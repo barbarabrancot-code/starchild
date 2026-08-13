@@ -201,7 +201,7 @@ function Tile({
     >
       {selected && <CornerBrackets inset={-4} />}
       <img
-        src={`/icons/${tile.icon}.svg`}
+        src={`${import.meta.env.BASE_URL}icons/${tile.icon}.svg`}
         alt={tile.id}
         className="size-6 object-contain"
         style={{

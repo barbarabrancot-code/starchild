@@ -3,12 +3,14 @@ import { motion } from "motion/react";
 import type { Scenario } from "./data";
 import { Deliverable } from "./Deliverable";
 
+const ICON_BASE = `${import.meta.env.BASE_URL}icons/`;
+
 const MODEL_ICON_SRC: Record<string, string> = {
-  gemini: "/icons/gemini.svg",
-  openai: "/icons/openai.svg",
-  xai: "/icons/xai.svg",
-  deepseek: "/icons/deepseek.svg",
-  "ai-generic": "/icons/ai-generic.svg",
+  gemini: `${ICON_BASE}gemini.svg`,
+  openai: `${ICON_BASE}openai.svg`,
+  xai: `${ICON_BASE}xai.svg`,
+  deepseek: `${ICON_BASE}deepseek.svg`,
+  "ai-generic": `${ICON_BASE}ai-generic.svg`,
 };
 
 function TokenStat({ stat }: { stat: Scenario["stat"] }) {

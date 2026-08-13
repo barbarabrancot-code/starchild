@@ -103,7 +103,7 @@ export function HeroScreen({ onEnterChat }: { onEnterChat: () => void }) {
 
         .hero-bg {
           position: absolute; inset: 0;
-          background-image: url("/images/Background.png");
+          background-image: url("${import.meta.env.BASE_URL}images/Background.png");
           background-size: cover;
           background-position: center 60%;
         }

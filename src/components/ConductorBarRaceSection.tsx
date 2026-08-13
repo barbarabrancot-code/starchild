@@ -99,7 +99,11 @@ export function ConductorBarRaceSection() {
                       style={{ height: `${(value / MAX_VALUE) * 100}%` }}
                     />
                   </div>
-                  <img src={`/icons/${model.id}.svg`} alt={model.name} className="br-icon" />
+                  <img
+                    src={`${import.meta.env.BASE_URL}icons/${model.id}.svg`}
+                    alt={model.name}
+                    className="br-icon"
+                  />
                 </div>
               );
             })}

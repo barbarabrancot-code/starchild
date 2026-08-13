@@ -37,7 +37,7 @@ function Tile({ logo, index }: { logo: string | null; index: number }) {
     >
       {logo && !broken && (
         <img
-          src={`/logos/${logo}.svg`}
+          src={`${import.meta.env.BASE_URL}logos/${logo}.svg`}
           alt={logo}
           className="size-8 object-contain"
           onError={() => setBroken(true)}

@@ -166,7 +166,12 @@ export function ConductorRankChartSection() {
                 onBlur={() => setHovered(null)}
               >
                 <span className="rc-legend-swatch" style={{ background: model.color }} aria-hidden="true" />
-                <img src={`/icons/${model.id}.svg`} alt="" className="rc-legend-icon" aria-hidden="true" />
+                <img
+                  src={`${import.meta.env.BASE_URL}icons/${model.id}.svg`}
+                  alt=""
+                  className="rc-legend-icon"
+                  aria-hidden="true"
+                />
                 {model.name}
               </button>
             ))}
