@@ -1,12 +1,15 @@
 import { motion } from "motion/react";
 import { CAPABILITY_PILLS } from "./data";
 import { LogoMark, PlusIcon, MicIcon, ChevronDownIcon } from "./icons";
+import { MonolithAbsorption } from "./MonolithAbsorption";
 
 export function HeroScreen({ onEnterChat }: { onEnterChat: () => void }) {
   return (
     <section className="hero-section relative flex min-h-screen flex-col overflow-hidden">
       <div className="hero-bg" aria-hidden="true" />
       <div className="hero-vignette" aria-hidden="true" />
+
+      <MonolithAbsorption />
 
       {/* top bar */}
       <div className="relative z-10 flex items-center justify-between px-6 py-6 sm:px-10">
@@ -29,12 +32,12 @@ export function HeroScreen({ onEnterChat }: { onEnterChat: () => void }) {
       </div>
 
       {/* center content */}
-      <div className="relative z-10 flex flex-1 flex-col items-center justify-center px-5 pb-16">
+      <div className="relative z-10 flex flex-1 flex-col items-start justify-center px-5 pb-16 sm:pl-16 lg:pl-24">
         <motion.h1
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-          className="mb-8 text-center text-[32px] font-semibold text-white drop-shadow-[0_2px_20px_rgba(0,0,0,0.25)] sm:text-[42px]"
+          className="mb-8 text-left text-[32px] font-semibold text-white drop-shadow-[0_2px_20px_rgba(0,0,0,0.25)] sm:text-[42px]"
           style={{ fontFamily: "var(--font-google-sans)" }}
         >
           One agent to rule all LLMs
@@ -83,7 +86,7 @@ export function HeroScreen({ onEnterChat }: { onEnterChat: () => void }) {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-          className="mt-6 flex flex-wrap items-center justify-center gap-2.5"
+          className="mt-6 flex flex-wrap items-center justify-start gap-2.5"
         >
           {CAPABILITY_PILLS.map(({ id, label, icon: Icon }) => (
             <div
@@ -103,9 +106,9 @@ export function HeroScreen({ onEnterChat }: { onEnterChat: () => void }) {
 
         .hero-bg {
           position: absolute; inset: 0;
-          background-image: url("${import.meta.env.BASE_URL}images/Background.png");
+          background-image: url("${import.meta.env.BASE_URL}images/Background2.jpg");
           background-size: cover;
-          background-position: center 60%;
+          background-position: center 50%;
         }
 
         .hero-vignette {

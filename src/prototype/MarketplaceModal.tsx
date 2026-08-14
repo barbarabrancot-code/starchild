@@ -219,7 +219,7 @@ export function MarketplaceModal({
                           className="mt-1.5 text-[15.5px] font-semibold text-neutral-900"
                           style={{ fontFamily: "var(--font-google-sans)" }}
                         >
-                          Package what you just did into a skill
+                          Turn what you just did into real earnings
                         </h4>
                         <p
                           className="mt-1 text-[12.5px] text-neutral-600"
