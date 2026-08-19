@@ -123,11 +123,11 @@ function hexToRgba(hex: string, alpha: number) {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
-const ACCENT = "#f4511e";
+const ACCENT = "#f84600";
 const TILE_SHADOW = "0 0 0 1px rgba(255,255,255,0.06)";
 
 function CornerBrackets({ inset = -2 }: { inset?: number }) {
-  const base = "pointer-events-none absolute size-3 border-[#f4511e]/70";
+  const base = "pointer-events-none absolute size-3 border-[#f84600]/70";
   const s = `${inset}px`;
   return (
     <>
@@ -292,7 +292,7 @@ export function ConductorSectionEdgy() {
         <div className="max-w-[420px]">
           <p
             className="text-xs uppercase tracking-[0.3em]"
-            style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace", color: ACCENT }}
+            style={{ fontFamily: "var(--font-google-sans)", color: ACCENT }}
           >
             // select mode
           </p>
@@ -306,12 +306,12 @@ export function ConductorSectionEdgy() {
           </h2>
 
           <div className="mt-8 flex h-14 items-center gap-2 border border-white/15 bg-black px-5">
-            <span style={{ color: ACCENT, fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}>
+            <span style={{ color: ACCENT, fontFamily: "var(--font-google-sans)" }}>
               {">"}
             </span>
             <span
               className="text-[15px] text-white/90"
-              style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
+              style={{ fontFamily: "var(--font-google-sans)" }}
             >
               {typed}
               <span
@@ -323,7 +323,7 @@ export function ConductorSectionEdgy() {
 
           <div
             className="mt-6 flex items-center gap-2 text-xs uppercase tracking-wider text-white/40"
-            style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
+            style={{ fontFamily: "var(--font-google-sans)" }}
           >
             <span>best model</span>
             <span className="text-white/20">/</span>

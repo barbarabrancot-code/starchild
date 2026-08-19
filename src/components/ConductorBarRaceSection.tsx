@@ -120,7 +120,7 @@ export function ConductorBarRaceSection() {
         }
 
         .br-eyebrow {
-          font-family: var(--font-mono); font-size: 12px; font-weight: 500;
+          font-family: var(--font-google-sans); font-size: 12px; font-weight: 500;
           letter-spacing: 0.32em; text-transform: uppercase; color: var(--br-text-2);
           margin: 0 0 20px;
         }
@@ -143,12 +143,12 @@ export function ConductorBarRaceSection() {
           display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px;
         }
         .br-title {
-          font-family: var(--font-mono); font-size: 12px; font-weight: 600; letter-spacing: 0.14em;
+          font-family: var(--font-google-sans); font-size: 12px; font-weight: 600; letter-spacing: 0.14em;
           text-transform: uppercase; color: var(--br-text);
         }
         .br-period {
           display: flex; align-items: baseline; gap: 6px; background: transparent; border: 0;
-          cursor: pointer; font-family: var(--font-mono); font-size: 13px; font-weight: 600;
+          cursor: pointer; font-family: var(--font-google-sans); font-size: 13px; font-weight: 600;
           letter-spacing: 0.06em; color: var(--br-text);
         }
         .br-period:focus-visible { outline: 2px solid var(--br-text-2); outline-offset: 3px; }
@@ -162,7 +162,7 @@ export function ConductorBarRaceSection() {
           align-items: center; height: 100%;
         }
         .br-tag {
-          font-family: var(--font-mono); font-size: 8.5px; font-weight: 700; letter-spacing: 0.08em;
+          font-family: var(--font-google-sans); font-size: 8.5px; font-weight: 700; letter-spacing: 0.08em;
           text-transform: uppercase; color: var(--br-green); margin-bottom: 6px; white-space: nowrap;
         }
         .br-track {

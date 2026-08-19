@@ -146,7 +146,7 @@ export function ConductorFatiguePopSection() {
           --fp-border: #e5e4e0;
           --fp-text: #171717;
           --fp-text-2: #6b6b68;
-          --fp-orange: #f4511e;
+          --fp-orange: var(--color-primary);
           --fp-card: #ffffff;
         }
 
@@ -193,7 +193,7 @@ export function ConductorFatiguePopSection() {
           display: flex; align-items: center; gap: 7px;
           background: var(--fp-orange); color: #fff; border-radius: 999px; padding: 10px 20px 10px 14px;
           font-family: var(--font-google-sans); font-size: 14px; font-weight: 700; letter-spacing: 0.01em;
-          box-shadow: 0 10px 24px rgba(244,81,30,0.32);
+          box-shadow: 0 10px 24px rgba(248,70,0,0.32);
           transform: translate(-50%, -50%) scale(0) rotate(-4deg); opacity: 0; pointer-events: none;
           transition: transform 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.15), opacity 0.25s ease;
         }

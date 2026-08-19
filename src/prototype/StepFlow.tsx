@@ -19,12 +19,22 @@ function TokenStat({ stat }: { stat: Scenario["stat"] }) {
 
   return (
     <div className="rounded-2xl border border-neutral-200 bg-[#fbfaf8] p-5">
-      <p
-        className="text-[11px] font-semibold tracking-[0.1em] text-neutral-400 uppercase"
-        style={{ fontFamily: "var(--font-mono)" }}
-      >
-        Estimated savings on this task
-      </p>
+      <div className="flex items-center justify-between gap-3">
+        <p
+          className="text-[11px] font-semibold tracking-[0.1em] text-neutral-400 uppercase"
+          style={{ fontFamily: "var(--font-google-sans)" }}
+        >
+          Estimated savings on this task
+        </p>
+        {/* the savings are the payoff of routing — stamp what produced them */}
+        <span
+          className="flex shrink-0 items-center gap-1.5 rounded-full bg-[#f84600]/10 px-2.5 py-1 text-[10.5px] font-semibold tracking-[0.08em] text-[#f84600] uppercase"
+          style={{ fontFamily: "var(--font-google-sans)" }}
+        >
+          <span className="size-1.5 rounded-full bg-[#f84600]" aria-hidden="true" />
+          Conductor Mode
+        </span>
+      </div>
 
       <div className="mt-4 flex flex-col gap-3">
         {[
@@ -40,7 +50,7 @@ function TokenStat({ stat }: { stat: Scenario["stat"] }) {
             </span>
             <div className="h-2 flex-1 overflow-hidden rounded-full bg-neutral-100">
               <motion.div
-                className={`h-full rounded-full ${row.accent ? "bg-[#f4511e]" : "bg-neutral-300"}`}
+                className={`h-full rounded-full ${row.accent ? "bg-[#f84600]" : "bg-neutral-300"}`}
                 initial={{ width: 0 }}
                 animate={{ width: `${(row.tokens / withoutTokens) * 100}%` }}
                 transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1], delay: 0.15 }}
@@ -48,9 +58,10 @@ function TokenStat({ stat }: { stat: Scenario["stat"] }) {
             </div>
             <span
               className="w-[74px] shrink-0 text-right text-[12.5px] tabular-nums text-neutral-500"
-              style={{ fontFamily: "var(--font-mono)" }}
+              style={{ fontFamily: "var(--font-google-sans)" }}
             >
-              {row.tokens.toLocaleString()}
+              {/* pinned: the UI is English, so a pt-BR browser must not render 9,600 as "9.600" */}
+              {row.tokens.toLocaleString("en-US")}
             </span>
           </div>
         ))}
@@ -112,7 +123,7 @@ export function StepFlow({
     <div className="relative flex flex-col gap-6 py-1 pl-1">
       <div className="absolute top-1 bottom-1 left-[7px] w-px bg-neutral-200" aria-hidden="true">
         <motion.div
-          className="w-px bg-[#f4511e]"
+          className="w-px bg-[#f84600]"
           initial={{ height: 0 }}
           animate={{ height: `${progressPct}%` }}
           transition={{ duration: 0.4, ease: "easeOut" }}
@@ -133,18 +144,18 @@ export function StepFlow({
             <span
               className={`relative z-10 mt-1 flex size-3.5 shrink-0 items-center justify-center rounded-full border-2 ${
                 isActive || (isLastStep && showFinal)
-                  ? "border-[#f4511e] bg-white"
+                  ? "border-[#f84600] bg-white"
                   : "border-neutral-300 bg-white"
               }`}
             >
               {isActive && (
                 <motion.span
-                  className="size-1.5 rounded-full bg-[#f4511e]"
+                  className="size-1.5 rounded-full bg-[#f84600]"
                   animate={visible === steps.length ? { scale: [1, 1.4, 1] } : {}}
                   transition={{ duration: 0.9, repeat: Infinity }}
                 />
               )}
-              {isLastStep && showFinal && <span className="size-1.5 rounded-full bg-[#f4511e]" />}
+              {isLastStep && showFinal && <span className="size-1.5 rounded-full bg-[#f84600]" />}
             </span>
             <div className="flex-1">
               <p
@@ -192,7 +203,7 @@ export function StepFlow({
                     <button
                       type="button"
                       onClick={onMonetize}
-                      className="rounded-full border border-[#f4511e]/30 bg-[#f4511e]/[0.07] px-4 py-2 text-[13px] font-medium text-[#f4511e] transition-colors hover:bg-[#f4511e]/[0.12]"
+                      className="rounded-full border border-[#f84600]/30 bg-[#f84600]/[0.07] px-4 py-2 text-[13px] font-medium text-[#f84600] transition-colors hover:bg-[#f84600]/[0.12]"
                       style={{ fontFamily: "var(--font-google-sans)" }}
                     >
                       Make a skill and monetize

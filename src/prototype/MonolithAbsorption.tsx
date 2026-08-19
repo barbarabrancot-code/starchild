@@ -18,20 +18,18 @@ const RENDER_HEIGHT = 22;
 const CAROUSEL_HEIGHT = 20;
 const CAROUSEL_RADIUS = 190;
 
-type Phase = "flat" | "absorbing" | "carousel" | "restoring";
+type Phase = "flat" | "absorbing" | "carousel";
 
 const DURATION: Record<Phase, number> = {
   flat: 3000,
   absorbing: 1600,
-  carousel: 9000,
-  restoring: 900,
+  carousel: 0,
 };
 
 const NEXT: Record<Phase, Phase> = {
   flat: "absorbing",
   absorbing: "carousel",
-  carousel: "restoring",
-  restoring: "flat",
+  carousel: "carousel",
 };
 
 export function MonolithAbsorption() {
@@ -39,15 +37,16 @@ export function MonolithAbsorption() {
   const n = LOGOS.length;
 
   useEffect(() => {
+    // carousel is the terminal phase: it spins forever, only a page refresh restarts the sequence
+    if (phase === "carousel") return;
     const t = setTimeout(() => setPhase(NEXT[phase]), DURATION[phase]);
     return () => clearTimeout(t);
   }, [phase]);
 
   const rowVisible = phase === "flat" || phase === "absorbing";
-  const rowFaded = phase === "absorbing" || phase === "carousel" || phase === "restoring";
+  const rowFaded = phase === "absorbing" || phase === "carousel";
   const beamOn = phase === "absorbing";
-  const carouselVisible = phase === "carousel" || phase === "restoring";
-  const carouselSpinning = phase === "carousel";
+  const carouselVisible = phase === "carousel";
 
   return (
     <>
@@ -99,7 +98,7 @@ export function MonolithAbsorption() {
           >
             <motion.div
               className="carousel-ring"
-              animate={carouselSpinning ? { rotateY: 360 } : {}}
+              animate={carouselVisible ? { rotateY: 360 } : {}}
               transition={{ duration: 24, repeat: Infinity, ease: "linear" }}
             >
               {LOGOS.map((logo, i) => {

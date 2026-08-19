@@ -192,7 +192,7 @@ export function ConductorRankChartSection() {
         }
 
         .rc-eyebrow {
-          font-family: var(--font-mono); font-size: 12px; font-weight: 500;
+          font-family: var(--font-google-sans); font-size: 12px; font-weight: 500;
           letter-spacing: 0.32em; text-transform: uppercase; color: var(--rc-text-2);
           margin: 0 0 20px;
         }
@@ -214,7 +214,7 @@ export function ConductorRankChartSection() {
         .rc-category {
           display: inline-flex; align-items: center; gap: 8px; background: transparent;
           border: 1px solid var(--rc-border); border-radius: 999px; padding: 6px 14px 6px 10px;
-          font-family: var(--font-mono); font-size: 11px; font-weight: 600; letter-spacing: 0.14em;
+          font-family: var(--font-google-sans); font-size: 11px; font-weight: 600; letter-spacing: 0.14em;
           text-transform: uppercase; color: var(--rc-green); cursor: pointer; margin-bottom: 18px;
           transition: border-color 0.2s ease;
         }
@@ -238,7 +238,7 @@ export function ConductorRankChartSection() {
           display: flex; justify-content: space-between; margin-top: 8px; padding: 0 26px;
         }
         .rc-axis span {
-          font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.05em;
+          font-family: var(--font-google-sans); font-size: 10px; letter-spacing: 0.05em;
           text-transform: uppercase; color: var(--rc-text-2);
         }
 
@@ -248,7 +248,7 @@ export function ConductorRankChartSection() {
         }
         .rc-legend-item {
           display: flex; align-items: center; gap: 7px; background: transparent; border: 0;
-          padding: 2px; cursor: pointer; font-family: var(--font-mono); font-size: 11px;
+          padding: 2px; cursor: pointer; font-family: var(--font-google-sans); font-size: 11px;
           letter-spacing: 0.04em; color: var(--rc-text-2); transition: color 0.2s ease;
         }
         .rc-legend-item:hover, .rc-legend-item--active { color: var(--rc-text); }

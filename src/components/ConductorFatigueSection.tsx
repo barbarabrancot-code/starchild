@@ -89,7 +89,7 @@ export function ConductorFatigueSection() {
           --fg-border: #e5e4e0;
           --fg-text: #171717;
           --fg-text-2: #6b6b68;
-          --fg-orange: #f4511e;
+          --fg-orange: var(--color-primary);
           --fg-card: #ffffff;
         }
 

@@ -10,7 +10,7 @@ type Intent = "create" | "buy" | null;
 
 const TILE_STYLES: Record<string, { bg: string; text: string }> = {
   Writing: { bg: "#262626", text: "#ffffff" },
-  Design: { bg: "#f4511e", text: "#ffffff" },
+  Design: { bg: "#f84600", text: "#ffffff" },
   Code: { bg: "#312e81", text: "#ffffff" },
   Marketing: { bg: "#0f766e", text: "#ffffff" },
 };
@@ -30,7 +30,7 @@ function SkillCard({ skill, onSelect }: { skill: MarketplaceSkill; onSelect?: ()
         if (onSelect && (e.key === "Enter" || e.key === " ")) onSelect();
       }}
       className={`flex h-full flex-col overflow-hidden rounded-xl border bg-white text-left ${
-        skill.mine ? "border-[#f4511e]/40" : "border-neutral-200"
+        skill.mine ? "border-[#f84600]/40" : "border-neutral-200"
       } ${onSelect ? "cursor-pointer transition-shadow hover:shadow-[0_6px_18px_rgba(0,0,0,0.08)]" : ""}`}
     >
       <div
@@ -38,7 +38,7 @@ function SkillCard({ skill, onSelect }: { skill: MarketplaceSkill; onSelect?: ()
         style={{ background: tile.bg }}
       >
         {skill.mine && (
-          <span className="absolute top-2 left-2 rounded-full bg-white/90 px-2 py-0.5 text-[9.5px] font-semibold tracking-wide text-[#f4511e] uppercase">
+          <span className="absolute top-2 left-2 rounded-full bg-white/90 px-2 py-0.5 text-[9.5px] font-semibold tracking-wide text-[#f84600] uppercase">
             New
           </span>
         )}
@@ -64,8 +64,8 @@ function SkillCard({ skill, onSelect }: { skill: MarketplaceSkill; onSelect?: ()
             {skill.provider}
           </span>
           <span
-            className="text-[12.5px] font-semibold text-[#f4511e]"
-            style={{ fontFamily: "var(--font-mono)" }}
+            className="text-[12.5px] font-semibold text-[#f84600]"
+            style={{ fontFamily: "var(--font-google-sans)" }}
           >
             {skill.price}
           </span>
@@ -205,13 +205,13 @@ export function MarketplaceModal({
                   {/* featured banner */}
                   <div
                     className="mt-4 overflow-hidden rounded-2xl p-5"
-                    style={{ background: "linear-gradient(135deg, #fff4ef 0%, #ffe4d6 100%)" }}
+                    style={{ background: "linear-gradient(135deg, #ffffff 0%, #fff0db 100%)" }}
                   >
                     <div className="flex items-center justify-between gap-5">
                       <div>
                         <p
-                          className="text-[10.5px] font-semibold tracking-[0.14em] text-[#f4511e] uppercase"
-                          style={{ fontFamily: "var(--font-mono)" }}
+                          className="text-[10.5px] font-semibold tracking-[0.14em] text-[#f84600] uppercase"
+                          style={{ fontFamily: "var(--font-google-sans)" }}
                         >
                           Featured
                         </p>
@@ -230,7 +230,7 @@ export function MarketplaceModal({
                         <button
                           type="button"
                           onClick={openCreate}
-                          className="mt-3 rounded-full bg-[#f4511e] px-4 py-2 text-[12.5px] font-medium text-white transition-transform hover:scale-[1.03]"
+                          className="mt-3 rounded-full bg-[#f84600] px-4 py-2 text-[12.5px] font-medium text-white transition-transform hover:scale-[1.03]"
                           style={{ fontFamily: "var(--font-google-sans)" }}
                         >
                           Add your skill
@@ -245,7 +245,7 @@ export function MarketplaceModal({
                         <span
                           key={i}
                           className={`h-1.5 rounded-full transition-all ${
-                            i === 0 ? "w-4 bg-[#f4511e]" : "w-1.5 bg-black/15"
+                            i === 0 ? "w-4 bg-[#f84600]" : "w-1.5 bg-black/15"
                           }`}
                         />
                       ))}
@@ -294,7 +294,7 @@ export function MarketplaceModal({
                     <button
                       type="button"
                       onClick={openCreate}
-                      className="flex min-h-[150px] flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed border-neutral-300 text-neutral-400 transition-colors hover:border-[#f4511e]/50 hover:text-[#f4511e]"
+                      className="flex min-h-[150px] flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed border-neutral-300 text-neutral-400 transition-colors hover:border-[#f84600]/50 hover:text-[#f84600]"
                     >
                       <PlusIcon className="size-5" />
                       <span className="text-[12px]" style={{ fontFamily: "var(--font-google-sans)" }}>
@@ -332,7 +332,7 @@ export function MarketplaceModal({
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     placeholder="Name your skill"
-                    className="mt-4 w-full border-b border-neutral-200 pb-2 text-[17px] font-semibold text-neutral-900 placeholder:text-neutral-300 focus:border-[#f4511e] focus:outline-none"
+                    className="mt-4 w-full border-b border-neutral-200 pb-2 text-[17px] font-semibold text-neutral-900 placeholder:text-neutral-300 focus:border-[#f84600] focus:outline-none"
                     style={{ fontFamily: "var(--font-google-sans)" }}
                   />
 
@@ -341,7 +341,7 @@ export function MarketplaceModal({
                     onChange={(e) => setBlurb(e.target.value)}
                     placeholder="What does this skill do? (one or two sentences)"
                     rows={3}
-                    className="mt-4 w-full resize-none rounded-lg border border-neutral-200 p-3 text-[13.5px] text-neutral-800 placeholder:text-neutral-400 focus:border-[#f4511e] focus:outline-none"
+                    className="mt-4 w-full resize-none rounded-lg border border-neutral-200 p-3 text-[13.5px] text-neutral-800 placeholder:text-neutral-400 focus:border-[#f84600] focus:outline-none"
                     style={{ fontFamily: "var(--font-google-sans)" }}
                   />
 
@@ -350,13 +350,13 @@ export function MarketplaceModal({
                       value={price}
                       onChange={(e) => setPrice(e.target.value)}
                       placeholder="$5"
-                      className="w-1/2 rounded-lg border border-neutral-200 p-3 text-[13.5px] text-neutral-800 placeholder:text-neutral-400 focus:border-[#f4511e] focus:outline-none"
+                      className="w-1/2 rounded-lg border border-neutral-200 p-3 text-[13.5px] text-neutral-800 placeholder:text-neutral-400 focus:border-[#f84600] focus:outline-none"
                       style={{ fontFamily: "var(--font-google-sans)" }}
                     />
                     <select
                       value={skillCategory}
                       onChange={(e) => setSkillCategory(e.target.value)}
-                      className="w-1/2 rounded-lg border border-neutral-200 p-3 text-[13.5px] text-neutral-800 focus:border-[#f4511e] focus:outline-none"
+                      className="w-1/2 rounded-lg border border-neutral-200 p-3 text-[13.5px] text-neutral-800 focus:border-[#f84600] focus:outline-none"
                       style={{ fontFamily: "var(--font-google-sans)" }}
                     >
                       {CATEGORIES.filter((c) => c !== "All").map((c) => (
@@ -372,7 +372,7 @@ export function MarketplaceModal({
                       type="button"
                       onClick={submit}
                       disabled={!title.trim()}
-                      className="flex items-center gap-1.5 rounded-full bg-[#f4511e] px-4 py-2 text-[13px] font-medium text-white transition-opacity disabled:opacity-40"
+                      className="flex items-center gap-1.5 rounded-full bg-[#f84600] px-4 py-2 text-[13px] font-medium text-white transition-opacity disabled:opacity-40"
                       style={{ fontFamily: "var(--font-google-sans)" }}
                     >
                       <PlusIcon className="size-3.5" />

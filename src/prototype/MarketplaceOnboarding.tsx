@@ -36,7 +36,7 @@ export function MarketplaceOnboarding({ onDone }: { onDone: () => void }) {
           transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
           className="flex min-h-[176px] flex-col items-center gap-4"
         >
-          <div className="flex size-14 items-center justify-center rounded-full bg-[#f4511e]/10 text-[#f4511e]">
+          <div className="flex size-14 items-center justify-center rounded-full bg-[#f84600]/10 text-[#f84600]">
             <slide.Icon className="size-6" />
           </div>
           <div>
@@ -64,7 +64,7 @@ export function MarketplaceOnboarding({ onDone }: { onDone: () => void }) {
             onClick={() => setIndex(i)}
             aria-label={`Go to slide ${i + 1}`}
             className={`h-1.5 rounded-full transition-all ${
-              i === index ? "w-5 bg-[#f4511e]" : "w-1.5 bg-neutral-200"
+              i === index ? "w-5 bg-[#f84600]" : "w-1.5 bg-neutral-200"
             }`}
           />
         ))}
@@ -82,7 +82,7 @@ export function MarketplaceOnboarding({ onDone }: { onDone: () => void }) {
         <button
           type="button"
           onClick={() => (isLast ? onDone() : setIndex((i) => i + 1))}
-          className="rounded-full bg-[#f4511e] px-5 py-2.5 text-[13px] font-medium text-white transition-transform hover:scale-[1.03]"
+          className="rounded-full bg-[#f84600] px-5 py-2.5 text-[13px] font-medium text-white transition-transform hover:scale-[1.03]"
           style={{ fontFamily: "var(--font-google-sans)" }}
         >
           {isLast ? "Ok, let's go" : "Next"}

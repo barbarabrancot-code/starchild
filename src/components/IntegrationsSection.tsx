@@ -60,7 +60,7 @@ export function IntegrationsSection() {
           <h2
             className="text-white"
             style={{
-              fontFamily: "var(--font-denton)",
+              fontFamily: "var(--font-google-sans)",
               fontSize: 64,
               fontWeight: 400,
               letterSpacing: "-0.02em",

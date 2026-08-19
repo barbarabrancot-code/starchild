@@ -1,5 +1,6 @@
 import { Fragment } from "react";
 import { motion, type Variants } from "motion/react";
+import { Container } from "../prototype/Container";
 
 // ---------------------------------------------------------------------------
 // BLOCK 1 — flow diagram data
@@ -172,83 +173,85 @@ const BENEFITS = [
 
 // ---------------------------------------------------------------------------
 
-export function ConductorModeSection() {
+export function ConductorModeSection({ onTryConductorMode }: { onTryConductorMode?: () => void } = {}) {
   return (
-    <section className="cm-section relative overflow-hidden bg-[#0a0a0a] px-6 py-20 md:py-36">
+    <section className="cm-section relative overflow-hidden bg-[#0a0a0a] py-20 md:py-36">
       <div className="cm-grain" aria-hidden="true" />
 
-      <div className="relative mx-auto max-w-[1180px]">
-        {/* BLOCK 1 — DIAGRAM */}
-        <div>
-          <p className="cm-eyebrow">How it works</p>
+      <Container className="relative">
+        <div className="grid grid-cols-12 gap-6">
+          {/* BLOCK 1 — DIAGRAM */}
+          <div className="col-span-12">
+            <p className="cm-eyebrow">How it works</p>
 
-          <ol className="cm-diagram" aria-label="Conductor Mode flow, from request to response">
-            {NODES.map((node, i) => (
-              <Fragment key={node.label}>
-                <DiagramNode index={i} label={node.label} sub={node.sub} emphasis={node.emphasis} />
-                {i < NODES.length - 1 && <DiagramConnector index={i + 1} />}
-              </Fragment>
-            ))}
-          </ol>
+            <ol className="cm-diagram" aria-label="Conductor Mode flow, from request to response">
+              {NODES.map((node, i) => (
+                <Fragment key={node.label}>
+                  <DiagramNode index={i} label={node.label} sub={node.sub} emphasis={node.emphasis} />
+                  {i < NODES.length - 1 && <DiagramConnector index={i + 1} />}
+                </Fragment>
+              ))}
+            </ol>
 
-          <p className="cm-caption">one request, one conducted path, one response</p>
-        </div>
-
-        {/* BLOCK 2 — COMPARISON TABLE */}
-        <div className="cm-block">
-          <div className="cm-block-header">
-            <h2 className="cm-block-title">What actually changes</h2>
-            <p className="cm-block-subtitle">
-              Picking the right model is table stakes by now. The difference is everything else.
-            </p>
+            <p className="cm-caption">one request, one conducted path, one response</p>
           </div>
 
-          <div style={{ overflowX: "auto" }}>
-            <table className="cm-table">
-              <thead>
-                <tr>
-                  <th scope="col"></th>
-                  <th scope="col">Other platforms</th>
-                  <th scope="col">Starchild Conductor</th>
-                </tr>
-              </thead>
-              <tbody>
-                {COMPARISON_ROWS.map((row) => (
-                  <tr key={row.label}>
-                    <td>{row.label}</td>
-                    <MarkCell cell={row.other} label="Other platforms" />
-                    <MarkCell cell={row.conductor} label="Starchild Conductor" />
+          {/* BLOCK 2 — COMPARISON TABLE */}
+          <div className="cm-block col-span-12">
+            <div className="cm-block-header">
+              <h2 className="cm-block-title">What actually changes</h2>
+              <p className="cm-block-subtitle">
+                Picking the right model is table stakes by now. The difference is everything else.
+              </p>
+            </div>
+
+            <div style={{ overflowX: "auto" }}>
+              <table className="cm-table">
+                <thead>
+                  <tr>
+                    <th scope="col"></th>
+                    <th scope="col">Other platforms</th>
+                    <th scope="col">Starchild Conductor</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {COMPARISON_ROWS.map((row) => (
+                    <tr key={row.label}>
+                      <td>{row.label}</td>
+                      <MarkCell cell={row.other} label="Other platforms" />
+                      <MarkCell cell={row.conductor} label="Starchild Conductor" />
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* BLOCK 3 — BENEFITS + CTA */}
+          <div className="cm-block col-span-12">
+            <div className="cm-block-header">
+              <h2 className="cm-block-title">What this changes for the people using it</h2>
+            </div>
+
+            <div className="cm-benefits">
+              {BENEFITS.map((b) => (
+                <div className="cm-benefit" key={b.tag}>
+                  <span className="cm-benefit-tag">{b.tag}</span>
+                  <h3 className="cm-benefit-title">{b.title}</h3>
+                  <p className="cm-benefit-desc">{b.desc}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="cm-cta">
+              <p className="cm-cta-line">Stop choosing tools. Start asking for results.</p>
+              <button className="cm-cta-button" type="button" onClick={onTryConductorMode}>
+                Try Conductor Mode
+              </button>
+            </div>
           </div>
         </div>
-
-        {/* BLOCK 3 — BENEFITS + CTA */}
-        <div className="cm-block">
-          <div className="cm-block-header">
-            <h2 className="cm-block-title">What this changes for the people using it</h2>
-          </div>
-
-          <div className="cm-benefits">
-            {BENEFITS.map((b) => (
-              <div className="cm-benefit" key={b.tag}>
-                <span className="cm-benefit-tag">{b.tag}</span>
-                <h3 className="cm-benefit-title">{b.title}</h3>
-                <p className="cm-benefit-desc">{b.desc}</p>
-              </div>
-            ))}
-          </div>
-
-          <div className="cm-cta">
-            <p className="cm-cta-line">Stop choosing tools. Start asking for results.</p>
-            <button className="cm-cta-button" type="button">
-              Try Conductor Mode
-            </button>
-          </div>
-        </div>
-      </div>
+      </Container>
 
       <style>{`
         .cm-section {
@@ -257,8 +260,7 @@ export function ConductorModeSection() {
           --cm-text: #d0d0d0;
           --cm-text-2: #6b6b6b;
           --cm-text-3: #454545;
-          --cm-green: #3ecf8e;
-          --cm-green-wash: rgba(62, 207, 142, 0.08);
+          --cm-accent: var(--color-primary);
         }
 
         .cm-section ul, .cm-section ol { margin: 0; padding: 0; list-style: none; }
@@ -279,15 +281,16 @@ export function ConductorModeSection() {
         .cm-block { margin-top: 132px; }
 
         .cm-eyebrow {
-          font-family: var(--font-mono); font-size: 12px; font-weight: 500;
-          letter-spacing: 0.32em; color: var(--cm-text-2); text-align: center; margin: 0 0 56px;
+          font-family: var(--font-google-sans); font-size: 12px; font-weight: 600;
+          letter-spacing: 0.24em; color: var(--cm-text-2); text-align: center; margin: 0 0 56px;
+          text-transform: uppercase;
         }
 
         .cm-block-header { max-width: 46ch; margin: 0 auto 56px; text-align: center; }
 
         .cm-block-title {
-          font-family: var(--font-mono); font-size: 15px; font-weight: 600;
-          letter-spacing: 0.16em; color: var(--cm-text); margin: 0 0 14px;
+          font-family: var(--font-google-sans); font-size: 15px; font-weight: 600;
+          letter-spacing: 0.1em; color: var(--cm-text); margin: 0 0 14px;
           text-transform: uppercase; text-wrap: balance;
         }
 
@@ -308,15 +311,15 @@ export function ConductorModeSection() {
         .cm-node--emphasis { border-color: var(--cm-border-strong); position: relative; }
         .cm-node--emphasis::before {
           content: ""; position: absolute; top: -1px; left: -1px; width: 6px; height: 6px;
-          background: var(--cm-green);
+          background: var(--cm-accent);
         }
 
         .cm-node-label {
-          font-family: var(--font-mono); font-size: 12.5px; font-weight: 600;
+          font-family: var(--font-google-sans); font-size: 12.5px; font-weight: 600;
           letter-spacing: 0.05em; color: var(--cm-text); text-transform: uppercase;
         }
         .cm-node-sub {
-          font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.03em;
+          font-family: var(--font-google-sans); font-size: 10px; letter-spacing: 0.03em;
           color: var(--cm-text-2); line-height: 1.5; text-transform: uppercase;
         }
 
@@ -330,7 +333,7 @@ export function ConductorModeSection() {
           fill: none; stroke: var(--cm-border-strong); stroke-width: 1; stroke-dasharray: 3 3;
           animation: cm-trail-pulse 3s ease-in-out infinite;
         }
-        .cm-packet { fill: var(--cm-green); }
+        .cm-packet { fill: var(--cm-accent); }
 
         .cm-connector--1 .cm-trail { animation-delay: 0s; }
         .cm-connector--2 .cm-trail { animation-delay: 0.5s; }
@@ -347,12 +350,12 @@ export function ConductorModeSection() {
         }
 
         .cm-caption {
-          font-family: var(--font-denton); font-style: italic; font-size: 20px;
+          font-family: var(--font-google-sans); font-style: italic; font-size: 20px;
           color: var(--cm-text-2); text-align: center; max-width: 32ch; margin: 44px auto 0; line-height: 1.5;
         }
 
         /* table */
-        .cm-table { width: 100%; font-family: var(--font-mono); font-size: 13.5px; }
+        .cm-table { width: 100%; font-family: var(--font-google-sans); font-size: 13.5px; }
 
         .cm-table thead th {
           font-weight: 500; letter-spacing: 0.09em; color: var(--cm-text-2); text-transform: uppercase;
@@ -372,10 +375,10 @@ export function ConductorModeSection() {
         .cm-mark { font-size: 16px; }
         .cm-mark--neutral { color: var(--cm-text-2); }
         .cm-mark--absent { color: var(--cm-text-3); }
-        .cm-mark--active { color: var(--cm-green); }
+        .cm-mark--active { color: var(--cm-accent); }
 
         .cm-word { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--cm-text-2); }
-        .cm-word--active { color: var(--cm-green); }
+        .cm-word--active { color: var(--cm-accent); }
 
         /* benefits */
         .cm-benefits {
@@ -387,11 +390,11 @@ export function ConductorModeSection() {
           border-top: 1px solid var(--cm-border);
         }
         .cm-benefit-tag {
-          display: flex; align-items: center; gap: 9px; font-family: var(--font-mono);
-          font-size: 11px; font-weight: 600; letter-spacing: 0.18em; color: var(--cm-green);
+          display: flex; align-items: center; gap: 9px; font-family: var(--font-google-sans);
+          font-size: 11px; font-weight: 600; letter-spacing: 0.12em; color: var(--cm-accent);
           text-transform: uppercase;
         }
-        .cm-benefit-tag::before { content: ""; width: 6px; height: 6px; background: var(--cm-green); flex: none; }
+        .cm-benefit-tag::before { content: ""; width: 6px; height: 6px; background: var(--cm-accent); flex: none; }
         .cm-benefit-title {
           font-family: var(--font-google-sans); font-size: 18.5px; font-weight: 600;
           color: var(--cm-text); margin: 0; text-wrap: balance;
@@ -406,17 +409,18 @@ export function ConductorModeSection() {
           display: flex; flex-direction: column; align-items: center; gap: 30px; text-align: center;
         }
         .cm-cta-line {
-          font-family: var(--font-mono); font-size: 15px; font-weight: 500; letter-spacing: 0.09em;
-          color: var(--cm-text); max-width: 30ch; margin: 0; text-transform: uppercase;
+          font-family: var(--font-google-sans); font-size: 17px; font-weight: 600; letter-spacing: 0;
+          color: var(--cm-text); max-width: 30ch; margin: 0;
         }
         .cm-cta-button {
-          font-family: var(--font-mono); font-size: 12.5px; font-weight: 600; letter-spacing: 0.14em;
-          text-transform: uppercase; color: var(--cm-green); background: transparent;
-          border: 1px solid var(--cm-green); border-radius: 2px; padding: 17px 34px; cursor: pointer;
-          transition: background-color 0.2s ease;
+          font-family: var(--font-google-sans); font-size: 14px; font-weight: 500; letter-spacing: 0;
+          color: #fff; background: var(--cm-accent); border: 1px solid var(--cm-accent);
+          border-radius: 999px; padding: 14px 30px; cursor: pointer;
+          transition: transform 0.2s ease, box-shadow 0.2s ease;
+          box-shadow: 0 8px 24px rgba(248, 70, 0, 0.32);
         }
-        .cm-cta-button:hover { background-color: var(--cm-green-wash); }
-        .cm-cta-button:focus-visible { outline: 2px solid var(--cm-green); outline-offset: 3px; }
+        .cm-cta-button:hover { transform: scale(1.03); }
+        .cm-cta-button:focus-visible { outline: 2px solid var(--cm-accent); outline-offset: 3px; }
 
         @media (max-width: 760px) {
           .cm-section { padding-top: 84px; padding-bottom: 84px; }

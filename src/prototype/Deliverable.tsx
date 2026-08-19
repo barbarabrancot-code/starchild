@@ -83,7 +83,7 @@ function MarketDeliverable({ rows }: { rows: { label: string; value: string; up:
           </span>
           <span
             className={`text-[13px] font-medium tabular-nums ${row.up ? "text-emerald-600" : "text-red-500"}`}
-            style={{ fontFamily: "var(--font-mono)" }}
+            style={{ fontFamily: "var(--font-google-sans)" }}
           >
             {row.up ? "▲" : "▼"} {row.value}
           </span>
@@ -99,20 +99,20 @@ function CodeDeliverable({ language, snippet }: { language: string; snippet: str
       <div className="flex items-center justify-between border-b border-white/10 px-3.5 py-2">
         <span
           className="text-[10.5px] tracking-wide text-white/40 uppercase"
-          style={{ fontFamily: "var(--font-mono)" }}
+          style={{ fontFamily: "var(--font-google-sans)" }}
         >
           {language}
         </span>
         <span
           className="text-[10.5px] font-medium text-emerald-400"
-          style={{ fontFamily: "var(--font-mono)" }}
+          style={{ fontFamily: "var(--font-google-sans)" }}
         >
           ✓ ran without errors
         </span>
       </div>
       <pre
         className="overflow-x-auto p-3.5 text-[12px] leading-relaxed text-neutral-200"
-        style={{ fontFamily: "var(--font-mono)" }}
+        style={{ fontFamily: "var(--font-google-sans)" }}
       >
         {snippet}
       </pre>

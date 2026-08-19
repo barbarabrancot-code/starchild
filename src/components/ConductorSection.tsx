@@ -266,7 +266,7 @@ export function ConductorSection() {
           </p>
           <h2
             className="text-[40px] leading-tight font-bold"
-            style={{ fontFamily: "var(--font-google-sans)", color: "#f4511e" }}
+            style={{ fontFamily: "var(--font-google-sans)", color: "#f84600" }}
           >
             Conductor mode
           </h2>
