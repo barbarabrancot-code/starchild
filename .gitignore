@@ -3,3 +3,7 @@ dist
 dist-artifact
 .DS_Store
 .vscode
+
+.env
+.env.local
+.vercel
