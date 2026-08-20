@@ -1,10 +1,10 @@
-import { LogoMark } from "./icons";
 import { Container } from "./Container";
 
+// The Conductor Mode and Marketplace links are parked for now — both pages still
+// exist and both handlers are still passed in, so restoring the nav is putting the
+// two buttons back.
 export function SiteHeader({
   onNavigateHome,
-  onNavigateConductorMode,
-  onOpenMarketplace,
   onLogIn,
   onSignUp,
 }: {
@@ -19,33 +19,17 @@ export function SiteHeader({
       <Container>
         <div className="grid grid-cols-[auto_1fr] items-center gap-4">
           <div className="flex items-center gap-8">
-            <button type="button" onClick={onNavigateHome} className="flex items-center gap-2.5">
-              <LogoMark className="size-7" />
-              <span
-                className="text-[15px] font-semibold tracking-[0.16em] text-white"
-                style={{ fontFamily: "var(--font-google-sans)" }}
-              >
-                STARCHILD
-              </span>
+            {/* the real wordmark — mark and lettering come as one file, so this
+                replaces the CSS placeholder mark plus the typed STARCHILD */}
+            <button type="button" onClick={onNavigateHome} className="flex items-center">
+              <img
+                src={`${import.meta.env.BASE_URL}images/starchild-logo.svg`}
+                alt="Starchild"
+                width={172}
+                height={32}
+                className="h-8 w-auto"
+              />
             </button>
-            <nav className="hidden items-center gap-6 sm:flex">
-              <button
-                type="button"
-                onClick={onNavigateConductorMode}
-                className="text-[13.5px] text-white/70 transition-colors hover:text-white"
-                style={{ fontFamily: "var(--font-google-sans)" }}
-              >
-                Conductor Mode
-              </button>
-              <button
-                type="button"
-                onClick={onOpenMarketplace}
-                className="text-[13.5px] text-white/70 transition-colors hover:text-white"
-                style={{ fontFamily: "var(--font-google-sans)" }}
-              >
-                Marketplace
-              </button>
-            </nav>
           </div>
           {/* Log in stays quiet so the header's orange doesn't compete with the
               hero CTA — the primary action on this page is still "Meet Starchild". */}

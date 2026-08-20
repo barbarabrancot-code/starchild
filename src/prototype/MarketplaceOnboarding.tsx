@@ -41,13 +41,13 @@ export function MarketplaceOnboarding({ onDone }: { onDone: () => void }) {
           </div>
           <div>
             <h3
-              className="text-[18px] font-semibold text-neutral-900"
+              className="text-[18px] font-semibold text-white"
               style={{ fontFamily: "var(--font-google-sans)" }}
             >
               {slide.title}
             </h3>
             <p
-              className="mt-2 max-w-[360px] text-[13.5px] leading-relaxed text-neutral-500"
+              className="mt-2 max-w-[360px] text-[13.5px] leading-relaxed text-white/55"
               style={{ fontFamily: "var(--font-google-sans)" }}
             >
               {slide.body}
@@ -64,7 +64,7 @@ export function MarketplaceOnboarding({ onDone }: { onDone: () => void }) {
             onClick={() => setIndex(i)}
             aria-label={`Go to slide ${i + 1}`}
             className={`h-1.5 rounded-full transition-all ${
-              i === index ? "w-5 bg-[#f84600]" : "w-1.5 bg-neutral-200"
+              i === index ? "w-5 bg-[#f84600]" : "w-1.5 bg-white/20"
             }`}
           />
         ))}
@@ -74,7 +74,7 @@ export function MarketplaceOnboarding({ onDone }: { onDone: () => void }) {
         <button
           type="button"
           onClick={onDone}
-          className="text-[13px] text-neutral-400 transition-colors hover:text-neutral-600"
+          className="text-[13px] text-white/40 transition-colors hover:text-white/70"
           style={{ fontFamily: "var(--font-google-sans)" }}
         >
           Skip

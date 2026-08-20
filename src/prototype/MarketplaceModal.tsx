@@ -1,12 +1,11 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { CATEGORIES, type MarketplaceSkill } from "./data";
-import { CloseIcon, PlusIcon, ArrowLeftIcon, SearchIcon, LogoMark, CheckIcon } from "./icons";
+import { CloseIcon, PlusIcon, ArrowLeftIcon, SearchIcon, CheckIcon } from "./icons";
 import { MarketplaceOnboarding } from "./MarketplaceOnboarding";
 import { MarketplaceAuthGate } from "./MarketplaceAuthGate";
 
 type View = "onboarding" | "grid" | "create" | "auth" | "purchased";
-type Intent = "create" | "buy" | null;
 
 const TILE_STYLES: Record<string, { bg: string; text: string }> = {
   Writing: { bg: "#262626", text: "#ffffff" },
@@ -29,8 +28,8 @@ function SkillCard({ skill, onSelect }: { skill: MarketplaceSkill; onSelect?: ()
       onKeyDown={(e) => {
         if (onSelect && (e.key === "Enter" || e.key === " ")) onSelect();
       }}
-      className={`flex h-full flex-col overflow-hidden rounded-xl border bg-white text-left ${
-        skill.mine ? "border-[#f84600]/40" : "border-neutral-200"
+      className={`flex h-full flex-col overflow-hidden rounded-xl border bg-white/[0.03] text-left ${
+        skill.mine ? "border-[#f84600]/40" : "border-white/10"
       } ${onSelect ? "cursor-pointer transition-shadow hover:shadow-[0_6px_18px_rgba(0,0,0,0.08)]" : ""}`}
     >
       <div
@@ -38,7 +37,7 @@ function SkillCard({ skill, onSelect }: { skill: MarketplaceSkill; onSelect?: ()
         style={{ background: tile.bg }}
       >
         {skill.mine && (
-          <span className="absolute top-2 left-2 rounded-full bg-white/90 px-2 py-0.5 text-[9.5px] font-semibold tracking-wide text-[#f84600] uppercase">
+          <span className="absolute top-2 left-2 rounded-full bg-black/70 px-2 py-0.5 text-[9.5px] font-semibold tracking-wide text-[#f84600] uppercase">
             New
           </span>
         )}
@@ -51,14 +50,14 @@ function SkillCard({ skill, onSelect }: { skill: MarketplaceSkill; onSelect?: ()
       </div>
       <div className="flex flex-1 flex-col p-3.5">
         <p
-          className="flex-1 text-[12px] leading-snug text-neutral-500"
+          className="flex-1 text-[12px] leading-snug text-white/50"
           style={{ fontFamily: "var(--font-google-sans)" }}
         >
           {skill.blurb}
         </p>
         <div className="mt-3 flex items-center justify-between">
           <span
-            className="text-[11px] text-neutral-400"
+            className="text-[11px] text-white/40"
             style={{ fontFamily: "var(--font-google-sans)" }}
           >
             {skill.provider}
@@ -93,30 +92,26 @@ export function MarketplaceModal({
   const [blurb, setBlurb] = useState("");
   const [price, setPrice] = useState("");
   const [skillCategory, setSkillCategory] = useState(CATEGORIES[2]);
-  const [intent, setIntent] = useState<Intent>(null);
   const [selectedSkill, setSelectedSkill] = useState<MarketplaceSkill | null>(null);
 
   useEffect(() => {
     if (open) {
       setView("onboarding");
-      setIntent(null);
       setSelectedSkill(null);
     }
   }, [open]);
 
   function openCreate() {
-    setIntent("create");
-    setView("auth");
+    setView("create");
   }
 
   function requestBuy(skill: MarketplaceSkill) {
-    setIntent("buy");
     setSelectedSkill(skill);
     setView("auth");
   }
 
   function handleAuthContinue() {
-    setView(intent === "create" ? "create" : "purchased");
+    setView("purchased");
   }
 
   function submit() {
@@ -164,11 +159,11 @@ export function MarketplaceModal({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.98 }}
             transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-            className="max-h-[85vh] w-full max-w-[640px] overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl"
+            className="max-h-[85vh] w-full max-w-[640px] overflow-y-auto rounded-2xl border border-white/10 bg-[#111112] p-6 shadow-2xl"
           >
             <div className="flex items-start justify-between">
               <h3
-                className="text-[18px] font-semibold text-neutral-900"
+                className="text-[18px] font-semibold text-white"
                 style={{ fontFamily: "var(--font-google-sans)" }}
               >
                 Marketplace
@@ -176,7 +171,7 @@ export function MarketplaceModal({
               <button
                 type="button"
                 onClick={onClose}
-                className="flex size-7 items-center justify-center rounded-full text-neutral-400 transition-colors hover:bg-black/[0.05]"
+                className="flex size-7 items-center justify-center rounded-full text-white/40 transition-colors hover:bg-white/10"
                 aria-label="Close"
               >
                 <CloseIcon className="size-4" />
@@ -216,13 +211,13 @@ export function MarketplaceModal({
                           Featured
                         </p>
                         <h4
-                          className="mt-1.5 text-[15.5px] font-semibold text-neutral-900"
+                          className="mt-1.5 text-[15.5px] font-semibold text-[#1a1206]"
                           style={{ fontFamily: "var(--font-google-sans)" }}
                         >
                           Turn what you just did into real earnings
                         </h4>
                         <p
-                          className="mt-1 text-[12.5px] text-neutral-600"
+                          className="mt-1 text-[12.5px] text-[#1a1206]/65"
                           style={{ fontFamily: "var(--font-google-sans)" }}
                         >
                           Anything Conductor helps you build can become something other people pay to use.
@@ -236,8 +231,14 @@ export function MarketplaceModal({
                           Add your skill
                         </button>
                       </div>
-                      <div className="flex size-[76px] shrink-0 items-center justify-center rounded-xl bg-white/70">
-                        <LogoMark className="size-9" />
+                      <div className="flex size-[76px] shrink-0 items-center justify-center rounded-xl border border-black/[0.06] bg-white shadow-sm">
+                        <img
+                          src={`${import.meta.env.BASE_URL}images/starchild-symbol.svg`}
+                          alt="Starchild"
+                          width={36}
+                          height={36}
+                          className="size-9"
+                        />
                       </div>
                     </div>
                     <div className="mt-4 flex justify-center gap-1.5">
@@ -253,13 +254,13 @@ export function MarketplaceModal({
                   </div>
 
                   {/* search */}
-                  <div className="mt-4 flex items-center gap-2 rounded-full border border-neutral-200 px-3.5 py-2.5">
-                    <SearchIcon className="size-4 text-neutral-400" />
+                  <div className="mt-4 flex items-center gap-2 rounded-full border border-white/12 px-3.5 py-2.5">
+                    <SearchIcon className="size-4 text-white/40" />
                     <input
                       value={search}
                       onChange={(e) => setSearch(e.target.value)}
                       placeholder="Search skills, tags…"
-                      className="flex-1 bg-transparent text-[13px] text-neutral-800 placeholder:text-neutral-400 focus:outline-none"
+                      className="flex-1 bg-transparent text-[13px] text-white placeholder:text-white/35 focus:outline-none"
                       style={{ fontFamily: "var(--font-google-sans)" }}
                     />
                   </div>
@@ -273,8 +274,8 @@ export function MarketplaceModal({
                         onClick={() => setCategory(c)}
                         className={`shrink-0 rounded-full border px-3 py-1.5 text-[12px] whitespace-nowrap transition-colors ${
                           category === c
-                            ? "border-neutral-900 bg-neutral-900 text-white"
-                            : "border-neutral-200 text-neutral-500 hover:border-neutral-300"
+                            ? "border-white bg-white text-neutral-900"
+                            : "border-white/12 text-white/55 hover:border-white/30"
                         }`}
                         style={{ fontFamily: "var(--font-google-sans)" }}
                       >
@@ -284,6 +285,18 @@ export function MarketplaceModal({
                   </div>
 
                   <div className="mt-4 grid grid-cols-2 gap-3">
+                    {/* first cell, always: the way to publish shouldn't drift
+                        below the fold as the grid fills up */}
+                    <button
+                      type="button"
+                      onClick={openCreate}
+                      className="flex min-h-[150px] flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed border-white/20 text-white/40 transition-colors hover:border-[#f84600]/50 hover:text-[#f84600]"
+                    >
+                      <PlusIcon className="size-5" />
+                      <span className="text-[12px]" style={{ fontFamily: "var(--font-google-sans)" }}>
+                        Add skill
+                      </span>
+                    </button>
                     {filtered.map((skill) => (
                       <SkillCard
                         key={skill.id}
@@ -291,16 +304,6 @@ export function MarketplaceModal({
                         onSelect={skill.mine ? undefined : () => requestBuy(skill)}
                       />
                     ))}
-                    <button
-                      type="button"
-                      onClick={openCreate}
-                      className="flex min-h-[150px] flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed border-neutral-300 text-neutral-400 transition-colors hover:border-[#f84600]/50 hover:text-[#f84600]"
-                    >
-                      <PlusIcon className="size-5" />
-                      <span className="text-[12px]" style={{ fontFamily: "var(--font-google-sans)" }}>
-                        Add skill
-                      </span>
-                    </button>
                   </div>
                 </motion.div>
               ) : view === "create" ? (
@@ -315,13 +318,13 @@ export function MarketplaceModal({
                     <button
                       type="button"
                       onClick={() => setView("grid")}
-                      className="flex size-7 items-center justify-center rounded-full text-neutral-400 transition-colors hover:bg-black/[0.05]"
+                      className="flex size-7 items-center justify-center rounded-full text-white/40 transition-colors hover:bg-white/10"
                       aria-label="Back"
                     >
                       <ArrowLeftIcon className="size-4" />
                     </button>
                     <p
-                      className="text-[13px] text-neutral-500"
+                      className="text-[13px] text-white/55"
                       style={{ fontFamily: "var(--font-google-sans)" }}
                     >
                       New skill
@@ -332,7 +335,7 @@ export function MarketplaceModal({
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     placeholder="Name your skill"
-                    className="mt-4 w-full border-b border-neutral-200 pb-2 text-[17px] font-semibold text-neutral-900 placeholder:text-neutral-300 focus:border-[#f84600] focus:outline-none"
+                    className="mt-4 w-full border-b border-white/12 bg-transparent pb-2 text-[17px] font-semibold text-white placeholder:text-white/25 focus:border-[#f84600] focus:outline-none"
                     style={{ fontFamily: "var(--font-google-sans)" }}
                   />
 
@@ -341,7 +344,7 @@ export function MarketplaceModal({
                     onChange={(e) => setBlurb(e.target.value)}
                     placeholder="What does this skill do? (one or two sentences)"
                     rows={3}
-                    className="mt-4 w-full resize-none rounded-lg border border-neutral-200 p-3 text-[13.5px] text-neutral-800 placeholder:text-neutral-400 focus:border-[#f84600] focus:outline-none"
+                    className="mt-4 w-full resize-none rounded-lg border border-white/12 bg-white/[0.04] p-3 text-[13.5px] text-white placeholder:text-white/35 focus:border-[#f84600] focus:outline-none"
                     style={{ fontFamily: "var(--font-google-sans)" }}
                   />
 
@@ -350,13 +353,13 @@ export function MarketplaceModal({
                       value={price}
                       onChange={(e) => setPrice(e.target.value)}
                       placeholder="$5"
-                      className="w-1/2 rounded-lg border border-neutral-200 p-3 text-[13.5px] text-neutral-800 placeholder:text-neutral-400 focus:border-[#f84600] focus:outline-none"
+                      className="w-1/2 rounded-lg border border-white/12 bg-white/[0.04] p-3 text-[13.5px] text-white placeholder:text-white/35 focus:border-[#f84600] focus:outline-none"
                       style={{ fontFamily: "var(--font-google-sans)" }}
                     />
                     <select
                       value={skillCategory}
                       onChange={(e) => setSkillCategory(e.target.value)}
-                      className="w-1/2 rounded-lg border border-neutral-200 p-3 text-[13.5px] text-neutral-800 focus:border-[#f84600] focus:outline-none"
+                      className="w-1/2 rounded-lg border border-white/12 bg-white/[0.04] p-3 text-[13.5px] text-white focus:border-[#f84600] focus:outline-none"
                       style={{ fontFamily: "var(--font-google-sans)" }}
                     >
                       {CATEGORIES.filter((c) => c !== "All").map((c) => (
@@ -383,7 +386,6 @@ export function MarketplaceModal({
               ) : view === "auth" ? (
                 <motion.div key="auth" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
                   <MarketplaceAuthGate
-                    intent={intent === "create" ? "create" : "buy"}
                     skillTitle={selectedSkill?.title}
                     onBack={() => setView("grid")}
                     onContinue={handleAuthContinue}
@@ -403,13 +405,13 @@ export function MarketplaceModal({
                   </div>
                   <div>
                     <h3
-                      className="text-[16.5px] font-semibold text-neutral-900"
+                      className="text-[16.5px] font-semibold text-white"
                       style={{ fontFamily: "var(--font-google-sans)" }}
                     >
                       You're in
                     </h3>
                     <p
-                      className="mt-1.5 max-w-[320px] text-[13px] leading-relaxed text-neutral-500"
+                      className="mt-1.5 max-w-[320px] text-[13px] leading-relaxed text-white/55"
                       style={{ fontFamily: "var(--font-google-sans)" }}
                     >
                       "{selectedSkill?.title}" is ready — check your library to start using it.
@@ -418,7 +420,7 @@ export function MarketplaceModal({
                   <button
                     type="button"
                     onClick={() => setView("grid")}
-                    className="mt-2 rounded-full border border-neutral-200 px-4 py-2 text-[13px] font-medium text-neutral-700 transition-colors hover:bg-black/[0.03]"
+                    className="mt-2 rounded-full border border-white/15 px-4 py-2 text-[13px] font-medium text-white/80 transition-colors hover:bg-white/[0.07]"
                     style={{ fontFamily: "var(--font-google-sans)" }}
                   >
                     Back to Marketplace

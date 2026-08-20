@@ -370,20 +370,20 @@ const IMAGE: Scenario = {
   models: [{ name: "Gemini", icon: "gemini" }],
   steps: [
     {
-      title: "Conductor Mode is choosing the best model",
-      sub: "A poster is a visual, creative job — so it's routed to a model actually built to compose images, not just describe them.",
+      title: "Choosing the right model",
+      sub: "Matching the task to the best fit.",
     },
     {
-      title: "Assembling the right tools",
-      sub: "Plus a quick, cheap research pass first, so the details are real — Odysseus doesn't end up looking generic.",
+      title: "Gathering what it needs",
+      sub: "Bringing in the right context and tools.",
     },
     {
-      title: "Getting the advisor opinion",
-      sub: "A fast visual check before it reaches you: is the composition solid, is the text legible?",
+      title: "Checking the work",
+      sub: "Running a second pass before delivering.",
     },
     {
       title: "Delivering",
-      sub: "Here's your poster — and what it actually cost, below.",
+      sub: "Putting it all together.",
     },
   ],
   deliverable: {
@@ -402,20 +402,20 @@ const DESIGN: Scenario = {
   ],
   steps: [
     {
-      title: "Conductor Mode is choosing the best model",
-      sub: "A brand is really two jobs — naming and voice go to a model sharp with language, the logo direction goes to a visual one.",
+      title: "Choosing the right model",
+      sub: "Matching the task to the best fit.",
     },
     {
-      title: "Assembling the right tools",
-      sub: "The color palette is genuinely easy, so it's handed to something fast and cheap instead of a heavyweight.",
+      title: "Gathering what it needs",
+      sub: "Bringing in the right context and tools.",
     },
     {
-      title: "Getting the advisor opinion",
-      sub: "One more pass checks that the name, palette, and logo direction actually agree with each other.",
+      title: "Checking the work",
+      sub: "Running a second pass before delivering.",
     },
     {
       title: "Delivering",
-      sub: "Here's your starter brand kit — and what it actually cost, below.",
+      sub: "Putting it all together.",
     },
   ],
   deliverable: {
@@ -432,20 +432,20 @@ const TRADING: Scenario = {
   models: [{ name: "Grok", icon: "xai" }],
   steps: [
     {
-      title: "Conductor Mode is choosing the best model",
-      sub: "Numbers matter more than eloquence here, so it's routed to a model actually wired to live market data, not one guessing from memory.",
+      title: "Choosing the right model",
+      sub: "Matching the task to the best fit.",
     },
     {
-      title: "Assembling the right tools",
-      sub: "A live data feed pulls today's real figures — not a plausible-sounding hallucination.",
+      title: "Gathering what it needs",
+      sub: "Bringing in the right context and tools.",
     },
     {
-      title: "Getting the advisor opinion",
-      sub: "This is the kind of task where being wrong actually costs you, so the numbers get double-checked before delivery.",
+      title: "Checking the work",
+      sub: "Running a second pass before delivering.",
     },
     {
       title: "Delivering",
-      sub: "Here's today's snapshot — and what it actually cost, below.",
+      sub: "Putting it all together.",
     },
   ],
   deliverable: {
@@ -464,20 +464,20 @@ const CODE: Scenario = {
   models: [{ name: "DeepSeek", icon: "deepseek" }],
   steps: [
     {
-      title: "Conductor Mode is choosing the best model",
-      sub: "Debugging needs a model actually tuned for code — not a generalist that's merely fluent in it.",
+      title: "Choosing the right model",
+      sub: "Matching the task to the best fit.",
     },
     {
-      title: "Assembling the right tools",
-      sub: "It also gets a sandbox: a place to actually run the fix and see if it works, instead of just predicting it.",
+      title: "Gathering what it needs",
+      sub: "Bringing in the right context and tools.",
     },
     {
-      title: "Getting the advisor opinion",
-      sub: "The result gets checked before it reaches you, catching the kind of bug that looks fine at a glance.",
+      title: "Checking the work",
+      sub: "Running a second pass before delivering.",
     },
     {
       title: "Delivering",
-      sub: "Here's your fix — and what it actually cost, below.",
+      sub: "Putting it all together.",
     },
   ],
   deliverable: {
@@ -502,20 +502,20 @@ const GENERIC: Scenario = {
   models: [{ name: "the right model", icon: "ai-generic" }],
   steps: [
     {
-      title: "Conductor Mode is choosing the best model",
-      sub: "It reads your whole request, then matches it to a model actually built for that kind of work — not just the \"smartest\" one available.",
+      title: "Choosing the right model",
+      sub: "Matching the task to the best fit.",
     },
     {
-      title: "Assembling the right tools",
-      sub: "It grabs only what that specific job needs — nothing you're not using, nothing you're paying for and not touching.",
+      title: "Gathering what it needs",
+      sub: "Bringing in the right context and tools.",
     },
     {
-      title: "Getting the advisor opinion",
-      sub: "On anything that actually matters, a second pass quietly checks the work before you ever see it.",
+      title: "Checking the work",
+      sub: "Running a second pass before delivering.",
     },
     {
       title: "Delivering",
-      sub: "That's the whole trick — and here's what it saves, below.",
+      sub: "Putting it all together.",
     },
   ],
   deliverable: { kind: "none" },

@@ -1,27 +1,24 @@
-import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { PRIMARY_USE_CASES, type TaskCard } from "../data";
 import { ArrowUpIcon } from "../icons";
 import { Container } from "../Container";
+import { ScrollPin, useScrollPin } from "./ScrollPin";
 import { ProductWindow } from "./ProductWindow";
 
+// The section pins while you scroll through the three use cases: one stretch of
+// scroll per case, released once the last one has been seen.
 export function LifeAndWorkSection({ onStartTask }: { onStartTask: (task: TaskCard) => void }) {
-  const [activeId, setActiveId] = useState(PRIMARY_USE_CASES[0].id);
-  const active = PRIMARY_USE_CASES.find((u) => u.id === activeId) ?? PRIMARY_USE_CASES[0];
+  const { trackRef, pinned, index, selectStep } = useScrollPin(PRIMARY_USE_CASES.length);
+  const active = PRIMARY_USE_CASES[index];
 
   return (
     <section className="uc-section bg-[#0a0a0a] py-24 md:py-32">
+      <ScrollPin trackRef={trackRef} pinned={pinned} screens={PRIMARY_USE_CASES.length}>
       <Container>
         <div className="grid grid-cols-12 gap-6">
           <div className="col-span-12 max-w-[46ch]">
-            <p
-              className="text-[12px] font-medium tracking-[0.24em] text-white/40 uppercase"
-              style={{ fontFamily: "var(--font-google-sans)" }}
-            >
-              Ok, it gets me — but for what?
-            </p>
             <h2
-              className="mt-4 text-[34px] leading-[1.1] font-semibold text-white sm:text-[42px]"
+              className="text-[34px] leading-[1.1] font-semibold text-balance text-white sm:text-[42px]"
               style={{ fontFamily: "var(--font-google-sans)" }}
             >
               What Starchild can help with.
@@ -32,13 +29,13 @@ export function LifeAndWorkSection({ onStartTask }: { onStartTask: (task: TaskCa
         {/* Level 1 — pick a use case, the product view follows */}
         <div className="mt-14 grid grid-cols-12 gap-6">
           <div className="col-span-12 flex flex-col gap-2 lg:col-span-4">
-            {PRIMARY_USE_CASES.map((useCase) => {
-              const isActive = useCase.id === activeId;
+            {PRIMARY_USE_CASES.map((useCase, i) => {
+              const isActive = i === index;
               return (
                 <button
                   key={useCase.id}
                   type="button"
-                  onClick={() => setActiveId(useCase.id)}
+                  onClick={() => selectStep(i)}
                   aria-pressed={isActive}
                   className={`uc-tab${isActive ? " uc-tab--active" : ""}`}
                 >
@@ -71,8 +68,8 @@ export function LifeAndWorkSection({ onStartTask }: { onStartTask: (task: TaskCa
             <ProductWindow useCase={active} />
           </div>
         </div>
-
       </Container>
+      </ScrollPin>
 
       <style>{`
         .uc-tab {

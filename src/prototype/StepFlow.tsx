@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion } from "motion/react";
 import type { Scenario } from "./data";
 import { Deliverable } from "./Deliverable";
+import { CheckIcon, InfoIcon } from "./icons";
 
 const ICON_BASE = `${import.meta.env.BASE_URL}icons/`;
 
@@ -13,86 +14,150 @@ const MODEL_ICON_SRC: Record<string, string> = {
   "ai-generic": `${ICON_BASE}ai-generic.svg`,
 };
 
+// One quiet line under the result: what happened, then what it delivered, then
+// what it saved. The comparison behind the number is a detail, so it waits behind
+// the info icon — on hover with a mouse, on tap on touch.
 function TokenStat({ stat }: { stat: Scenario["stat"] }) {
-  const { withoutLabel, withoutTokens, withLabel, withTokens } = stat;
-  const pct = Math.round((1 - withTokens / withoutTokens) * 100);
+  const { withoutTokens, withTokens } = stat;
+  const [open, setOpen] = useState(false);
+  const [fine, setFine] = useState(false);
+  const closeTimer = useRef<number | undefined>(undefined);
+  const saved = withoutTokens - withTokens;
+
+  useEffect(() => {
+    setFine(window.matchMedia("(hover: hover) and (pointer: fine)").matches);
+    return () => window.clearTimeout(closeTimer.current);
+  }, []);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [open]);
+
+  // the small delay is what lets the pointer cross the gap into the panel
+  const openNow = () => {
+    window.clearTimeout(closeTimer.current);
+    setOpen(true);
+  };
+  const closeSoon = () => {
+    window.clearTimeout(closeTimer.current);
+    closeTimer.current = window.setTimeout(() => setOpen(false), 140);
+  };
 
   return (
-    <div className="rounded-2xl border border-neutral-200 bg-[#fbfaf8] p-5">
-      <div className="flex items-center justify-between gap-3">
-        <p
-          className="text-[11px] font-semibold tracking-[0.1em] text-neutral-400 uppercase"
-          style={{ fontFamily: "var(--font-google-sans)" }}
-        >
-          Estimated savings on this task
+    <div className="relative self-start">
+      <div className="flex items-center gap-2.5">
+        <span className="size-1.5 shrink-0 rounded-full bg-[#f84600]" aria-hidden="true" />
+        <p className="text-[13px] text-white/60" style={{ fontFamily: "var(--font-google-sans)" }}>
+          Saved{" "}
+          <span className="font-medium text-white/90 tabular-nums">
+            {/* pinned: the UI is English, so a pt-BR browser must not render 9,100 as "9.100" */}
+            {saved.toLocaleString("en-US")}
+          </span>{" "}
+          tokens with Conductor Mode
         </p>
-        {/* the savings are the payoff of routing — stamp what produced them */}
-        <span
-          className="flex shrink-0 items-center gap-1.5 rounded-full bg-[#f84600]/10 px-2.5 py-1 text-[10.5px] font-semibold tracking-[0.08em] text-[#f84600] uppercase"
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          onPointerEnter={fine ? openNow : undefined}
+          onPointerLeave={fine ? closeSoon : undefined}
+          onFocus={fine ? openNow : undefined}
+          onBlur={fine ? closeSoon : undefined}
+          aria-expanded={open}
+          aria-label="How this saving was estimated"
+          className="rounded-full p-0.5 text-[#f84600]/60 transition-colors hover:text-[#f84600] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#f84600]/70"
+        >
+          <InfoIcon className="size-4" />
+        </button>
+      </div>
+
+      {open &&
+        (fine ? (
+          <motion.div
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+            onPointerEnter={openNow}
+            onPointerLeave={closeSoon}
+            role="tooltip"
+            className="absolute bottom-[calc(100%+10px)] left-0 z-40 w-[min(300px,calc(100vw-3rem))] rounded-2xl border border-white/10 bg-[#111112] p-4 shadow-2xl"
+          >
+            <SavingsDetail />
+          </motion.div>
+        ) : (
+          <TokenStatDialog onClose={() => setOpen(false)} />
+        ))}
+    </div>
+  );
+}
+
+// the panel itself — same content whether it arrives on hover or on tap
+function SavingsDetail() {
+  return (
+    <>
+      <p
+        className="text-[13.5px] font-medium text-white/90"
+        style={{ fontFamily: "var(--font-google-sans)" }}
+      >
+        Conductor Mode routes each step to the AI that fits it best.
+      </p>
+      <p
+        className="mt-1 text-[11.5px] text-white/35"
+        style={{ fontFamily: "var(--font-google-sans)" }}
+      >
+        That means less unnecessary token usage and less wasted context.
+      </p>
+    </>
+  );
+}
+
+function TokenStatDialog({ onClose }: { onClose: () => void }) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-5 backdrop-blur-sm"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Estimated savings on this task"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ opacity: 0, y: 10, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+        onClick={(event) => event.stopPropagation()}
+        className="w-full max-w-[320px] rounded-2xl border border-white/10 bg-[#111112] p-5 shadow-2xl"
+      >
+        <SavingsDetail />
+
+        <button
+          type="button"
+          onClick={onClose}
+          className="mt-5 w-full rounded-full border border-white/15 bg-white/[0.06] py-2.5 text-[13px] font-medium text-white/85 transition-colors hover:bg-white/[0.12]"
           style={{ fontFamily: "var(--font-google-sans)" }}
         >
-          <span className="size-1.5 rounded-full bg-[#f84600]" aria-hidden="true" />
-          Conductor Mode
-        </span>
-      </div>
-
-      <div className="mt-4 flex flex-col gap-3">
-        {[
-          { label: withoutLabel, tokens: withoutTokens, accent: false },
-          { label: withLabel, tokens: withTokens, accent: true },
-        ].map((row) => (
-          <div key={row.label} className="flex items-center gap-3">
-            <span
-              className="w-[132px] shrink-0 text-[12.5px] text-neutral-600"
-              style={{ fontFamily: "var(--font-google-sans)" }}
-            >
-              {row.label}
-            </span>
-            <div className="h-2 flex-1 overflow-hidden rounded-full bg-neutral-100">
-              <motion.div
-                className={`h-full rounded-full ${row.accent ? "bg-[#f84600]" : "bg-neutral-300"}`}
-                initial={{ width: 0 }}
-                animate={{ width: `${(row.tokens / withoutTokens) * 100}%` }}
-                transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1], delay: 0.15 }}
-              />
-            </div>
-            <span
-              className="w-[74px] shrink-0 text-right text-[12.5px] tabular-nums text-neutral-500"
-              style={{ fontFamily: "var(--font-google-sans)" }}
-            >
-              {/* pinned: the UI is English, so a pt-BR browser must not render 9,600 as "9.600" */}
-              {row.tokens.toLocaleString("en-US")}
-            </span>
-          </div>
-        ))}
-      </div>
-
-      <p
-        className="mt-4 text-[13.5px] font-medium text-neutral-800"
-        style={{ fontFamily: "var(--font-google-sans)" }}
-      >
-        ~{pct}% fewer tokens burned on this exact task.
-      </p>
-      <p
-        className="mt-1 text-[11.5px] text-neutral-400 italic"
-        style={{ fontFamily: "var(--font-google-sans)" }}
-      >
-        Illustrative estimate for this demo — not a live token count.
-      </p>
+          Close
+        </button>
+      </motion.div>
     </div>
   );
 }
 
 export function StepFlow({
   scenario,
-  onMonetize,
   onStep,
   onDone,
+  showSavings = false,
 }: {
   scenario: Scenario;
-  onMonetize: () => void;
   onStep?: () => void;
   onDone?: () => void;
+  /** Guest Mode only: what Conductor Mode saved is an argument for signing up, and
+   *  an account holder has already been made it. */
+  showSavings?: boolean;
 }) {
   const { steps, models, deliverable, stat } = scenario;
   const [visible, setVisible] = useState(0);
@@ -120,8 +185,8 @@ export function StepFlow({
   const progressPct = showFinal ? 100 : (Math.min(visible, steps.length) / steps.length) * 100;
 
   return (
-    <div className="relative flex flex-col gap-6 py-1 pl-1">
-      <div className="absolute top-1 bottom-1 left-[7px] w-px bg-neutral-200" aria-hidden="true">
+    <div className="relative flex flex-col gap-3.5 py-1 pl-1">
+      <div className="absolute top-1 bottom-1 left-[7px] w-px bg-white/12" aria-hidden="true">
         <motion.div
           className="w-px bg-[#f84600]"
           initial={{ height: 0 }}
@@ -130,9 +195,10 @@ export function StepFlow({
         />
       </div>
 
+      {/* A running status, not an explanation: titles only, ticked as they pass.
+          Each step's `sub` is still in the scenario data, unused here. */}
       {steps.slice(0, visible).map((step, i) => {
         const isActive = i === visible - 1 && !showFinal;
-        const isLastStep = i === steps.length - 1;
         return (
           <motion.div
             key={step.title}
@@ -142,45 +208,38 @@ export function StepFlow({
             className="relative flex items-start gap-4"
           >
             <span
-              className={`relative z-10 mt-1 flex size-3.5 shrink-0 items-center justify-center rounded-full border-2 ${
-                isActive || (isLastStep && showFinal)
-                  ? "border-[#f84600] bg-white"
-                  : "border-neutral-300 bg-white"
+              className={`relative z-10 mt-[3px] flex size-3.5 shrink-0 items-center justify-center rounded-full ${
+                isActive ? "border-2 border-[#f84600] bg-[#0a0a0a]" : "bg-[#0a0a0a]"
               }`}
             >
-              {isActive && (
+              {isActive ? (
                 <motion.span
                   className="size-1.5 rounded-full bg-[#f84600]"
-                  animate={visible === steps.length ? { scale: [1, 1.4, 1] } : {}}
-                  transition={{ duration: 0.9, repeat: Infinity }}
+                  animate={{ scale: [1, 1.4, 1] }}
+                  transition={{ duration: 1.4, repeat: Infinity }}
                 />
+              ) : (
+                <CheckIcon className="size-3.5 text-[#f84600]" />
               )}
-              {isLastStep && showFinal && <span className="size-1.5 rounded-full bg-[#f84600]" />}
             </span>
             <div className="flex-1">
               <p
-                className="text-[14.5px] font-medium text-neutral-900"
+                className={`text-[14.5px] font-medium ${isActive ? "text-white" : "text-white/55"}`}
                 style={{ fontFamily: "var(--font-google-sans)" }}
               >
                 {step.title}
               </p>
-              <p
-                className="mt-1 text-[13px] leading-relaxed text-neutral-500"
-                style={{ fontFamily: "var(--font-google-sans)" }}
-              >
-                {step.sub}
-              </p>
 
-              {i === 0 && (
+              {i === 0 && isActive && (
                 <div className="mt-2.5 flex flex-wrap gap-1.5">
                   {models.map((m) => (
                     <span
                       key={m.name}
-                      className="flex items-center gap-1.5 rounded-full border border-neutral-200 bg-neutral-50 py-1 pr-2.5 pl-1.5"
+                      className="flex items-center gap-1.5 rounded-full border border-white/12 bg-white/[0.05] py-1 pr-2.5 pl-1.5"
                     >
                       <img src={MODEL_ICON_SRC[m.icon]} alt="" className="size-3.5 object-contain" />
                       <span
-                        className="text-[11.5px] font-medium text-neutral-700"
+                        className="text-[11.5px] font-medium text-white/80"
                         style={{ fontFamily: "var(--font-google-sans)" }}
                       >
                         {m.name}
@@ -189,32 +248,34 @@ export function StepFlow({
                   ))}
                 </div>
               )}
-
-              {isLastStep && showFinal && (
-                <motion.div
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                  className="mt-4 flex flex-col gap-4"
-                >
-                  {deliverable.kind !== "none" && <Deliverable deliverable={deliverable} />}
-                  <TokenStat stat={stat} />
-                  <div>
-                    <button
-                      type="button"
-                      onClick={onMonetize}
-                      className="rounded-full border border-[#f84600]/30 bg-[#f84600]/[0.07] px-4 py-2 text-[13px] font-medium text-[#f84600] transition-colors hover:bg-[#f84600]/[0.12]"
-                      style={{ fontFamily: "var(--font-google-sans)" }}
-                    >
-                      Make a skill and monetize
-                    </button>
-                  </div>
-                </motion.div>
-              )}
             </div>
           </motion.div>
         );
       })}
+
+      {/* what happened → what it delivered → what it saved, in that order */}
+      {showFinal && (
+        <motion.div
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+          className="relative flex items-start gap-4"
+        >
+          <span className="relative z-10 mt-[3px] flex size-3.5 shrink-0 items-center justify-center rounded-full bg-[#0a0a0a]">
+            <CheckIcon className="size-3.5 text-[#f84600]" />
+          </span>
+          <div className="flex flex-1 flex-col gap-4">
+            <p
+              className="text-[14.5px] font-medium text-white"
+              style={{ fontFamily: "var(--font-google-sans)" }}
+            >
+              Done.
+            </p>
+            {deliverable.kind !== "none" && <Deliverable deliverable={deliverable} />}
+            {showSavings && <TokenStat stat={stat} />}
+          </div>
+        </motion.div>
+      )}
     </div>
   );
 }

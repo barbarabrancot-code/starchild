@@ -22,8 +22,11 @@ export function SignupGate({
   onBack?: () => void;
   onContinue: () => void;
 }) {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  // Prefilled on purpose: this is a prototype, and typing an address to see the
+  // next screen is friction that teaches nobody anything. Clear it when the form
+  // becomes a real one.
+  const [email, setEmail] = useState("you@example.com");
+  const [password, setPassword] = useState("starchild");
   const canSubmit = !showForm || (email.trim() !== "" && password.trim() !== "");
 
   return (
@@ -33,12 +36,12 @@ export function SignupGate({
           <button
             type="button"
             onClick={onBack}
-            className="flex size-7 items-center justify-center rounded-full text-neutral-400 transition-colors hover:bg-black/[0.05]"
+            className="flex size-7 items-center justify-center rounded-full text-white/40 transition-colors hover:bg-white/10"
             aria-label="Back"
           >
             <ArrowLeftIcon className="size-4" />
           </button>
-          <p className="text-[13px] text-neutral-500" style={{ fontFamily: "var(--font-google-sans)" }}>
+          <p className="text-[13px] text-white/50" style={{ fontFamily: "var(--font-google-sans)" }}>
             {backLabel}
           </p>
         </div>
@@ -49,10 +52,10 @@ export function SignupGate({
           <LockIcon className="size-5" />
         </div>
         <div>
-          <h3 className="text-[16.5px] font-semibold text-neutral-900" style={{ fontFamily: "var(--font-google-sans)" }}>
+          <h3 className="text-[16.5px] font-semibold text-white" style={{ fontFamily: "var(--font-google-sans)" }}>
             {heading}
           </h3>
-          <p className="mt-1.5 max-w-[340px] text-[13px] leading-relaxed text-neutral-500" style={{ fontFamily: "var(--font-google-sans)" }}>
+          <p className="mt-1.5 max-w-[340px] text-[13px] leading-relaxed text-white/55" style={{ fontFamily: "var(--font-google-sans)" }}>
             {sub}
           </p>
         </div>
@@ -66,7 +69,7 @@ export function SignupGate({
               onChange={(e) => setEmail(e.target.value)}
               type="email"
               placeholder="Email"
-              className="w-full rounded-lg border border-neutral-200 p-3 text-[13.5px] text-neutral-800 placeholder:text-neutral-400 focus:border-[#f84600] focus:outline-none"
+              className="w-full rounded-lg border border-white/12 bg-white/[0.04] p-3 text-[13.5px] text-white placeholder:text-white/35 focus:border-[#f84600] focus:outline-none"
               style={{ fontFamily: "var(--font-google-sans)" }}
             />
             <input
@@ -74,7 +77,7 @@ export function SignupGate({
               onChange={(e) => setPassword(e.target.value)}
               type="password"
               placeholder="Password"
-              className="w-full rounded-lg border border-neutral-200 p-3 text-[13.5px] text-neutral-800 placeholder:text-neutral-400 focus:border-[#f84600] focus:outline-none"
+              className="w-full rounded-lg border border-white/12 bg-white/[0.04] p-3 text-[13.5px] text-white placeholder:text-white/35 focus:border-[#f84600] focus:outline-none"
               style={{ fontFamily: "var(--font-google-sans)" }}
             />
           </>
@@ -90,7 +93,7 @@ export function SignupGate({
           {ctaLabel}
         </button>
 
-        <p className="text-center text-[12px] text-neutral-400" style={{ fontFamily: "var(--font-google-sans)" }}>
+        <p className="text-center text-[12px] text-white/40" style={{ fontFamily: "var(--font-google-sans)" }}>
           {footerNote} <span className="font-medium text-[#f84600]">Log in</span>
         </p>
       </div>

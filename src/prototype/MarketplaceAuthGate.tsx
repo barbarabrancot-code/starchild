@@ -1,22 +1,23 @@
 import { SignupGate } from "./SignupGate";
 
+// Buying is the only thing behind this gate: there's a payment to route and a
+// library to put the skill in. Listing one goes straight to the form — asking
+// someone to sign up before they've even described what they'd publish loses them.
 export function MarketplaceAuthGate({
-  intent,
   skillTitle,
   onBack,
   onContinue,
 }: {
-  intent: "create" | "buy";
   skillTitle?: string;
   onBack: () => void;
   onContinue: () => void;
 }) {
-  const heading =
-    intent === "create" ? "Create a free account to list your skill" : `Create a free account to get this skill`;
-  const sub =
-    intent === "create"
-      ? "So buyers know who built it, and payouts land somewhere real."
-      : `So "${skillTitle}" lands in your library and the seller actually gets paid.`;
-
-  return <SignupGate heading={heading} sub={sub} onBack={onBack} onContinue={onContinue} />;
+  return (
+    <SignupGate
+      heading="Create a free account to get this skill"
+      sub={`So "${skillTitle}" lands in your library and the seller actually gets paid.`}
+      onBack={onBack}
+      onContinue={onContinue}
+    />
+  );
 }

@@ -1,8 +1,20 @@
 import { motion } from "motion/react";
+import { ArrowUpIcon } from "../icons";
 import { Container } from "../Container";
 
-export function FinalCtaSection({ onStartFree }: { onStartFree: () => void }) {
-  const headline = "Meet Starchild.";
+// The closing line is the one thing that differs between the landings that share
+// this section, so it's a prop. The default is the line the Conductor section used
+// to close on — it lands harder here, right above the button, so it isn't repeated
+// back there.
+const DEFAULT_HEADLINE = "The best AI for the job changes constantly. Starchild keeps up.";
+
+export function FinalCtaSection({
+  onStartFree,
+  headline = DEFAULT_HEADLINE,
+}: {
+  onStartFree: () => void;
+  headline?: string;
+}) {
   const ctaLabel = "Meet Starchild";
 
   return (
@@ -15,7 +27,7 @@ export function FinalCtaSection({ onStartFree }: { onStartFree: () => void }) {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.5 }}
               transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
-              className="max-w-[22ch] text-[36px] leading-[1.12] font-semibold text-white sm:text-[48px]"
+              className="max-w-[26ch] text-[32px] leading-[1.14] font-semibold text-balance text-white sm:text-[44px]"
               style={{ fontFamily: "var(--font-google-sans)" }}
             >
               {headline}
@@ -31,6 +43,22 @@ export function FinalCtaSection({ onStartFree }: { onStartFree: () => void }) {
               style={{ fontFamily: "var(--font-google-sans)" }}
             >
               {ctaLabel}
+            </motion.button>
+
+            {/* Placeholder: the pricing page doesn't exist yet, so this deliberately
+                goes nowhere. Wire it up when there's a page to send people to. */}
+            <motion.button
+              type="button"
+              onClick={() => {}}
+              initial={{ opacity: 0, y: 10 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.5 }}
+              transition={{ duration: 0.5, delay: 0.18, ease: [0.16, 1, 0.3, 1] }}
+              className="group -mt-3 flex items-center gap-2 text-[14px] text-white/55 transition-colors hover:text-white"
+              style={{ fontFamily: "var(--font-google-sans)" }}
+            >
+              See pricing
+              <ArrowUpIcon className="size-3.5 rotate-45 text-white/30 transition-colors group-hover:text-[#f84600]" />
             </motion.button>
           </div>
         </div>

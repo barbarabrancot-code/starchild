@@ -3,6 +3,7 @@ import { motion, useMotionValue, useMotionValueEvent, useScroll } from "motion/r
 import { CONTEXT_SIGNALS } from "../data";
 import { Container } from "../Container";
 import { StarchildDot } from "../onboarding/StarchildDot";
+import { ScrollPin, usePinFits, usePinnedProgress } from "./ScrollPin";
 
 // native SVG dimensions, so each wordmark keeps its aspect ratio at LOGO_HEIGHT.
 // Grok is intentionally absent: the only xAI wordmark we hold (Spacexai.svg) reads
@@ -37,14 +38,27 @@ const easeInOut = (t: number) => (t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 
 type Point = { x: number; y: number };
 type Anchors = { you: Point; models: Point; conductor: Point; result: Point };
 
-/** Point on `rect` nearest to `target` — gives the edge a dot should leave from,
- *  and works unchanged when the row stacks vertically on small screens. */
-function edgeToward(rect: DOMRect, stage: DOMRect, target: Point): Point {
-  const left = rect.left - stage.left;
-  const top = rect.top - stage.top;
+type Box = { left: number; top: number; width: number; height: number };
+
+/** Position of `el` inside the stage, in layout pixels. The pinned pane may be
+ *  scaled down to fit a short viewport, and the dots are positioned in unscaled
+ *  pixels inside it — so every measurement is divided back out by that scale. */
+function boxIn(el: Element, stage: DOMRect, scale: number): Box {
+  const r = el.getBoundingClientRect();
   return {
-    x: Math.max(left, Math.min(target.x, left + rect.width)),
-    y: Math.max(top, Math.min(target.y, top + rect.height)),
+    left: (r.left - stage.left) / scale,
+    top: (r.top - stage.top) / scale,
+    width: r.width / scale,
+    height: r.height / scale,
+  };
+}
+
+/** Point on `box` nearest to `target` — gives the edge a dot should leave from,
+ *  and works unchanged when the row stacks vertically on small screens. */
+function edgeToward(box: Box, target: Point): Point {
+  return {
+    x: Math.max(box.left, Math.min(target.x, box.left + box.width)),
+    y: Math.max(box.top, Math.min(target.y, box.top + box.height)),
   };
 }
 
@@ -65,7 +79,12 @@ function Panel({
   );
 }
 
-export function KnowsYouKnowsAiSection() {
+export function KnowsYouKnowsAiSection({
+  // Version C ends the section on the diagram: the four benefits restate in words
+  // what the choreography has just shown, and C is deliberately the shorter page.
+  showBenefits = true,
+}: { showBenefits?: boolean } = {}) {
+  const trackRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const youRef = useRef<HTMLDivElement>(null);
   const modelsRef = useRef<HTMLDivElement>(null);
@@ -81,15 +100,23 @@ export function KnowsYouKnowsAiSection() {
   const [merged, setMerged] = useState(false);
   const [delivered, setDelivered] = useState(false);
   const [reduced, setReduced] = useState(false);
+  // pinned: the diagram holds still on screen and the scroll drives the whole
+  // choreography. Same rule as the showcase sections — where it can't pin, the
+  // animation plays as the section passes by instead.
+  const pinned = usePinFits();
 
-  const { scrollYProgress } = useScroll({
+  // unpinned fallback: the choreography plays as the section crosses the viewport
+  const { scrollYProgress: flowProgress } = useScroll({
     target: stageRef,
     offset: ["start 0.85", "end 0.55"],
   });
 
   useEffect(() => {
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    setReduced(mq.matches);
+    const reducedMq = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+    const syncMode = () => setReduced(reducedMq.matches);
+    syncMode();
+    reducedMq.addEventListener("change", syncMode);
 
     const measure = () => {
       const stage = stageRef.current;
@@ -98,24 +125,35 @@ export function KnowsYouKnowsAiSection() {
       if (!stage || !you || !models || !cond || !res) return;
 
       const s = stage.getBoundingClientRect();
-      const c = cond.getBoundingClientRect();
-      const conductor = { x: c.left - s.left + c.width / 2, y: c.top - s.top + c.height / 2 };
-      const r = res.getBoundingClientRect();
+      const scale = stage.offsetWidth ? s.width / stage.offsetWidth : 1;
+
+      const c = boxIn(cond, s, scale);
+      const conductor = { x: c.left + c.width / 2, y: c.top + c.height / 2 };
+      const r = boxIn(res, s, scale);
 
       anchors.current = {
         conductor,
-        you: edgeToward(you.getBoundingClientRect(), s, conductor),
-        models: edgeToward(models.getBoundingClientRect(), s, conductor),
-        result: { x: r.left - s.left + r.width / 2, y: r.top - s.top },
+        you: edgeToward(boxIn(you, s, scale), conductor),
+        models: edgeToward(boxIn(models, s, scale), conductor),
+        result: { x: r.left + r.width / 2, y: r.top },
       };
     };
 
     measure();
     window.addEventListener("resize", measure);
-    return () => window.removeEventListener("resize", measure);
+    return () => {
+      window.removeEventListener("resize", measure);
+      reducedMq.removeEventListener("change", syncMode);
+    };
   }, []);
 
-  useMotionValueEvent(scrollYProgress, "change", (p) => {
+  // the stage moves when pinning switches on or off, so the anchors have to be
+  // re-read before the next dot position is computed
+  useEffect(() => {
+    window.dispatchEvent(new Event("resize"));
+  }, [pinned]);
+
+  const applyProgress = (p: number) => {
     const a = anchors.current;
     if (!a) return;
 
@@ -140,6 +178,12 @@ export function KnowsYouKnowsAiSection() {
 
     setMerged(inb > 0.9);
     setDelivered(outb > 0.88);
+  };
+
+  // pinned: progress comes from the track itself, same as the showcase sections
+  usePinnedProgress(trackRef, pinned, applyProgress);
+  useMotionValueEvent(flowProgress, "change", (p) => {
+    if (!pinned) applyProgress(p);
   });
 
   // reduced motion: skip the choreography, show the end state
@@ -147,28 +191,18 @@ export function KnowsYouKnowsAiSection() {
 
   return (
     <section className="ky-section bg-[#0a0a0a] py-24 md:py-32">
-      <Container>
-        <div className="grid grid-cols-12 gap-6">
-          <div className="col-span-12 mx-auto max-w-[52ch] text-center">
-            <div className="mb-4 flex items-center justify-center gap-2">
-              <motion.span
-                className="size-2 rounded-full bg-[#f84600]"
-                animate={{ opacity: [1, 0.4, 1] }}
-                transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
-              />
-              <p
-                className="text-[12px] font-medium tracking-[0.24em] text-white/40 uppercase"
-                style={{ fontFamily: "var(--font-google-sans)" }}
-              >
-                It gets to know how you work
-              </p>
-            </div>
+      {/* While pinned, the track supplies the scroll distance and the pane inside it
+          holds the headline and the diagram still until the choreography finishes. */}
+      <ScrollPin trackRef={trackRef} pinned={pinned} screens={2}>
+          <Container>
+            <div className="grid grid-cols-12 gap-6">
+              <div className="col-span-12 mx-auto max-w-[52ch] text-center">
             <motion.h2
               initial={{ opacity: 0, y: 14 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.5 }}
               transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
-              className="text-[34px] leading-[1.1] font-semibold text-white sm:text-[44px]"
+              className="text-[34px] leading-[1.1] font-semibold text-balance text-white sm:text-[44px]"
               style={{ fontFamily: "var(--font-google-sans)" }}
             >
               It knows you. It knows AI.
@@ -177,7 +211,7 @@ export function KnowsYouKnowsAiSection() {
               className="mt-5 text-[16px] leading-relaxed text-white/60"
               style={{ fontFamily: "var(--font-google-sans)" }}
             >
-              Starchild learns how you work and keeps up with which AI is best for each task — so you don't have to.
+              Starchild learns how you work and chooses the right AI for each task.
             </p>
           </div>
         </div>
@@ -217,7 +251,7 @@ export function KnowsYouKnowsAiSection() {
               <div className={`ky-result${showResult ? " ky-result--lit" : ""}`} ref={resultRef}>
                 <p className="ky-result-label">Result</p>
                 <p className="ky-result-text">
-                  One answer — routed to the right model, using only the context it actually needed.
+                  One answer, routed to the right model.
                 </p>
               </div>
 
@@ -229,10 +263,14 @@ export function KnowsYouKnowsAiSection() {
                   <motion.span className="ky-dot ky-dot--result" style={{ x: cx, y: cy, opacity: cOp }} />
                 </div>
               )}
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
+          </Container>
+      </ScrollPin>
 
+      {showBenefits && (
+      <Container>
         {/* benefits */}
         <div className="mt-20 grid grid-cols-12 gap-6">
           {BENEFITS.map((benefit, i) => (
@@ -251,20 +289,8 @@ export function KnowsYouKnowsAiSection() {
             </motion.div>
           ))}
         </div>
-
-        <div className="mt-20 grid grid-cols-12 gap-6">
-          <motion.p
-            initial={{ opacity: 0, y: 12 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.6 }}
-            transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
-            className="col-span-12 mx-auto max-w-[32ch] text-center text-[26px] leading-[1.25] font-semibold text-white sm:text-[32px]"
-            style={{ fontFamily: "var(--font-google-sans)" }}
-          >
-            The best AI for the job changes constantly. Conductor keeps up.
-          </motion.p>
-        </div>
       </Container>
+      )}
 
       <style>{`
         .ky-section { --ky-border: rgba(255,255,255,.1); --ky-accent: var(--color-primary); }
