@@ -6,7 +6,7 @@ A visual, responsive, English-only brand foundation document for **Starchild** �
 
 | File | Description |
 |------|-------------|
-| `index.html` | Semantic HTML with 13 content sections, accessible landmarks, and keyboard support |
+| `index.html` | Semantic HTML with 12 content sections, accessible landmarks, and keyboard support |
 | `styles.css` | Full editorial design system — near-black ink, warm paper background, yellow/magenta/blue accents, responsive layout |
 | `app.js` | Vanilla JS interactions — sticky nav active section, collapsible mobile nav, reveal-on-scroll, collapsible voice principles |
 | `README.md` | This file |
@@ -27,21 +27,26 @@ npx serve .
 
 Then visit **http://localhost:8000** in your browser.
 
-No build step, no dependencies, no remote assets — everything is local and uses system fonts only.
+No build step, no dependencies, no remote assets — everything is local, fonts included.
 
 ## Design System
 
+The same one the product uses — see `src/index.css` and the prototype components.
+
 ### Colors
-- **Starchild Yellow** `#FFD166` — primary accent
-- **Starchild Magenta** `#E63984` — secondary accent
-- **Starchild Blue** `#118AB2` — tertiary accent
-- **Ink** `#1A1A2E` — near-black text
-- **Paper** `#FAF6F0` — warm background
-- **Warm Gray** `#8B8178` — muted text
+- **Starchild Orange** `#F84600` — the accent, and the only brand colour
+- **Amber** `#FFA940` — secondary accent, as used on the product's eyebrows
+- **Ground** `#0A0A0A` — page
+- **Surface** `#111112` — cards, and `#1A1A1C` for anything raised above them
+- **Border** `rgba(255,255,255,.09)` — every rule and edge
+- **Text** white at 100 / 72 / 55 / 45 / 32% for the descending levels of emphasis
+
+There is deliberately no third brand colour. Where a group needs three states
+(now / directional / later), it runs orange → amber → muted white. The product's
+green and red are semantic — connected, positive — so they are not borrowed here.
 
 ### Typography
-- **Headings:** Georgia / Times New Roman (system serif)
-- **Body:** Segoe UI / Helvetica Neue / Arial (system sans-serif)
+- **Everything:** Google Sans (400 / 500 / 600 / 700), bundled in `fonts/`
 - **Code:** Cascadia Code / Fira Code / Consolas (system monospace)
 
 ## Features
@@ -56,16 +61,15 @@ No build step, no dependencies, no remote assets — everything is local and use
 
 ## Content Sections
 
+The board (NOW · NEXT · LATER) opens the document, ahead of the numbered phases.
+
 1. Align · Validate · Formalize
 2. Who Are We?
 3. Who Is It For? (Primary & Secondary audiences + Jobs to Be Done)
 4. Positioning (Old Way vs Starchild + Pillars)
-5. Messaging Hierarchy (Tagline → Full Story)
-6. Voice Principles (Do/Don't examples + Words we use/avoid)
-7. Visual Direction (Locked Now / Directional / Later + Color palette)
-8. Product Language (Conductor Mode, Agent, Marketplace, Skill, MCP)
-9. Brand Decision Log
-10. Landing Page Validation Loop
-11. After the LP — Brand System v1
-12. NOW · NEXT · LATER Roadmap
-13. Team (Quote + Values)
+5. Voice Principles (Do/Don't examples + Words we use/avoid)
+6. Visual Direction (Locked Now / Directional / Later + Color palette)
+7. Product Language (Conductor Mode, Agent, Marketplace, Skill, MCP)
+8. Brand Decision Log
+9. Landing Page Validation Loop
+10. After the LP — Brand System v1
