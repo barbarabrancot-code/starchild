@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Starchild Brand Foundation</title>
+  <meta name="description" content="Starchild Brand Foundation — a visual, responsive brand system document.">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+
+  <button class="nav-toggle" aria-expanded="false" aria-controls="sidebar-nav" aria-label="Toggle navigation menu">
+    <span class="nav-toggle-bar"></span>
+    <span class="nav-toggle-bar"></span>
+    <span class="nav-toggle-bar"></span>
+  </button>
+
+  <nav id="sidebar-nav" class="sidebar-nav" aria-label="Section navigation">
+    <div class="sidebar-header">
+      <img src="./starchild-logo.svg" alt="Starchild" class="sidebar-logo" />
+    </div>
+    <p class="sidebar-subtitle">Brand Foundation v1</p>
+    <ul class="sidebar-links">
+      <li><a href="#roadmap" data-section="roadmap">NOW · NEXT · LATER</a></li>
+      <li><a href="#who-are-we" data-section="who-are-we">Who Are We?</a></li>
+      <li><a href="#audience" data-section="audience">Who Is It For?</a></li>
+      <li><a href="#positioning" data-section="positioning">Positioning</a></li>
+      <li><a href="#voice" data-section="voice">Voice Principles</a></li>
+      <li><a href="#visual" data-section="visual">Visual Direction</a></li>
+      <li><a href="#product-language" data-section="product-language">Product Language</a></li>
+      <li><a href="#brand-decisions" data-section="brand-decisions">Brand Decision Log</a></li>
+      <li><a href="#landing-page" data-section="landing-page">Landing Page Validation</a></li>
+    </ul>
+    <div class="sidebar-footer">
+      <span class="sidebar-ink"><img src="./starchild-symbol.svg" alt="" class="inline-mark" />Starchild Brand Foundation</span>
+    </div>
+  </nav>
+
+  <div class="nav-overlay" aria-hidden="true"></div>
+
+  <main id="main-content" class="main-content">
+
+    <header class="hero">
+      <div class="hero-ornament"><img src="./starchild-symbol.svg" alt="" class="hero-mark" /></div>
+      <h1 class="hero-title">Starchild Brand Foundation</h1>
+    </header>
+
+    <!-- BOARD: NOW / NEXT / LATER — the state of the work, up front. -->
+    <section id="roadmap" class="section reveal" aria-labelledby="roadmap-heading">
+      <div class="section-label">Board</div>
+      <h2 id="roadmap-heading" class="section-heading">NOW · NEXT · LATER</h2>
+      <p class="section-lead">Where we are, where we're going, and what we're saving for when we're ready.</p>
+
+      <div class="roadmap-grid">
+        <div class="roadmap-column roadmap-now">
+          <div class="roadmap-column-header">
+            <span class="roadmap-phase-dot"></span>
+            <span class="roadmap-phase">NOW</span>
+            <span class="roadmap-count">1</span>
+          </div>
+          <ul class="roadmap-list">
+            <li>Define the primary audience — A/B test the two candidates on the landing page. <a class="doc-link" href="#audience">Who Is It For?</a></li>
+          </ul>
+        </div>
+        <div class="roadmap-column roadmap-next">
+          <div class="roadmap-column-header">
+            <span class="roadmap-phase-dot"></span>
+            <span class="roadmap-phase">NEXT</span>
+            <span class="roadmap-count">0</span>
+          </div>
+          <ul class="roadmap-list"></ul>
+        </div>
+        <div class="roadmap-column roadmap-later">
+          <div class="roadmap-column-header">
+            <span class="roadmap-phase-dot"></span>
+            <span class="roadmap-phase">LATER</span>
+            <span class="roadmap-count">1</span>
+          </div>
+          <ul class="roadmap-list">
+            <li>Rebranding — based also on what the landing page proves</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+    <!-- SECTION 2: Who Are We? -->
+    <section id="who-are-we" class="section reveal" aria-labelledby="who-are-we-heading">
+      <div class="section-label">02</div>
+      <h2 id="who-are-we-heading" class="section-heading">Who Are We?</h2>
+
+      <div class="identity-block">
+        <div class="identity-quote">
+          <span class="quote-mark">"</span>
+          <p class="identity-statement">Starchild is an open intelligence layer for people who want AI to carry work forward without having to manage models, tools and workflows themselves.</p>
+          <span class="quote-mark">"</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 3: Who Is It For? -->
+    <section id="audience" class="section reveal" aria-labelledby="audience-heading">
+      <div class="section-label">03</div>
+      <h2 id="audience-heading" class="section-heading">Who Is It For?</h2>
+      <p class="section-lead">We serve two audiences. One is primary — the people we build for first. The other is secondary — the people who benefit indirectly but are essential to the ecosystem.</p>
+
+      <div class="callout callout-open">
+        <span class="callout-status">Open decision</span>
+        <p><strong>Who the primary audience is has not been settled.</strong> The two candidates below go into an A/B test on the landing page — one variant written for each — and the variant that converts settles the question. Until the test reports, the primary audience card below stays empty rather than assuming an answer.</p>
+        <div class="open-options">
+          <div class="open-option">
+            <h4 class="open-option-name"><span class="open-option-variant">Variant A</span>Builders &amp; Creators</h4>
+            <p>People who build agents, skills and tools. Narrower, more technical, and the audience the Marketplace and the skill economy are built for. Documented in the card below.</p>
+          </div>
+          <div class="open-option">
+            <h4 class="open-option-name"><span class="open-option-variant">Variant B</span>General public (retail)</h4>
+            <p>People who already use several AI tools and want one that decides for them. Far larger, far less technical, and the audience Conductor Mode and Guest Mode speak to.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="audience-grid">
+        <div class="audience-card audience-primary">
+          <div class="audience-badge">Primary Audience <span class="status-badge status-open">Under review</span></div>
+          <h3 class="audience-name">—</h3>
+          <p class="audience-desc">—</p>
+          <div class="jobs-section">
+            <h4>Jobs to Be Done</h4>
+            <ul class="jobs-list">
+              <li>—</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="audience-card audience-secondary">
+          <div class="audience-badge">Secondary Audience</div>
+          <h3 class="audience-name">Organizations &amp; Teams</h3>
+          <p class="audience-desc">Companies and teams that want to deploy AI agents at scale — with governance, observability, and team collaboration.</p>
+          <div class="jobs-section">
+            <h4>Jobs to Be Done</h4>
+            <ul class="jobs-list">
+              <li><span class="job-chip">Orchestrate</span> multiple agents across a workflow</li>
+              <li><span class="job-chip">Govern</span> access, cost, and compliance</li>
+              <li><span class="job-chip">Integrate</span> agents into existing toolchains</li>
+              <li><span class="job-chip">Measure</span> agent performance and ROI</li>
+              <li><span class="job-chip">Scale</span> from prototype to production</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+    <!-- SECTION 4: Positioning -->
+    <section id="positioning" class="section reveal" aria-labelledby="positioning-heading">
+      <div class="section-label">04</div>
+      <h2 id="positioning-heading" class="section-heading">Positioning</h2>
+      <p class="section-lead">Every brand lives in a tension — between what the world currently offers and what it could offer. Ours is stark.</p>
+
+      <div class="positioning-comparison">
+        <div class="comparison-column comparison-old">
+          <div class="comparison-header">
+            <span class="comparison-label">The Old Way</span>
+            <span class="comparison-x">✕</span>
+          </div>
+          <ul class="comparison-list">
+            <li>Choose the model yourself</li>
+            <li>Re-explain context every time</li>
+            <li>Manually manage tools</li>
+            <li>Work stops when the chat ends</li>
+            <li>Build everything from scratch</li>
+          </ul>
+        </div>
+        <div class="comparison-divider">
+          <span class="comparison-arrow">→</span>
+        </div>
+        <div class="comparison-column comparison-new">
+          <div class="comparison-header">
+            <span class="comparison-label">With Starchild</span>
+            <img src="./starchild-symbol.svg" alt="" class="comparison-star" />
+          </div>
+          <ul class="comparison-list">
+            <li>Starchild routes each task</li>
+            <li>Context carries across work</li>
+            <li>Agents use tools for you</li>
+            <li>Agents keep working</li>
+            <li>Use and customize community agents</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="pillars-section">
+        <h3 class="pillars-section-title">Our Pillars</h3>
+        <div class="pillars-row">
+          <div class="pillar-item">
+            <span class="pillar-icon" aria-hidden="true"></span>
+            <span class="pillar-name">Connection</span>
+            <span class="pillar-desc">Every product is a bridge</span>
+          </div>
+          <div class="pillar-item">
+            <span class="pillar-icon" aria-hidden="true"></span>
+            <span class="pillar-name">Composability</span>
+            <span class="pillar-desc">Build with blocks, not bricks</span>
+          </div>
+          <div class="pillar-item">
+            <span class="pillar-icon" aria-hidden="true"></span>
+            <span class="pillar-name">Clarity</span>
+            <span class="pillar-desc">Simple language, deep intent</span>
+          </div>
+          <div class="pillar-item">
+            <span class="pillar-icon" aria-hidden="true"></span>
+            <span class="pillar-name">Community</span>
+            <span class="pillar-desc">Open by design, shared by all</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 6: Voice Principles -->
+    <section id="voice" class="section reveal" aria-labelledby="voice-heading">
+      <div class="section-label">06</div>
+      <h2 id="voice-heading" class="section-heading">Voice Principles</h2>
+
+      <p class="tbd">To be defined</p>
+    </section>
+    <!-- SECTION 7: Visual Direction -->
+    <section id="visual" class="section reveal" aria-labelledby="visual-heading">
+      <div class="section-label">07</div>
+      <h2 id="visual-heading" class="section-heading">Visual Direction</h2>
+      <p class="section-lead">Where we are now, where we're heading, and what comes later. Visual decisions are staged so we don't over-invest before we know what works.</p>
+
+      <dl class="stage-legend">
+        <div class="stage-legend-row">
+          <dt class="stage-legend-term stage-term-locked">Locked</dt>
+          <dd>Decided.</dd>
+        </div>
+        <div class="stage-legend-row">
+          <dt class="stage-legend-term stage-term-directional">Directional</dt>
+          <dd>The direction is set, still evolving.</dd>
+        </div>
+        <div class="stage-legend-row">
+          <dt class="stage-legend-term stage-term-exploratory">Exploratory</dt>
+          <dd>Still exploring — nothing decided yet.</dd>
+        </div>
+      </dl>
+
+      <div class="visual-timeline">
+        <div class="visual-stage visual-now">
+          <div class="visual-stage-badge">Locked</div>
+          <h3 class="visual-stage-title">What's locked</h3>
+          <ul class="visual-stage-list">
+            <li>Color palette</li>
+            <li>Typeface: Google Sans</li>
+            <li>Logo</li>
+            <li>Monolith</li>
+          </ul>
+        </div>
+
+        <div class="visual-stage visual-directional">
+          <div class="visual-stage-badge">Directional</div>
+          <h3 class="visual-stage-title">What's directional</h3>
+          <ul class="visual-stage-list">
+            <li>Icon system for product surfaces</li>
+            <li>Photography / illustration style</li>
+            <li>Motion principles (subtle, purposeful)</li>
+            <li>Component library (buttons, cards, inputs)</li>
+          </ul>
+        </div>
+
+        <div class="visual-stage visual-later">
+          <div class="visual-stage-badge">Exploratory</div>
+          <h3 class="visual-stage-title">What's exploratory</h3>
+          <ul class="visual-stage-list">
+            <li>Full design system with tokens</li>
+            <li>Brand film / motion identity</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="color-palette">
+        <h3 class="color-palette-title">Color Palette</h3>
+        <div class="color-swatches">
+          <div class="color-swatch color-swatch-primary">
+            <span class="color-name">Starchild Orange</span>
+            <span class="color-hex">#F84600</span>
+          </div>
+          <div class="color-swatch color-swatch-warm">
+            <span class="color-name">Amber</span>
+            <span class="color-hex">#FFA940</span>
+          </div>
+          <div class="color-swatch color-swatch-border">
+            <span class="color-name">Border</span>
+            <span class="color-hex">rgba(255,255,255,.09)</span>
+          </div>
+          <div class="color-swatch color-swatch-surface">
+            <span class="color-name">Surface</span>
+            <span class="color-hex">#111112</span>
+          </div>
+          <div class="color-swatch color-swatch-paper">
+            <span class="color-name">Ground</span>
+            <span class="color-hex">#0A0A0A</span>
+          </div>
+          <div class="color-swatch color-swatch-warm-gray">
+            <span class="color-name">Muted text</span>
+            <span class="color-hex">rgba(255,255,255,.45)</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 8: Product Language Table -->
+    <section id="product-language" class="section reveal" aria-labelledby="product-language-heading">
+      <div class="section-label">08</div>
+      <h2 id="product-language-heading" class="section-heading">Product Language</h2>
+      <p class="section-lead">How we name and describe each product surface — the vocabulary that ties the platform together.</p>
+
+      <div class="table-wrapper">
+        <table class="brand-table">
+          <thead>
+            <tr>
+              <th scope="col">Product</th>
+              <th scope="col">One-line description</th>
+              <th scope="col">What it does</th>
+              <th scope="col">Voice note</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="product-name">Conductor Mode</span></td>
+              <td>Starchild choosing the right AI for each step of a task</td>
+              <td>Reads the whole task, picks the model and tools built for it, checks the result, returns one answer</td>
+              <td>Never explain routing, tokens or model names. "Starchild chooses the right AI for each task, so you don't have to."</td>
+            </tr>
+            <tr>
+              <td><span class="product-name">Agent</span></td>
+              <td>Work that carries on after the conversation ends</td>
+              <td>Keeps track of something, repeats it, or takes care of it over time</td>
+              <td>Not a "bot". The page says it plainly: "Let Starchild keep things moving for you."</td>
+            </tr>
+            <tr>
+              <td><span class="product-name">Marketplace</span></td>
+              <td>Where skills are discovered, used and published</td>
+              <td>Browse what others built, or list your own and get paid each time it runs</td>
+              <td>Community first — not an app store, a gathering</td>
+            </tr>
+            <tr>
+              <td><span class="product-name">Skill</span></td>
+              <td>Something Starchild did once, packaged so it can be run again</td>
+              <td>Anything Conductor built for you — a poster, a brand kit, a fix — becomes a skill of its own</td>
+              <td>Like a plugin, but warmer and more open</td>
+            </tr>
+            <tr>
+              <td><span class="product-name">MCP</span> <span class="status-badge status-open">Not built</span></td>
+              <td>Model Context Protocol — the connection standard</td>
+              <td>Would connect any agent to any tool via a shared protocol. Nothing in the product uses this word yet</td>
+              <td>The plumbing nobody sees but everyone needs. Keep it out of user-facing copy until it exists</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- SECTION 9: Brand Decision Log -->
+    <section id="brand-decisions" class="section reveal" aria-labelledby="brand-decisions-heading">
+      <div class="section-label">09</div>
+      <h2 id="brand-decisions-heading" class="section-heading">Brand Decision Log</h2>
+      <p class="section-lead">Every brand decision is a record. This table captures the key choices we've made and why — so future decisions build on them, not repeat them.</p>
+
+      <div class="table-wrapper">
+        <table class="brand-table">
+          <thead>
+            <tr>
+              <th scope="col">Date</th>
+              <th scope="col">Decision</th>
+              <th scope="col">Rationale</th>
+              <th scope="col">Owner</th>
+              <th scope="col">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>—</td>
+              <td>Primary audience: Builders &amp; Creators, or general public (retail)</td>
+              <td>The two imply different heroes, different first runs, and a different role for the Marketplace. An A/B test on the landing page decides it — variant A written for builders, variant B for the general public — with conversion as the signal</td>
+              <td>—</td>
+              <td><span class="status-badge status-open">Open</span></td>
+            </tr>
+            <tr>
+              <td>2025-07-18</td>
+              <td>Name: Starchild</td>
+              <td>Evokes inner light, aspiration, and connection — universal and warm</td>
+              <td>Founders</td>
+              <td><span class="status-badge status-locked">Locked</span></td>
+            </tr>
+            <tr>
+              <td>2025-07-18</td>
+              <td>Positioning: Foundation-first</td>
+              <td>Build the ground, not the house — lets others build on top</td>
+              <td>Strategy</td>
+              <td><span class="status-badge status-locked">Locked</span></td>
+            </tr>
+            <tr>
+              <td>2025-07-18</td>
+              <td>Voice: Warm, clear, confident, human</td>
+              <td>Anti-corporate, pro-human — speaks to builders, not executives</td>
+              <td>Strategy</td>
+              <td><span class="status-badge status-locked">Locked</span></td>
+            </tr>
+            <tr>
+              <td>2025-07-18</td>
+              <td>Logo lockup: TBD</td>
+              <td>Will refine after validating symbol usage in context</td>
+              <td>Design</td>
+              <td><span class="status-badge status-open">Open</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- SECTION 10: Landing Page Validation Loop -->
+    <section id="landing-page" class="section reveal" aria-labelledby="landing-page-heading">
+      <div class="section-label">10</div>
+      <h2 id="landing-page-heading" class="section-heading">Landing Page Validation Loop</h2>
+      <p class="section-lead">Before we build the full site, we validate the core message with a minimal landing page. This is the loop: build → test → learn → iterate.</p>
+
+      <div class="validation-loop">
+        <div class="loop-step">
+          <div class="loop-step-number">1</div>
+          <h3 class="loop-step-title">Build</h3>
+          <p>Ship the landing page and the product behind it. There is no waitlist — every call to action drops straight into Guest Mode, so the message is tested against the product, not against a form.</p>
+        </div>
+        <div class="loop-arrow" aria-hidden="true">→</div>
+        <div class="loop-step">
+          <div class="loop-step-number">2</div>
+          <h3 class="loop-step-title">Test</h3>
+          <p>Drive real traffic. The first thing the page runs is the audience A/B test — variant A for builders, variant B for the general public. Watch where people click, where they leave, what they sign up for.</p>
+        </div>
+        <div class="loop-arrow" aria-hidden="true">→</div>
+        <div class="loop-step">
+          <div class="loop-step-number">3</div>
+          <h3 class="loop-step-title">Learn</h3>
+          <p>What landed? What confused? What made them stay? Document the signals.</p>
+        </div>
+        <div class="loop-arrow" aria-hidden="true">→</div>
+        <div class="loop-step">
+          <div class="loop-step-number">4</div>
+          <h3 class="loop-step-title">Iterate</h3>
+          <p>Refine the message based on evidence, not opinion. Then run the loop again.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="site-footer">
+      <div class="footer-ornament"><img src="./starchild-symbol.svg" alt="" class="footer-mark" /></div>
+      <p class="footer-brand">Starchild Brand Foundation</p>
+      <p class="footer-version">Version 1.0 &nbsp;·&nbsp; Draft &nbsp;·&nbsp; July 2025</p>
+      <p class="footer-note">This document is a living artifact. It will change as we learn.</p>
+    </footer>
+
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
