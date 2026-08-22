@@ -7,9 +7,11 @@ import { ProductSidebar } from "./ProductSidebar";
 import { SignupGate } from "./SignupGate";
 import { IntentPicker } from "./IntentPicker";
 import { StarchildDot } from "./onboarding/StarchildDot";
+import { PresenceOrb } from "./presence/PresenceOrb";
 import { FirstMeeting, useFirstMeeting, type Tone } from "./onboarding/FirstMeeting";
 import { ConductorIntroPopover } from "./onboarding/ConductorIntroPopover";
 import { MarketplaceIntroPopover } from "./onboarding/MarketplaceIntroPopover";
+import { AutomateIntroPopover } from "./onboarding/AutomateIntroPopover";
 import {
   ArrowLeftIcon,
   PlusIcon,
@@ -20,6 +22,72 @@ import {
   PanelIcon,
   BracketsIcon,
 } from "./icons";
+
+/**
+ * PLACEHOLDER — not real output.
+ *
+ * Every scenario delivers an artifact (a poster, a table, a snippet) but none of
+ * them writes anything, so there has never been a piece of Starchild prose on
+ * screen to look at. This is a stand-in of roughly the right length and shape:
+ * an opening line, a paragraph, a short list with lead-ins, and a closing offer —
+ * enough for the type, the measure and the rhythm between blocks to be judged.
+ *
+ * It is deliberately generic and deliberately the same for every scenario. Replace
+ * it with per-scenario copy in ../data once the design is settled; until then,
+ * nothing should be read into the words.
+ */
+function PlaceholderAnswer() {
+  return (
+    <div className="ca-answer">
+      <p>Here's where I'd start.</p>
+
+      <p>
+        Three things are actually holding this up, and the rest is noise until they're
+        settled. I've put them in the order that unblocks the most with the least effort —
+        the first one changes what the other two even look like.
+      </p>
+
+      <ul>
+        <li>
+          <strong>The thing you keep putting off.</strong> It's small, it's overdue, and
+          it's quietly making two other decisions harder than they need to be.
+        </li>
+        <li>
+          <strong>The one with a real deadline.</strong> Worth an hour this week rather
+          than a scramble next week; the shape of it is already clear enough to start.
+        </li>
+        <li>
+          <strong>Everything else.</strong> None of it needs you today, and deciding that
+          on purpose is what stops it sitting in the back of your head.
+        </li>
+      </ul>
+
+      <p>
+        Want me to turn this into something you can work through, or go deeper on any one
+        of them?
+      </p>
+
+      <style>{`
+        .ca-answer {
+          display: flex; flex-direction: column; gap: 16px;
+          font-family: var(--font-google-sans);
+          font-size: 15px; line-height: 1.65; color: rgba(255,255,255,.78);
+        }
+        .ca-answer p { margin: 0; }
+        .ca-answer strong { font-weight: 600; color: #fff; }
+
+        /* the marker sits in the gutter rather than indenting the text, so the list
+           keeps the same left edge as the paragraphs around it */
+        .ca-answer ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 12px; }
+        .ca-answer li { position: relative; padding-left: 18px; }
+        .ca-answer li::before {
+          content: ""; position: absolute; left: 0; top: 10px;
+          width: 4px; height: 4px; border-radius: 999px; background: rgba(248,70,0,.75);
+        }
+      `}</style>
+    </div>
+  );
+}
 
 export function ChatScreen({
   onBack,
@@ -64,7 +132,9 @@ export function ChatScreen({
   // The two first-run notes, shown one after the other the moment the meeting
   // ends: the first thing they send is about to be routed, and nothing so far has
   // told them by what, or that there's a Marketplace behind the sidebar.
-  const [intro, setIntro] = useState<"conductor" | "marketplace" | null>(null);
+  // How a single answer is made → what other people have made → work that keeps
+  // happening on its own. Three notes, in the order they become useful.
+  const [intro, setIntro] = useState<"conductor" | "marketplace" | "automate" | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -240,16 +310,34 @@ export function ChatScreen({
         <ProductSidebar
           onNewChat={newChat}
           onOpenMarketplace={onOpenMarketplace}
-          marketplaceIntro={
-            intro === "marketplace" && !guest ? (
-              <MarketplaceIntroPopover
-                onExplore={() => {
-                  setIntro(null);
-                  onOpenMarketplace();
-                }}
-                onClose={() => setIntro(null)}
-              />
-            ) : undefined
+          intro={
+            intro === "marketplace" && !guest
+              ? {
+                  label: "Marketplace",
+                  node: (
+                    <MarketplaceIntroPopover
+                      onExplore={() => {
+                        // exploring ends the run: someone who has gone off to look
+                        // around is no longer being introduced to anything
+                        setIntro(null);
+                        onOpenMarketplace();
+                      }}
+                      // dismissing it hands over to the last note
+                      onClose={() => setIntro("automate")}
+                    />
+                  ),
+                }
+              : intro === "automate" && !guest
+                ? {
+                    label: "Work",
+                    node: (
+                      <AutomateIntroPopover
+                        onExplore={() => setIntro(null)}
+                        onClose={() => setIntro(null)}
+                      />
+                    ),
+                  }
+                : undefined
           }
         />
       )}
@@ -411,23 +499,11 @@ export function ChatScreen({
                   transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
                   className="flex flex-col items-center"
                 >
-                  <div className="relative flex items-center justify-center">
-                    <span
-                      aria-hidden="true"
-                      className="absolute size-[280px] rounded-full"
-                      style={{
-                        background:
-                          "radial-gradient(circle, rgba(248,70,0,.30) 0%, rgba(248,70,0,.07) 45%, rgba(248,70,0,0) 70%)",
-                      }}
-                    />
-                    <motion.span
-                      aria-hidden="true"
-                      className="relative size-[124px] rounded-full bg-[#f84600]"
-                      style={{ boxShadow: "0 0 70px rgba(248,70,0,.45)" }}
-                      animate={{ scale: [1, 1.035, 1] }}
-                      transition={{ duration: 5.5, repeat: Infinity, ease: "easeInOut" }}
-                    />
-                  </div>
+                  {/* The same presence that was on the landing page, at the size
+                      it gets when it has the screen to itself. It is at rest
+                      until something is being typed, and then it comes closer —
+                      it does not loop while nothing is happening. */}
+                  <PresenceOrb state={value.trim() ? "listening" : "resting"} size={124} />
                   <h1
                     className="mt-9 text-[34px] font-semibold text-white"
                     style={{ fontFamily: "var(--font-google-sans)" }}
@@ -459,31 +535,51 @@ export function ChatScreen({
                 </div>
               </div>
 
+              {/* The answer goes inside the flow rather than after it: the Conductor
+                  Mode header is sticky, and sticky only holds within its own container.
+                  Outside, the explanation would scroll away the moment the response
+                  started — which is the thing it exists to survive. */}
               <StepFlow
                 scenario={scenario!}
                 onStep={scrollToBottom}
                 onDone={() => setDelivered(true)}
                 showSavings={guest}
-              />
+              >
+                {delivered && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.45, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                    className="mt-7"
+                  >
+                    <PlaceholderAnswer />
+                  </motion.div>
+                )}
+              </StepFlow>
 
-              {/* The ask comes last and on its own: the result, then what it
-                  saved, then — set apart by a rule and a delay — what to do next.
-                  As a card it competed with the thing the person came for. */}
+              {/* The ask still comes last and on its own — result, then what it
+                  saved, then, past a rule and a delay, what to do next. What
+                  changed is its weight: as quiet text it read as a footnote and
+                  got skipped, so it is now the accent button it always was in
+                  intent. Still one line, still below the rule: the separation was
+                  what kept it from competing with the delivery, not the greyness. */}
               {delivered && guest && (
                 <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.4, delay: 0.9 }}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.45, delay: 0.9, ease: [0.16, 1, 0.3, 1] }}
                   className="mt-6 border-t border-white/[0.08] pt-6"
                 >
                   <button
                     type="button"
                     onClick={() => onRequestSignup?.()}
-                    className="group flex items-center gap-2.5 text-[13.5px] text-white/60 transition-colors hover:text-white"
+                    className="group inline-flex items-center gap-2.5 rounded-full bg-[#f84600] px-5 py-3 text-[14px] font-semibold text-white transition-colors hover:bg-[#ff5a1f] focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[#f84600] active:translate-y-px"
                     style={{ fontFamily: "var(--font-google-sans)" }}
                   >
                     Create a free account to keep this
-                    <ArrowUpIcon className="size-3.5 rotate-45 text-white/30 transition-colors group-hover:text-[#f84600]" />
+                    {/* the arrow leans out on hover — the only movement on the
+                        button, so the colour does not have to shout as well */}
+                    <ArrowUpIcon className="size-3.5 rotate-45 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                   </button>
                 </motion.div>
               )}

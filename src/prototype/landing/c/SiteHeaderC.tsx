@@ -19,11 +19,13 @@ const AUDIENCES: { id: string; label: string; route?: "traders" }[] = [
 export function SiteHeaderC({
   onNavigateHome,
   onNavigateTraders,
+  onNavigatePricing,
   onLogIn,
   onSignUp,
 }: {
   onNavigateHome: () => void;
   onNavigateTraders: () => void;
+  onNavigatePricing: () => void;
   onLogIn: () => void;
   onSignUp: () => void;
 }) {
@@ -103,14 +105,13 @@ export function SiteHeaderC({
               )}
             </div>
 
-            {/* Placeholders: neither has a page of its own yet, so both deliberately
-                go nowhere — same rule as "See pricing" in the final CTA and as the
-                audience items above. Marketplace opens as a modal from inside the
-                product, which is a different thing from a page in the nav. */}
-            <button type="button" onClick={() => {}} className="sh-trigger">
+            <button type="button" onClick={onNavigatePricing} className="sh-trigger">
               Pricing
             </button>
 
+            {/* Placeholder: Marketplace opens as a modal from inside the product,
+                which is a different thing from a page in the nav, so this goes
+                nowhere until there is one — same rule as the audience items above. */}
             <button type="button" onClick={() => {}} className="sh-trigger sh-trigger--badged">
               Marketplace
               <span className="sh-badge">New</span>
@@ -123,7 +124,7 @@ export function SiteHeaderC({
             <button
               type="button"
               onClick={onLogIn}
-              className="px-1 text-[13.5px] font-medium text-white/70 transition-colors hover:text-white"
+              className="px-1 text-[13.5px] font-medium text-[var(--color-text-body)] transition-colors hover:text-white"
               style={{ fontFamily: "var(--font-google-sans)" }}
             >
               Log in
@@ -131,7 +132,7 @@ export function SiteHeaderC({
             <button
               type="button"
               onClick={onSignUp}
-              className="rounded-full border border-white/20 bg-white/10 px-5 py-2.5 text-[13.5px] font-medium text-white backdrop-blur-sm transition-colors hover:bg-white/20"
+              className="rounded-full border border-white/20 bg-white/10 px-5 py-2.5 text-[13.5px] font-medium text-[var(--color-text-body)] backdrop-blur-sm transition-colors hover:bg-white/20"
               style={{ fontFamily: "var(--font-google-sans)" }}
             >
               Sign up
@@ -148,7 +149,7 @@ export function SiteHeaderC({
           display: flex; align-items: center; gap: 6px; cursor: pointer;
           padding: 6px 2px; border: 0; background: none;
           font-family: var(--font-google-sans); font-size: 13.5px; font-weight: 500;
-          color: rgba(255,255,255,.7); transition: color .2s ease;
+          color: var(--color-text-body); transition: color .2s ease;
         }
         .sh-trigger:hover, .sh-trigger--open { color: #fff; }
         .sh-trigger:focus-visible { outline: 2px solid rgba(248,70,0,.7); outline-offset: 4px; border-radius: 6px; }
@@ -177,7 +178,7 @@ export function SiteHeaderC({
 
         .sh-item {
           text-align: left; cursor: pointer; padding: 9px 12px; border: 0; border-radius: 9px;
-          background: none; color: rgba(255,255,255,.78);
+          background: none; color: var(--color-text-body);
           font-family: var(--font-google-sans); font-size: 13.5px;
           transition: background-color .18s ease, color .18s ease;
         }

@@ -27,14 +27,14 @@ export function AgentsSection({ onStartTask }: { onStartTask: (task: TaskCard) =
               Do it once. Let it keep moving.
             </p>
             <h2
-              className="mt-4 text-[34px] leading-[1.12] font-semibold text-balance text-white sm:text-[42px]"
+              className="mt-4 text-[34px] leading-[1.12] font-semibold text-balance text-white sm:text-[44px]"
               style={{ fontFamily: "var(--font-google-sans)" }}
             >
               Turn recurring work into something Starchild can handle for you.
             </h2>
             {/* integrations, said once and quietly — the product view carries the proof */}
             <p
-              className="mt-5 text-[15px] leading-[1.6] text-white/40"
+              className="mt-5 text-[15px] leading-[1.6] text-balance text-white/40"
               style={{ fontFamily: "var(--font-google-sans)" }}
             >
               Works across the tools and sources you already use.

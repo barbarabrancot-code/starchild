@@ -159,11 +159,13 @@ function ConductorFlow() {
 
 export function TradersPage({
   onNavigateHome,
+  onNavigatePricing,
   onEnterGuest,
   onLogIn,
   onSignUp,
 }: {
   onNavigateHome: () => void;
+  onNavigatePricing: () => void;
   onEnterGuest: (prompt?: string) => void;
   onLogIn: () => void;
   onSignUp: () => void;
@@ -178,6 +180,7 @@ export function TradersPage({
         onNavigateHome={onNavigateHome}
         // already here — the menu item scrolls back to the top instead of reloading
         onNavigateTraders={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+        onNavigatePricing={onNavigatePricing}
         onLogIn={onLogIn}
         onSignUp={onSignUp}
       />
@@ -541,7 +544,7 @@ export function TradersPage({
       <section className="py-28 text-center md:py-36">
         <Container>
           <div className="mx-auto flex max-w-[46ch] flex-col items-center gap-8">
-            <h2 className="text-[32px] leading-[1.14] font-semibold text-balance text-white sm:text-[42px]" style={{ fontFamily: "var(--font-google-sans)" }}>
+            <h2 className="text-[32px] leading-[1.14] font-semibold text-balance text-white sm:text-[44px]" style={{ fontFamily: "var(--font-google-sans)" }}>
               You define the logic and the limits. Starchild keeps it running.
             </h2>
             <p className="tr-lead text-center">
@@ -667,7 +670,6 @@ export function TradersPage({
           display: inline-flex; align-items: center; gap: 10px; cursor: pointer;
           padding: 14px 26px; border: 0; border-radius: 999px;
           background: #f84600; color: #fff; font-size: 15px; font-weight: 500;
-          box-shadow: 0 8px 24px rgba(248,70,0,.32);
           transition: transform .18s ease;
         }
         .tr-cta:hover { transform: scale(1.03); }

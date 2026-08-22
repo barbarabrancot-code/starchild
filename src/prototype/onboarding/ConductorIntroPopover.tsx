@@ -1,5 +1,7 @@
+import { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import { StarchildDot } from "./StarchildDot";
+import { usePrefersReducedMotion } from "../presence/usePresence";
 import { IntroPopover } from "./IntroPopover";
 
 // One thing to know before continuing — not another onboarding step. It hangs off
@@ -17,28 +19,53 @@ const MARKS = [
   { x: 45, y: 21, size: 5, delay: 2.1 },
 ];
 
+// A glimpse of how Starchild behaves, not a feature animation: the marks come in
+// once, the dot notices them, takes a moment, absorbs them and recomposes. Then
+// it is over. It used to loop forever, which made it wallpaper — and a presence
+// that is always moving is not noticing anything.
+type Beat = "waiting" | "noticing" | "resolved";
+
 function ConductorVisual() {
+  const reduced = usePrefersReducedMotion();
+  const [beat, setBeat] = useState<Beat>("waiting");
+
+  useEffect(() => {
+    if (reduced) {
+      setBeat("resolved");
+      return;
+    }
+    // arrive → register → settle. The gap between the last two is the judgment.
+    const noticing = window.setTimeout(() => setBeat("noticing"), 1450);
+    const resolved = window.setTimeout(() => setBeat("resolved"), 2250);
+    return () => {
+      window.clearTimeout(noticing);
+      window.clearTimeout(resolved);
+    };
+  }, [reduced]);
+
   return (
     <>
-      {MARKS.map((mark) => (
-        <motion.span
-          key={`${mark.x},${mark.y}`}
-          className="absolute rounded-full bg-white/70"
-          style={{
-            width: mark.size,
-            height: mark.size,
-            left: `calc(50% - ${mark.size / 2}px)`,
-            top: `calc(50% - ${mark.size / 2}px)`,
-          }}
-          animate={{
-            x: [mark.x, mark.x * 0.58, mark.x],
-            y: [mark.y, mark.y * 0.58, mark.y],
-            opacity: [0.2, 0.5, 0.2],
-          }}
-          transition={{ duration: 5.2, delay: mark.delay, repeat: Infinity, ease: "easeInOut" }}
-        />
-      ))}
-      <StarchildDot state="settled" depth={1} size={13} />
+      {!reduced &&
+        MARKS.map((mark) => (
+          <motion.span
+            key={`${mark.x},${mark.y}`}
+            className="absolute rounded-full bg-white/70"
+            style={{
+              width: mark.size,
+              height: mark.size,
+              left: `calc(50% - ${mark.size / 2}px)`,
+              top: `calc(50% - ${mark.size / 2}px)`,
+            }}
+            initial={{ x: mark.x, y: mark.y, opacity: 0 }}
+            animate={{ x: mark.x * 0.22, y: mark.y * 0.22, opacity: [0, 0.5, 0] }}
+            transition={{ duration: 1.05, delay: mark.delay * 0.2, ease: [0.32, 0.72, 0.3, 1] }}
+          />
+        ))}
+      <StarchildDot
+        state={beat === "waiting" ? "idle" : beat === "noticing" ? "acknowledging" : "settled"}
+        depth={beat === "waiting" ? 0.4 : 1}
+        size={13}
+      />
     </>
   );
 }

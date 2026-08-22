@@ -104,7 +104,7 @@ function CompanionHero({
         style={{ fontFamily: "var(--font-google-sans)" }}
       />
       <div className="mt-4 flex items-center justify-end">
-        <button type="button" onClick={submit} className="flex items-center gap-2 rounded-full bg-[#f84600] px-5 py-2.5 text-[13.5px] font-medium text-white shadow-[0_8px_24px_rgba(248,70,0,.32)] transition-transform hover:scale-[1.03]" style={{ fontFamily: "var(--font-google-sans)" }}>
+        <button type="button" onClick={submit} className="flex items-center gap-2 rounded-full bg-[#f84600] px-5 py-2.5 text-[13.5px] font-medium text-white transition-transform hover:scale-[1.03]" style={{ fontFamily: "var(--font-google-sans)" }}>
           Meet Starchild
           <ArrowUpIcon className="size-3.5 rotate-90" />
         </button>

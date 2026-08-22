@@ -24,7 +24,7 @@ export function ConductorExamplesSection({ onTryExample }: { onTryExample: (prom
               See it in action
             </p>
             <h2
-              className="mt-4 text-[34px] leading-[1.1] font-semibold text-white sm:text-[42px]"
+              className="mt-4 text-[34px] leading-[1.1] font-semibold text-white sm:text-[44px]"
               style={{ fontFamily: "var(--font-google-sans)" }}
             >
               Real prompts, run for real.

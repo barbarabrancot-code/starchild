@@ -3,6 +3,7 @@ import { LandingPage } from "./landing/LandingPage";
 import { LandingPageB } from "./landing/LandingPageB";
 import { LandingPageC } from "./landing/LandingPageC";
 import { TradersPage } from "./landing/c/TradersPage";
+import { PricesPage } from "./landing/PricesPage";
 import { HERO_INTENTS_C } from "./landing/c/heroIntents";
 import { VariantToggle } from "./landing/VariantToggle";
 import { ChatScreen } from "./ChatScreen";
@@ -15,6 +16,7 @@ import { MARKETPLACE_SEED, type MarketplaceSkill, type TaskCard } from "./data";
 type Screen =
   | "landing"
   | "for-traders"
+  | "pricing"
   | "conductor-mode"
   | "signup"
   | "chat";
@@ -101,6 +103,11 @@ export function ConductorApp() {
     window.scrollTo({ top: 0 });
   }
 
+  function goToPricing() {
+    setScreen("pricing");
+    window.scrollTo({ top: 0 });
+  }
+
   // Log in and Sign up both land on the same auth screen for now — it carries a
   // "Already have an account? Log in" link. Split them when real auth exists.
   function goToAuth() {
@@ -128,6 +135,7 @@ export function ConductorApp() {
               onNavigateTraders={goToTraders}
               onNavigateConductorMode={() => setScreen("conductor-mode")}
               onOpenMarketplace={() => setMarketplaceOpen(true)}
+              onNavigatePricing={goToPricing}
               onLogIn={goToAuth}
               onSignUp={goToAuth}
             />
@@ -154,9 +162,22 @@ export function ConductorApp() {
       {screen === "for-traders" && (
         <TradersPage
           onNavigateHome={goHome}
+          onNavigatePricing={goToPricing}
           onEnterGuest={enterGuest}
           onLogIn={goToAuth}
           onSignUp={goToAuth}
+        />
+      )}
+
+      {screen === "pricing" && (
+        <PricesPage
+          onNavigateHome={goHome}
+          onNavigateTraders={goToTraders}
+          onLogIn={goToAuth}
+          onSignUp={goToAuth}
+          // no billing sits behind any of these yet, so every plan button lands on
+          // the same account step the rest of the prototype uses
+          onChoosePlan={goToAuth}
         />
       )}
 

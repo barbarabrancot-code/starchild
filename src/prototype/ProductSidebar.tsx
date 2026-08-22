@@ -25,13 +25,16 @@ type NavItem = {
 export function ProductSidebar({
   onNewChat,
   onOpenMarketplace,
-  marketplaceIntro,
+  intro,
   accountName = "Agent7035",
 }: {
   onNewChat: () => void;
   onOpenMarketplace: () => void;
   /** the first-run note, anchored to the Marketplace item it describes */
-  marketplaceIntro?: ReactNode;
+  /** First-run note, keyed by the sidebar label it hangs off. Was a single
+   *  Marketplace-shaped prop; a third note made that a naming problem rather than a
+   *  structural one, so the slot is now generic and the item lights itself. */
+  intro?: { label: string; node: ReactNode };
   accountName?: string;
 }) {
   const items: NavItem[] = [
@@ -66,7 +69,7 @@ export function ProductSidebar({
 
       <nav className="mt-4 flex flex-col">
         {items.map(({ label, Icon, badge, onClick }) => {
-          const lit = label === "Marketplace" && Boolean(marketplaceIntro);
+          const lit = intro?.label === label;
           return (
             <div key={label} className="relative">
               <button
@@ -88,7 +91,7 @@ export function ProductSidebar({
                 {label}
               </button>
 
-              {label === "Marketplace" && marketplaceIntro}
+              {intro?.label === label && intro.node}
             </div>
           );
         })}

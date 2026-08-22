@@ -18,7 +18,7 @@ export function LifeAndWorkSection({ onStartTask }: { onStartTask: (task: TaskCa
         <div className="grid grid-cols-12 gap-6">
           <div className="col-span-12 max-w-[46ch]">
             <h2
-              className="text-[34px] leading-[1.1] font-semibold text-balance text-white sm:text-[42px]"
+              className="text-[34px] leading-[1.1] font-semibold text-balance text-white sm:text-[44px]"
               style={{ fontFamily: "var(--font-google-sans)" }}
             >
               What Starchild can help with.

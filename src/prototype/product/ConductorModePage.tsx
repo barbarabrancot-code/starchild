@@ -73,7 +73,7 @@ export function ConductorModePage({
                 <button
                   type="button"
                   onClick={() => onTry()}
-                  className="rounded-full bg-[#f84600] px-6 py-3.5 text-[14px] font-medium text-white shadow-[0_8px_24px_rgba(248,70,0,.32)] transition-transform hover:scale-[1.03]"
+                  className="rounded-full bg-[#f84600] px-6 py-3.5 text-[14px] font-medium text-white transition-transform hover:scale-[1.03]"
                   style={{ fontFamily: "var(--font-google-sans)" }}
                 >
                   Try Conductor Mode

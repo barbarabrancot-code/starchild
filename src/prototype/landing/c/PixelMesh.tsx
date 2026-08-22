@@ -1,4 +1,10 @@
 import { useEffect, useRef, type RefObject } from "react";
+import {
+  Presence,
+  frameTransform,
+  type Frame as PresenceFrame,
+  type Temperament,
+} from "../../presence/presence";
 
 // A field of fine particles laid over a slow-moving wave. The particles sit on a
 // jittered grid — never a visible lattice — and their brightness comes from how
@@ -20,10 +26,21 @@ const DUST: [number, number, number] = [150, 168, 196];
 const CREST: [number, number, number] = [255, 255, 255];
 const WARM: [number, number, number] = [255, 146, 62];
 
-const DOT_EASE = 0.34;
 const LIGHT_EASE = 0.15;
 const FADE_EASE = 0.08;
 const DOT_SIZE = 14; // matches the hero dot on A/B
+
+// How the dot carries itself over each part of the hero. It is the same body
+// throughout — this only changes its posture, the way someone's walk changes
+// when they get near the thing they were walking toward. Anything not listed
+// here is open space, where it is at its most curious and least composed.
+//
+// The elements themselves opt in with data-presence; see HeroScreenC.
+const ZONE_TEMPERAMENT: Record<string, Temperament> = {
+  input: "attentive", // it comes closer, as if listening
+  cta: "composed", // the one place it holds perfectly steady
+  chip: "curious", // leans after whichever option is being considered
+};
 
 type Particle = { x: number; y: number; depth: number; seed: number };
 type Bucket = { color: string; size: number; points: number[] };
@@ -71,8 +88,12 @@ export function PixelMesh({ targetRef }: { targetRef: RefObject<HTMLElement | nu
     let height = 0;
     let particles: Particle[] = [];
 
-    // pointer target, the dot chasing it, the light trailing the dot, and how
-    // "on" the light currently is
+    // The dot is a body with weight, not a follower: it notices the pointer,
+    // hesitates, falls behind, overshoots and recomposes. The pointer is only
+    // ever what it is *aiming at* — where it actually is is the body's business.
+    const presence = new Presence({ temperament: "curious", reduced, breath: 0.05 });
+
+    // where the pointer is, where the light trails, and how "on" the light is
     let tx = -9999;
     let ty = -9999;
     let dx = -9999;
@@ -82,6 +103,7 @@ export function PixelMesh({ targetRef }: { targetRef: RefObject<HTMLElement | nu
     let power = 0;
     let wanted = 0;
     let seeded = false;
+    let zone: string | null = null;
 
     let frame = 0;
     let running = false;
@@ -158,10 +180,10 @@ export function PixelMesh({ targetRef }: { targetRef: RefObject<HTMLElement | nu
     // over the field, not the headline, not the input. Painting it on the canvas
     // would bury it under both, so it is its own element on the top layer and
     // only its transform is touched per frame.
-    const paintDot = () => {
+    const paintDot = (frame: PresenceFrame) => {
       const el = dotRef.current;
       if (!el || !fine) return;
-      el.style.transform = `translate3d(${dx - DOT_SIZE / 2}px, ${dy - DOT_SIZE / 2}px, 0)`;
+      el.style.transform = frameTransform(frame, -DOT_SIZE / 2, -DOT_SIZE / 2);
       el.style.opacity = `${power}`;
     };
 
@@ -202,13 +224,21 @@ export function PixelMesh({ targetRef }: { targetRef: RefObject<HTMLElement | nu
     };
 
     const tick = (now: number) => {
-      dx += (tx - dx) * DOT_EASE;
-      dy += (ty - dy) * DOT_EASE;
+      // Re-aiming every frame rather than only on pointermove is deliberate: it
+      // is what makes the dot keep going after the pointer has stopped, then
+      // come back and settle, instead of freezing the instant the input does.
+      presence.aim(tx, ty, now);
+      const body = presence.step(now);
+      dx = body.x;
+      dy = body.y;
+
+      // the light trails the dot, which is itself trailing the pointer — two
+      // degrees of lag, so the field lags the presence rather than the cursor
       lx += (dx - lx) * LIGHT_EASE;
       ly += (dy - ly) * LIGHT_EASE;
       power += (wanted - power) * FADE_EASE;
       draw(now);
-      paintDot();
+      paintDot(body);
       frame = requestAnimationFrame(tick);
     };
 
@@ -230,26 +260,40 @@ export function PixelMesh({ targetRef }: { targetRef: RefObject<HTMLElement | nu
       if (!seeded) {
         // first move: drop everything where the cursor is instead of flying in from 0,0
         seeded = true;
+        presence.place(tx, ty);
         dx = lx = tx;
         dy = ly = ty;
       }
       wanted = 1;
+
+      // What the pointer is over changes how the dot holds itself, not what it
+      // does. Read off the event target rather than hit-testing the point: this
+      // runs on every pointermove and elementFromPoint would force layout.
+      const target = event.target instanceof Element ? event.target.closest("[data-presence]") : null;
+      const next = target?.getAttribute("data-presence") ?? null;
+      if (next !== zone) {
+        zone = next;
+        presence.setTemperament(next ? (ZONE_TEMPERAMENT[next] ?? "curious") : "curious");
+      }
+
       if (reduced) {
         dx = lx = tx;
         dy = ly = ty;
         power = 1;
         draw(performance.now());
-        paintDot();
+        paintDot(presence.step(performance.now()));
       }
     };
 
     const onLeave = () => {
       wanted = 0;
       seeded = false;
+      zone = null;
+      presence.setTemperament("curious");
       if (reduced) {
         power = 0;
         draw(performance.now());
-        paintDot();
+        paintDot(presence.step(performance.now()));
       }
     };
 
@@ -294,20 +338,18 @@ export function PixelMesh({ targetRef }: { targetRef: RefObject<HTMLElement | nu
 
       <style>{`
         .pm-cursor-layer { position: absolute; inset: 0; z-index: 40; pointer-events: none; }
+        /* Position, breath and the drag it picks up while travelling all arrive
+           in one transform from the presence body — there is no CSS animation
+           here on purpose. A keyframed loop would run whether or not anything
+           had happened, and the whole point is that the dot only moves when it
+           has noticed something. */
         .pm-dot {
           position: absolute; top: 0; left: 0;
           width: ${DOT_SIZE}px; height: ${DOT_SIZE}px; border-radius: 999px;
           background: #f84600;
           box-shadow: 0 0 12px rgba(248,70,0,.9), 0 0 34px rgba(248,70,0,.45);
           opacity: 0; will-change: transform;
-          animation: pm-breathe 3.6s ease-in-out infinite;
         }
-        /* transform carries the position, so the breath rides on scale instead */
-        @keyframes pm-breathe {
-          0%, 100% { scale: 1; }
-          50% { scale: 1.16; }
-        }
-        @media (prefers-reduced-motion: reduce) { .pm-dot { animation: none; } }
       `}</style>
     </>
   );

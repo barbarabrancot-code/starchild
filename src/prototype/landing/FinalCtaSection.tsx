@@ -18,7 +18,7 @@ export function FinalCtaSection({
   const ctaLabel = "Meet Starchild";
 
   return (
-    <section className="bg-[#0a0a0a] py-28 text-center md:py-36">
+    <section className="bg-[#0a0a0a] py-[var(--section-pad)] text-center">
       <Container>
         <div className="grid grid-cols-12 gap-6">
           <div className="col-span-12 flex flex-col items-center gap-8">
@@ -39,7 +39,7 @@ export function FinalCtaSection({
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.5 }}
               transition={{ duration: 0.55, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-              className="rounded-full bg-[#f84600] px-8 py-4 text-[15px] font-medium text-white shadow-[0_8px_24px_rgba(248,70,0,.32)] transition-transform hover:scale-[1.03]"
+              className="rounded-full bg-[#f84600] px-8 py-4 text-[15px] font-medium text-white transition-transform hover:scale-[1.03]"
               style={{ fontFamily: "var(--font-google-sans)" }}
             >
               {ctaLabel}
@@ -54,7 +54,7 @@ export function FinalCtaSection({
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.5 }}
               transition={{ duration: 0.5, delay: 0.18, ease: [0.16, 1, 0.3, 1] }}
-              className="group -mt-3 flex items-center gap-2 text-[14px] text-white/55 transition-colors hover:text-white"
+              className="group -mt-3 flex items-center gap-2 text-[14px] text-[var(--color-text-body)] transition-colors hover:text-white"
               style={{ fontFamily: "var(--font-google-sans)" }}
             >
               See pricing

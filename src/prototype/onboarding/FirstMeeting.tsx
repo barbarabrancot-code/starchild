@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { StarchildDot } from "./StarchildDot";
+import { StarchildDot, type DotState } from "./StarchildDot";
+import { usePrefersReducedMotion } from "../presence/usePresence";
 import type { TaskCard } from "../data";
 
 // Meeting Starchild, not configuring it. This runs inside the real chat — same
@@ -37,6 +38,19 @@ const ATTENTION: { label: string; echo: string }[] = [
 ];
 
 const UNSURE = "I'm not sure yet";
+
+// The buttons that move the meeting along, and the words on them. Kept here rather
+// than inline so the label that goes into the transcript is literally the label
+// that was clicked — the two drifting apart is exactly how a choice ends up
+// recorded as something the person didn't say.
+const ACTIONS = {
+  "keep-going": "Keep going",
+  "get-to-know": "Get to know me",
+  adjust: "Adjust",
+  accept: "Looks right",
+} as const;
+
+type Action = keyof typeof ACTIONS;
 
 const GUIDED_LINE = "What's taking up most of your attention lately?";
 const PREFERENCE_LINE =
@@ -119,6 +133,22 @@ export function useFirstMeeting({
   const say = (from: Turn["from"], text: string, stage?: number) =>
     setTurns((prev) => [...prev, { id: nextId(), from, text, stage }]);
 
+  // An answer used to be met with Starchild's next line in the same tick, which
+  // read as a form advancing rather than as being listened to. Now the answer
+  // lands on its own and Starchild takes a moment over it — the dot is what fills
+  // that moment. Reduced motion keeps a beat, but only enough to keep the order
+  // of events legible.
+  const timers = useRef<number[]>([]);
+  const reduced = usePrefersReducedMotion();
+  const CONSIDER_MS = reduced ? 160 : 760;
+
+  // bound, not passed by reference: clearTimeout detached from window throws
+  useEffect(() => () => timers.current.forEach((id) => window.clearTimeout(id)), []);
+
+  const consider = (then: () => void) => {
+    timers.current.push(window.setTimeout(then, CONSIDER_MS));
+  };
+
   const askPreference = () => {
     say("starchild", PREFERENCE_LINE, 1);
     setStep("preference");
@@ -134,13 +164,15 @@ export function useFirstMeeting({
 
     if (step === "adjust") {
       setTopic(said);
-      say("starchild", readLine(said, tone), 2);
-      setStep("read");
+      consider(() => {
+        say("starchild", readLine(said, tone), 2);
+        setStep("read");
+      });
       return;
     }
 
     setTopic(said);
-    askPreference();
+    consider(askPreference);
   };
 
   const choose = (label: string) => {
@@ -149,12 +181,14 @@ export function useFirstMeeting({
     if (step === "guided") {
       if (label === UNSURE) {
         // pushing a second question here would make it a questionnaire
-        say("starchild", "That's fine — we can find it as we go.");
-        onDone({ tone, opening: openingFor(undefined) });
+        consider(() => {
+          say("starchild", "That's fine — we can find it as we go.");
+          onDone({ tone, opening: openingFor(undefined) });
+        });
         return;
       }
       setTopic({ echo: ATTENTION.find((o) => o.label === label)?.echo });
-      askPreference();
+      consider(askPreference);
       return;
     }
 
@@ -162,29 +196,45 @@ export function useFirstMeeting({
       const picked: Tone | undefined =
         label === "More direct" ? "direct" : label === "More space" ? "space" : undefined;
       setTone(picked);
-      say("starchild", readLine(topic, picked), 2);
-      setStep("read");
+      consider(() => {
+        say("starchild", readLine(topic, picked), 2);
+        setStep("read");
+      });
     }
   };
 
-  const act = (action: string) => {
+  /**
+   * A pressed button is a turn like any other. These four used to change the step
+   * without ever being said: the transcript jumped from Starchild's question
+   * straight to Starchild's next line, with the answer missing from between them —
+   * so the conversation read as though it had asked something and then ignored it.
+   *
+   * They also go through `consider` now, for the same reason `choose` does: the
+   * answer lands on its own and Starchild takes a moment over it, rather than
+   * replying in the same tick like a form advancing.
+   */
+  const act = (action: Action) => {
+    say("you", ACTIONS[action]);
+
     if (action === "keep-going") {
-      onDone({ opening: task ? task.question : RESUME_OPENING });
+      consider(() => onDone({ opening: task ? task.question : RESUME_OPENING }));
       return;
     }
     if (action === "get-to-know") {
-      say("starchild", GUIDED_LINE, 0);
-      setStep("guided");
+      consider(() => {
+        say("starchild", GUIDED_LINE, 0);
+        setStep("guided");
+      });
       return;
     }
     if (action === "adjust") {
-      say("starchild", "Tell me what I got wrong.");
-      setStep("adjust");
+      consider(() => {
+        say("starchild", "Tell me what I got wrong.");
+        setStep("adjust");
+      });
       return;
     }
-    if (action === "accept") {
-      onDone({ topic: topic?.echo ?? topic?.said, tone, opening: openingFor(topic) });
-    }
+    consider(() => onDone({ topic: topic?.echo ?? topic?.said, tone, opening: openingFor(topic) }));
   };
 
   return {
@@ -204,6 +254,21 @@ export function FirstMeeting({ meeting, fromGuest = false }: { meeting: Meeting;
   const { step, turns, choose, act } = meeting;
   const last = turns[turns.length - 1];
   const thinking = last?.from === "you";
+
+  // Only the line Starchild is currently on has a live dot. The ones above it are
+  // finished thoughts, and a column of dots all reacting at once would turn the
+  // meeting into a light show.
+  const currentId = [...turns].reverse().find((turn) => turn.from === "starchild")?.id;
+
+  const dotFor = (turnId: string): DotState => {
+    if (turnId !== currentId) return "settled";
+    // the answer has landed and Starchild is taking it in
+    if (thinking) return "thinking";
+    // the read: it contracts over what it has understood, then settles
+    if (step === "read") return "acknowledging";
+    // a question is on the table — it holds close and waits
+    return "listening";
+  };
   // Only under the opening question — whether that's "keep going?" or the guided
   // one — and gone the moment they answer. It's a reassurance, not a banner.
   const showGuestNote = fromGuest && turns.length === 1;
@@ -221,7 +286,7 @@ export function FirstMeeting({ meeting, fromGuest = false }: { meeting: Meeting;
               className="flex items-start gap-3"
             >
               <span className="mt-1.5 shrink-0">
-                <StarchildDot state={thinking ? "thinking" : "settled"} depth={1} size={9} />
+                <StarchildDot state={dotFor(turn.id)} depth={1} size={9} />
               </span>
               <div>
                 {/* quiet enough to skip, there for anyone wondering how much is left */}
@@ -282,8 +347,8 @@ export function FirstMeeting({ meeting, fromGuest = false }: { meeting: Meeting;
         >
           {step === "continuity" && (
             <>
-              <Choice primary onClick={() => act("keep-going")}>Keep going</Choice>
-              <Choice onClick={() => act("get-to-know")}>Get to know me</Choice>
+              <Choice primary onClick={() => act("keep-going")}>{ACTIONS["keep-going"]}</Choice>
+              <Choice onClick={() => act("get-to-know")}>{ACTIONS["get-to-know"]}</Choice>
             </>
           )}
 
@@ -310,8 +375,8 @@ export function FirstMeeting({ meeting, fromGuest = false }: { meeting: Meeting;
 
           {step === "read" && (
             <>
-              <Choice primary onClick={() => act("accept")}>Looks right</Choice>
-              <Choice onClick={() => act("adjust")}>Adjust</Choice>
+              <Choice primary onClick={() => act("accept")}>{ACTIONS.accept}</Choice>
+              <Choice onClick={() => act("adjust")}>{ACTIONS.adjust}</Choice>
             </>
           )}
         </motion.div>

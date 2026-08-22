@@ -109,12 +109,12 @@ const CAPABILITIES: Capability[] = [
 
 export function CapabilityGridSection({ onStartTask }: { onStartTask: (task: TaskCard) => void }) {
   return (
-    <section className="cg-section bg-[#0a0a0a] py-24 md:py-32">
+    <section className="cg-section bg-[#0a0a0a] pt-[var(--section-gap)] pb-[var(--section-pad)]">
       <Container>
         <div className="grid grid-cols-12 gap-6">
           <div className="col-span-12 max-w-[46ch]">
             <h2
-              className="text-[34px] leading-[1.1] font-semibold text-balance text-white sm:text-[42px]"
+              className="text-[34px] leading-[1.1] font-semibold text-balance text-white sm:text-[44px]"
               style={{ fontFamily: "var(--font-google-sans)" }}
             >
               What Starchild can help with.
@@ -122,22 +122,29 @@ export function CapabilityGridSection({ onStartTask }: { onStartTask: (task: Tas
           </div>
         </div>
 
-        <div className="mt-14 grid grid-cols-12 gap-6">
+        {/* The tag sits above the drawing rather than under it: with no card around
+            the column, something has to anchor its top edge, and a small label there
+            is what makes six drawings read as a set of plates rather than as art
+            floating in the page. */}
+        <div className="cg-grid">
           {CAPABILITIES.map(({ id, tag, title, copy, art: Art, task }, i) => (
             <motion.button
               key={id}
               type="button"
               onClick={() => onStartTask(task)}
-              initial={{ opacity: 0, y: 14 }}
-              whileInView={{ opacity: 1, y: 0 }}
+              // Opacity only. The rules between the columns are borders on these
+              // buttons, so anything that moves would slide six hairlines into place
+              // one after another — the entrance would be the grid assembling itself.
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
               viewport={{ once: true, amount: 0.3 }}
               transition={{ duration: 0.5, delay: (i % 3) * 0.06, ease: [0.16, 1, 0.3, 1] }}
-              className="cg-card col-span-12 sm:col-span-6 lg:col-span-4"
+              className="cg-card"
             >
+              <span className="cg-tag">{tag}</span>
               <span className="cg-art" aria-hidden="true">
                 <Art />
               </span>
-              <span className="cg-tag">{tag}</span>
               <span className="cg-title-row">
                 <span className="cg-title">{title}</span>
                 <ArrowUpIcon className="cg-arrow size-3.5 rotate-45" />
@@ -149,43 +156,70 @@ export function CapabilityGridSection({ onStartTask }: { onStartTask: (task: Tas
       </Container>
 
       <style>{`
+        .cg-section { --cg-rule: rgba(255,255,255,.08); }
+
+        /* Columns divided by hairlines instead of six boxes. The rules run the full
+           height, through the drawing and the text alike, which is what holds the
+           six together as one plate rather than as a row of tiles. */
+        .cg-grid {
+          margin-top: 56px;
+          display: grid; grid-template-columns: 1fr;
+          border-top: 1px solid var(--cg-rule);
+        }
+        @media (min-width: 640px) { .cg-grid { grid-template-columns: 1fr 1fr; } }
+        @media (min-width: 1024px) { .cg-grid { grid-template-columns: repeat(3, 1fr); } }
+
         .cg-card {
           display: flex; flex-direction: column; text-align: left; cursor: pointer;
-          min-width: 0;
-          border: 1px solid rgba(255,255,255,.1); border-radius: 16px; overflow: hidden;
-          background: rgba(255,255,255,.02);
-          transition: border-color .25s ease, background-color .25s ease;
+          min-width: 0; padding: 24px 30px 34px;
+          border: 0; border-bottom: 1px solid var(--cg-rule);
+          background: none;
+          transition: background-color .3s ease;
         }
-        .cg-card:hover { border-color: rgba(248,70,0,.42); background: rgba(255,255,255,.04); }
-        .cg-card:focus-visible { outline: 2px solid rgba(248,70,0,.6); outline-offset: 2px; }
+        /* the wash is the only thing standing in for the old border — enough to
+           say "this is a target", not enough to put the box back */
+        .cg-card:hover { background: rgba(255,255,255,.022); }
+        .cg-card:focus-visible { outline: 2px solid rgba(248,70,0,.6); outline-offset: -2px; }
 
-        .cg-art {
-          display: block; padding: 26px 22px 10px;
-          background:
-            radial-gradient(120% 90% at 50% 0%, rgba(248,70,0,.07) 0%, rgba(248,70,0,0) 62%),
-            #060606;
-          border-bottom: 1px solid rgba(255,255,255,.06);
+        /* No rule at the outer left edge: the block starts flush with the page. Set
+           per breakpoint because which cards begin a row changes with the columns. */
+        @media (min-width: 640px) {
+          .cg-card { border-left: 1px solid var(--cg-rule); }
+          .cg-card:nth-child(2n + 1) { border-left: 0; }
         }
-        .cg-svg { display: block; width: 100%; height: auto; overflow: visible; }
+        @media (min-width: 1024px) {
+          .cg-card:nth-child(2n + 1) { border-left: 1px solid var(--cg-rule); }
+          .cg-card:nth-child(3n + 1) { border-left: 0; }
+        }
 
         .cg-tag {
-          display: block; margin: 20px 22px 0;
+          display: block;
           font-family: var(--font-google-sans); font-size: 10.5px; font-weight: 600;
-          letter-spacing: .16em; text-transform: uppercase; color: rgba(255,255,255,.32);
+          letter-spacing: .18em; text-transform: uppercase; color: rgba(255,255,255,.26);
         }
-        .cg-title-row { display: flex; align-items: center; gap: 10px; margin: 8px 22px 0; }
+
+        /* The drawing gets the room it never had inside a card, and no panel behind
+           it: on the page's own black it reads as a diagram, which is what it is. */
+        .cg-art {
+          display: flex; align-items: center; justify-content: center;
+          padding: 34px 0 40px; min-height: 200px;
+        }
+        .cg-svg { display: block; width: 100%; max-width: 264px; height: auto; overflow: visible; }
+
+        .cg-title-row { display: flex; align-items: center; gap: 8px; }
         .cg-title {
-          font-family: var(--font-google-sans); font-size: 20px; font-weight: 600; color: #fff;
+          font-family: var(--font-google-sans); font-size: 19px; font-weight: 600; color: #fff;
         }
         .cg-arrow {
-          margin-left: auto; color: rgba(255,255,255,.22); flex: none;
+          color: rgba(255,255,255,.22); flex: none;
           transition: color .2s ease, transform .2s ease;
         }
         .cg-card:hover .cg-arrow { color: var(--color-primary); transform: rotate(45deg) translateY(-2px); }
 
         .cg-copy {
-          display: block; margin: 8px 22px 22px; max-width: 34ch;
-          font-family: var(--font-google-sans); font-size: 13.5px; line-height: 1.55;
+          display: block; margin-top: 10px; max-width: 32ch;
+          font-family: var(--font-google-sans); font-size: 15.5px; line-height: 1.6;
+          letter-spacing: var(--tracking-body);
           color: rgba(255,255,255,.5);
         }
 

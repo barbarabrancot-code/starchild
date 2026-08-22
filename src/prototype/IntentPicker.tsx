@@ -26,13 +26,16 @@ export function IntentPicker({
         {intents.map(({ id, label, icon: Icon, badge }) => {
           const isOpen = openIntent === id;
           return (
+            // data-presence tells the hero dot it is over an option being weighed
+            // up rather than over open space — see landing/c/PixelMesh
             <button
               key={id}
               type="button"
               onClick={() => setOpenIntent(isOpen ? null : id)}
               aria-expanded={isOpen}
+              data-presence="chip"
               className={`relative flex items-center gap-2 rounded-full px-4 py-2.5 text-[13px] transition-colors ${
-                isOpen ? "bg-white text-neutral-900" : "bg-white/[0.07] text-white/80 hover:bg-white/[0.13]"
+                isOpen ? "bg-white text-neutral-900" : "bg-white/[0.07] text-[var(--color-text-body)] hover:bg-white/[0.13]"
               }`}
               style={{ fontFamily: "var(--font-google-sans)" }}
             >
@@ -64,10 +67,11 @@ export function IntentPicker({
                   key={task.id}
                   type="button"
                   onClick={() => onStartTask(task)}
+                  data-presence="chip"
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3, delay: 0.05 + i * 0.05, ease: [0.16, 1, 0.3, 1] }}
-                  className="group flex items-center gap-2.5 rounded-2xl border border-white/15 bg-black/20 px-4 py-3 text-left text-[13.5px] text-white/90 transition-colors hover:border-[#f84600]/60 hover:bg-white/[0.06]"
+                  className="group flex items-center gap-2.5 rounded-2xl border border-white/15 bg-black/20 px-4 py-3 text-left text-[13.5px] text-[var(--color-text-body)] transition-colors hover:border-[#f84600]/60 hover:bg-white/[0.06]"
                   style={{ fontFamily: "var(--font-google-sans)" }}
                 >
                   {task.label}

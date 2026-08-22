@@ -17,6 +17,7 @@ export function LandingPageC({
   onNavigateTraders,
   onNavigateConductorMode,
   onOpenMarketplace,
+  onNavigatePricing,
   onLogIn,
   onSignUp,
 }: {
@@ -25,6 +26,7 @@ export function LandingPageC({
   onNavigateTraders: () => void;
   onNavigateConductorMode: () => void;
   onOpenMarketplace: () => void;
+  onNavigatePricing: () => void;
   onLogIn: () => void;
   onSignUp: () => void;
 }) {
@@ -41,6 +43,7 @@ export function LandingPageC({
         onNavigateTraders={onNavigateTraders}
         onNavigateConductorMode={onNavigateConductorMode}
         onOpenMarketplace={onOpenMarketplace}
+        onNavigatePricing={onNavigatePricing}
         onLogIn={onLogIn}
         onSignUp={onSignUp}
       />
