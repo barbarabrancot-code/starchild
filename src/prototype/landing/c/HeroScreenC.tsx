@@ -130,7 +130,7 @@ function CompanionHero({
         making in pictures, so the two halves of the hero say the same thing. */}
     <motion.h1 initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }} className="max-w-[640px] text-[42px] leading-[1.08] font-semibold text-balance text-white sm:text-[56px]" style={{ fontFamily: "var(--font-google-sans)" }}>The world’s leading AI models, working as one for you.</motion.h1>
 
-    <motion.p initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55, delay: 0.08, ease: [0.16, 1, 0.3, 1] }} className="mt-5 max-w-[520px] text-[18px] leading-[1.6] tracking-[var(--tracking-body)] text-[var(--color-text-body)]" style={{ fontFamily: "var(--font-google-sans)" }}><span className="font-semibold text-white/90">Conductor Mode</span> chooses the model that fits each task best.</motion.p>
+    <motion.p initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55, delay: 0.08, ease: [0.16, 1, 0.3, 1] }} className="mt-5 max-w-[520px] text-[18px] leading-[1.6] tracking-[var(--tracking-body)] text-[var(--color-text-body)]" style={{ fontFamily: "var(--font-google-sans)" }}>Conductor Mode chooses the model that fits each task best.</motion.p>
 
     {/* data-presence tells the dot what it is near — see PixelMesh. Over the
         field it is at its most curious; here it comes in closer and steadies, as
@@ -140,7 +140,7 @@ function CompanionHero({
         value={prompt}
         onChange={(event) => setPrompt(event.target.value)}
         onKeyDown={(event) => { if (event.key === "Enter") submit(); }}
-        placeholder="What's on your mind?"
+        placeholder="Ask anything. Start for free."
         className="w-full bg-transparent text-[16px] text-white placeholder:text-white/35 focus:outline-none"
         style={{ fontFamily: "var(--font-google-sans)" }}
       />

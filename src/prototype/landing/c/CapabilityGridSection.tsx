@@ -4,24 +4,24 @@ import type { TaskCard } from "../../data";
 import { ArrowUpIcon } from "../../icons";
 import { Container } from "../../Container";
 import {
+  ConductorArt,
   CreateArt,
-  ExploreArt,
-  OrganizeArt,
+  MarketArt,
   RunArt,
   TalkArt,
   WorkArt,
 } from "./capabilityArt";
 
-// Version C, layer 1 — breadth. Six cards answer "what can I use this for?" and
-// nothing more; persistence (Agents) and intelligence (Conductor) come after.
+// Version C, layer 1 — breadth. Six cards answer "what can I use this for?".
 // Where B leads with builder/market territory (Build, Trade, Monetize), C is cut
-// for a general visitor: the six are things anyone already does in a day.
-// Every card is still a real entry point, so clicking one drops into Guest Mode.
+// for a general visitor: things anyone already does in a day, plus the two that
+// are Starchild's own — Conductor Mode and the Marketplace.
+// Every card is a real entry point, so clicking one drops into Guest Mode.
 //
-// The first five are the hero's chips in the hero's order, down to the task each
-// one opens — press a chip or scroll to its card and you land in the same place.
-// Organize is the sixth: no chip, because the hero already carries as many as it
-// can, but it is a job of its own and not covered by the other five.
+// Each card says the promise first and the mechanism second: the title is what
+// the visitor gets, the line under it is how. The tag above the drawing is the
+// territory, so the three read top to bottom as where / what / how.
+
 type Capability = {
   id: string;
   tag: string;
@@ -33,10 +33,10 @@ type Capability = {
 
 const CAPABILITIES: Capability[] = [
   {
-    id: "talk",
+    id: "conversation",
     tag: "Conversation",
-    title: "Talk",
-    copy: "Talk things through with an AI that gets to know you.",
+    title: "Talk to an AI that remembers you.",
+    copy: "Keep the context and continue without starting over.",
     art: TalkArt,
     task: {
       id: "talk-through",
@@ -46,23 +46,23 @@ const CAPABILITIES: Capability[] = [
     },
   },
   {
-    id: "research",
-    tag: "Curiosity",
-    title: "Research",
-    copy: "Look into things properly and come back with a real answer.",
-    art: ExploreArt,
+    id: "conductor",
+    tag: "Conductor Mode",
+    title: "Get the right AI without choosing it yourself.",
+    copy: "Starchild handles the model choice for each task.",
+    art: ConductorArt,
     task: {
-      id: "research-topic",
-      label: "Look into something",
-      basePrompt: "Look into this properly and come back with a real answer, not a pile of links.",
-      question: "What should I dig into?",
+      id: "conductor-task",
+      label: "Give it something to route",
+      basePrompt: "Take this on and use whichever model handles it best — I don't want to pick.",
+      question: "What do you need done?",
     },
   },
   {
-    id: "build",
-    tag: "Make",
-    title: "Build",
-    copy: "Turn an idea into something real.",
+    id: "create",
+    tag: "Create",
+    title: "Turn ideas into something real.",
+    copy: "Move from a thought to something you can actually use.",
     art: CreateArt,
     task: {
       id: "build-idea",
@@ -72,10 +72,10 @@ const CAPABILITIES: Capability[] = [
     },
   },
   {
-    id: "work",
+    id: "day-to-day",
     tag: "Day to day",
-    title: "Work",
-    copy: "Get through what's on your plate.",
+    title: "Get everyday tasks off your plate.",
+    copy: "Plan, write, organize, summarize, and handle routine work faster.",
     art: WorkArt,
     task: {
       id: "work-priorities",
@@ -85,10 +85,10 @@ const CAPABILITIES: Capability[] = [
     },
   },
   {
-    id: "run",
-    tag: "Autonomy",
-    title: "Run for me",
-    copy: "Hand something over and it keeps working after you leave.",
+    id: "agents",
+    tag: "Agents",
+    title: "Hand it over and keep moving.",
+    copy: "Let agents keep checking, following up, and working over time.",
     art: RunArt,
     task: {
       id: "run-task",
@@ -98,16 +98,16 @@ const CAPABILITIES: Capability[] = [
     },
   },
   {
-    id: "organize",
-    tag: "Structure",
-    title: "Organize",
-    copy: "Bring structure to tasks, projects, and recurring work.",
-    art: OrganizeArt,
+    id: "marketplace",
+    tag: "Marketplace",
+    title: "Use what already works — or earn from yours.",
+    copy: "Start with something ready-made, customize it, or publish your own.",
+    art: MarketArt,
     task: {
-      id: "organize-work",
-      label: "Get on top of things",
-      basePrompt: "Help me bring some structure to everything I've got going on.",
-      question: "What do you need to get on top of?",
+      id: "market-start",
+      label: "Start from something ready-made",
+      basePrompt: "Show me what is already built that I could start from instead of building it myself.",
+      question: "What are you trying to get done?",
     },
   },
 ];
@@ -211,12 +211,16 @@ export function CapabilityGridSection({ onStartTask }: { onStartTask: (task: Tas
         }
         .cg-svg { display: block; width: 100%; max-width: 264px; height: auto; overflow: visible; }
 
-        .cg-title-row { display: flex; align-items: center; gap: 8px; }
+        /* The titles are full sentences and wrap, so the row aligns to the top and
+           the arrow is nudged down to sit on the first line rather than floating
+           at the middle of a two-line block. */
+        .cg-title-row { display: flex; align-items: flex-start; gap: 8px; }
         .cg-title {
           font-family: var(--font-google-sans); font-size: 19px; font-weight: 600; color: #fff;
+          line-height: 1.32; text-wrap: balance;
         }
         .cg-arrow {
-          color: rgba(255,255,255,.22); flex: none;
+          color: rgba(255,255,255,.22); flex: none; margin-top: 5px;
           transition: color .2s ease, transform .2s ease;
         }
         .cg-card:hover .cg-arrow { color: var(--color-primary); transform: rotate(45deg) translateY(-2px); }
@@ -272,19 +276,15 @@ export function CapabilityGridSection({ onStartTask }: { onStartTask: (task: Tas
         .cg-rise { transition: transform .45s cubic-bezier(.16,1,.3,1); }
         .cg-card:hover .cg-rise { transform: translateY(-4px); }
 
-        /* Organize: the loose blocks land on the grid */
-        .cg-block {
-          transform: translate(var(--dx), var(--dy));
-          transition: transform .5s cubic-bezier(.16,1,.3,1);
-          transition-delay: calc(var(--i) * 45ms);
-        }
-        .cg-card:hover .cg-block { transform: translate(0, 0); }
+        /* Marketplace: one module lifts off the shelf, leaving its slot open */
+        .cg-lift { transition: transform .45s cubic-bezier(.16,1,.3,1); }
+        .cg-card:hover .cg-lift { transform: translateY(-15px); }
 
         @media (prefers-reduced-motion: reduce) {
-          .cg-row, .cg-block { transform: none; }
+          .cg-row { transform: none; }
           .cg-say { transform: none; opacity: 1; }
           .cg-run-arc, .cg-run-dot { transition: none; }
-          .cg-rise, .cg-node, .cg-arrow, .cg-say, .cg-block { transition: none; }
+          .cg-rise, .cg-node, .cg-arrow, .cg-say, .cg-lift { transition: none; }
         }
       `}</style>
     </section>

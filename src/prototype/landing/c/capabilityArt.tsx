@@ -88,8 +88,9 @@ export function WorkArt({ className = "" }: ArtProps) {
   );
 }
 
-// Explore — many thin sources converging on one point, then a single line out.
-export function ExploreArt({ className = "" }: ArtProps) {
+// Conductor Mode — many thin sources converging on one point, then a single
+// line out. The choice happens at the join; only the answer leaves.
+export function ConductorArt({ className = "" }: ArtProps) {
   const ys = [16, 30, 44, 58, 72];
   return (
     <svg viewBox={BOX} className={`cg-svg cg-svg--explore ${className}`} fill="none" aria-hidden="true">
@@ -146,37 +147,20 @@ export function RunArt({ className = "" }: ArtProps) {
   );
 }
 
-// Organize — loose blocks that fall into columns. At rest they sit off the grid;
-// on hover everything lands where it belongs.
-export function OrganizeArt({ className = "" }: ArtProps) {
-  const blocks = [
-    { x: 18, y: 20, w: 34, h: 12, dx: 9, dy: -6 },
-    { x: 18, y: 38, w: 34, h: 12, dx: -7, dy: 5 },
-    { x: 18, y: 56, w: 34, h: 12, dx: 6, dy: 8 },
-    { x: 63, y: 20, w: 34, h: 12, dx: -8, dy: 7 },
-    { x: 63, y: 38, w: 34, h: 12, dx: 7, dy: -8 },
-    { x: 108, y: 20, w: 34, h: 12, dx: 8, dy: 9 },
-  ];
+// Marketplace — a shelf of ready-made things. One is yours: on hover it lifts
+// clear of the row, and the empty slot it came from stays open behind it, which
+// is the trade the card is offering in both directions.
+export function MarketArt({ className = "" }: ArtProps) {
   return (
-    <svg viewBox={BOX} className={`cg-svg cg-svg--organize ${className}`} fill="none" aria-hidden="true">
-      {/* the columns the blocks are landing in */}
-      {[35, 80, 125].map((x) => (
-        <line key={x} x1={x} y1="14" x2={x} y2="82" stroke={faint} strokeWidth="1" />
+    <svg viewBox={BOX} className={`cg-svg cg-svg--market ${className}`} fill="none" aria-hidden="true">
+      <line x1="14" y1="72" x2="146" y2="72" stroke={faint} strokeWidth="1" />
+      {[22, 62, 102].map((x) => (
+        <rect key={x} x={x} y="46" width="36" height="26" rx="4" stroke={faint} strokeWidth="1" />
       ))}
-      {blocks.map((b, i) => (
-        <rect
-          key={`${b.x}-${b.y}`}
-          className="cg-block"
-          style={{ "--dx": `${b.dx}px`, "--dy": `${b.dy}px`, "--i": i } as CSSProperties}
-          x={b.x}
-          y={b.y}
-          width={b.w}
-          height={b.h}
-          rx="3"
-          stroke={i === 0 ? "var(--color-primary)" : line}
-          strokeWidth={i === 0 ? 1.4 : 1}
-        />
-      ))}
+      <g className="cg-lift">
+        <rect x="62" y="46" width="36" height="26" rx="4" stroke="var(--color-primary)" strokeWidth="1.4" />
+        <circle cx="80" cy="59" r="2.2" fill="var(--color-primary)" />
+      </g>
     </svg>
   );
 }

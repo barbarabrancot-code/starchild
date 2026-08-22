@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { motion } from "motion/react";
 import type { Scenario } from "./data";
 import { Deliverable } from "./Deliverable";
-import { CheckIcon, InfoIcon } from "./icons";
+import { CheckIcon } from "./icons";
 import { usePresenceDot, useDriftAim, usePrefersReducedMotion } from "./presence/usePresence";
 import type { Temperament } from "./presence/presence";
 
@@ -15,181 +15,6 @@ const MODEL_ICON_SRC: Record<string, string> = {
   deepseek: `${ICON_BASE}deepseek.svg`,
   "ai-generic": `${ICON_BASE}ai-generic.svg`,
 };
-
-// Two things on this run need explaining to someone meeting them for the first
-// time, and both explanations are the same shape: a question, then a plain answer.
-// Plain is the whole point — "routing system" is as technical as either is allowed
-// to get, and each ends on the consequence rather than on the mechanism.
-const CONDUCTOR_INFO = {
-  title: "What is Conductor Mode?",
-  body:
-    "Conductor Mode chooses the best AI for each part of the task and uses only the context it needs.",
-};
-
-// One icon on that line, not two. The result needs explaining and so does the word
-// "tokens", but a second ⓘ beside the first is clutter on the very line the section
-// is trying to make readable — so the definition rides along as a footnote.
-const SAVED_INFO = {
-  title: "What does this mean?",
-  body:
-    "Conductor Mode avoided unnecessary token usage by choosing the right model and using only the " +
-    "context this task needed.",
-  note: "Tokens are the units AI uses to process text — fewer usually means less waste and lower cost.",
-};
-
-function InfoBody({ title, body, note }: { title: string; body: string; note?: string }) {
-  return (
-    <>
-      <p
-        className="text-[13.5px] font-medium text-white/90"
-        style={{ fontFamily: "var(--font-google-sans)" }}
-      >
-        {title}
-      </p>
-      <p
-        className="mt-1.5 text-[12.5px] leading-[1.55] text-white/45"
-        style={{ fontFamily: "var(--font-google-sans)" }}
-      >
-        {body}
-      </p>
-      {note && (
-        <p
-          className="mt-2.5 border-t border-white/[0.07] pt-2.5 text-[11.5px] leading-[1.5] text-white/30"
-          style={{ fontFamily: "var(--font-google-sans)" }}
-        >
-          {note}
-        </p>
-      )}
-    </>
-  );
-}
-
-/**
- * The ⓘ beside a term. On a mouse it is a tooltip on hover; on touch, where there
- * is no hover to speak of, the same words arrive as a dialog you dismiss. Two
- * presentations, one piece of content — an explanation that only exists on one
- * kind of device is not an explanation.
- *
- * `drop` is not styling: a tip at the top of the run has to open downward and one
- * at the bottom upward, or it opens straight off the edge of the conversation.
- */
-function InfoTip({
-  title,
-  body,
-  note,
-  drop = "down",
-}: {
-  title: string;
-  body: string;
-  note?: string;
-  drop?: "down" | "up";
-}) {
-  const [open, setOpen] = useState(false);
-  const [fine, setFine] = useState(false);
-  const closeTimer = useRef<number | undefined>(undefined);
-
-  useEffect(() => {
-    setFine(window.matchMedia("(hover: hover) and (pointer: fine)").matches);
-    return () => window.clearTimeout(closeTimer.current);
-  }, []);
-
-  useEffect(() => {
-    if (!open) return;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpen(false);
-    };
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
-  }, [open]);
-
-  // the small delay is what lets the pointer cross the gap into the panel
-  const openNow = () => {
-    window.clearTimeout(closeTimer.current);
-    setOpen(true);
-  };
-  const closeSoon = () => {
-    window.clearTimeout(closeTimer.current);
-    closeTimer.current = window.setTimeout(() => setOpen(false), 140);
-  };
-
-  return (
-    <span className="relative inline-flex align-middle">
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        onPointerEnter={fine ? openNow : undefined}
-        onPointerLeave={fine ? closeSoon : undefined}
-        onFocus={fine ? openNow : undefined}
-        onBlur={fine ? closeSoon : undefined}
-        aria-expanded={open}
-        aria-label={title}
-        className="rounded-full p-0.5 text-[#f84600]/55 transition-colors hover:text-[#f84600] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#f84600]/70"
-      >
-        <InfoIcon className="size-4" />
-      </button>
-
-      {open &&
-        (fine ? (
-          <motion.div
-            initial={{ opacity: 0, y: drop === "down" ? -6 : 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-            onPointerEnter={openNow}
-            onPointerLeave={closeSoon}
-            role="tooltip"
-            className={`absolute left-0 z-40 w-[min(320px,calc(100vw-3rem))] rounded-2xl border border-white/10 bg-[#111112] p-4 text-left shadow-2xl ${
-              drop === "down" ? "top-[calc(100%+10px)]" : "bottom-[calc(100%+10px)]"
-            }`}
-          >
-            <InfoBody title={title} body={body} note={note} />
-          </motion.div>
-        ) : (
-          <InfoDialog title={title} body={body} note={note} onClose={() => setOpen(false)} />
-        ))}
-    </span>
-  );
-}
-
-function InfoDialog({
-  title,
-  body,
-  note,
-  onClose,
-}: {
-  title: string;
-  body: string;
-  note?: string;
-  onClose: () => void;
-}) {
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-5 backdrop-blur-sm"
-      role="dialog"
-      aria-modal="true"
-      aria-label={title}
-      onClick={onClose}
-    >
-      <motion.div
-        initial={{ opacity: 0, y: 10, scale: 0.98 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-        onClick={(event) => event.stopPropagation()}
-        className="w-full max-w-[320px] rounded-2xl border border-white/10 bg-[#111112] p-5 text-left shadow-2xl"
-      >
-        <InfoBody title={title} body={body} note={note} />
-
-        <button
-          type="button"
-          onClick={onClose}
-          className="mt-5 w-full rounded-full border border-white/15 bg-white/[0.06] py-2.5 text-[13px] font-medium text-white/85 transition-colors hover:bg-white/[0.12]"
-          style={{ fontFamily: "var(--font-google-sans)" }}
-        >
-          Close
-        </button>
-      </motion.div>
-    </div>
-  );
-}
 
 /**
  * Conductor Mode running, as the dot sees it. The step titles say what is
@@ -287,23 +112,16 @@ export function StepFlow({
   scenario,
   onStep,
   onDone,
-  showSavings = false,
   children,
 }: {
   scenario: Scenario;
   onStep?: () => void;
   onDone?: () => void;
-  /** Guest Mode only: what Conductor Mode saved is an argument for signing up, and
-   *  an account holder has already been made it. */
-  showSavings?: boolean;
-  /** The written answer, rendered inside this component rather than after it. A
-   *  sticky element only holds within its own container, so for the Conductor Mode
-   *  header to survive the scroll down through the response, the response has to be
-   *  in the same box. That is the whole reason this prop exists. */
+  /** The written answer, rendered inside this component rather than after it, so
+   *  the run and the answer it produced stay one block on the page. */
   children?: React.ReactNode;
 }) {
-  const { models, deliverable, stat } = scenario;
-  const saved = stat.withoutTokens - stat.withTokens;
+  const { models, deliverable } = scenario;
   const [visible, setVisible] = useState(0);
   const [showFinal, setShowFinal] = useState(false);
 
@@ -332,52 +150,6 @@ export function StepFlow({
 
   return (
     <div className="flex flex-col">
-      {/* Sticky, and the ⓘ is the reason. Left at the top of a long answer, the
-          explanation scrolls away exactly when someone starts wondering what they
-          are looking at; held here it stays one hover away for as long as the
-          response is on screen. The background is opaque on purpose — the run
-          scrolls under it, and a translucent bar would show the timeline through
-          the name. */}
-      <div className="sticky top-0 z-20 -mx-1 flex flex-wrap items-center justify-between gap-x-5 gap-y-1 bg-[#0a0a0a] px-1 pt-1 pb-3">
-        <span className="flex items-center gap-1.5">
-          <p
-            className="text-[17px] font-semibold text-white"
-            style={{ fontFamily: "var(--font-google-sans)" }}
-          >
-            Conductor Mode
-          </p>
-          <InfoTip {...CONDUCTOR_INFO} />
-        </span>
-
-        {/* The outcome rides in the header rather than closing the timeline. It is
-            the one line worth still having on screen three paragraphs into the
-            answer, and down in the run it would scroll away with everything else —
-            which is the same reason the name is up here. */}
-        {showFinal && showSavings && (
-          <motion.span
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-            className="flex items-center gap-1.5"
-          >
-            <p
-              className="text-[16px] font-medium text-white"
-              style={{ fontFamily: "var(--font-google-sans)" }}
-            >
-              Saved{" "}
-              {/* the one number on the screen, so it is allowed to be the one thing
-                  in the accent. Pinned to en-US: the UI is English, and a pt-BR
-                  browser would otherwise render 9,100 as "9.100". */}
-              <span className="text-[19px] font-semibold text-[#f84600] tabular-nums">
-                {saved.toLocaleString("en-US")}
-              </span>{" "}
-              tokens
-            </p>
-            <InfoTip {...SAVED_INFO} />
-          </motion.span>
-        )}
-      </div>
-
       <div className="relative flex flex-col gap-3 py-1 pl-1">
         <div className="absolute top-1 bottom-1 left-[7px] w-px bg-white/12" aria-hidden="true">
           <motion.div

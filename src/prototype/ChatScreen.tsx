@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { motion } from "motion/react";
 import { pickScenario, type HeroIntent, type Scenario, type TaskCard } from "./data";
 import { StepFlow } from "./StepFlow";
+import { ConductorNote, useConductorNote } from "./ConductorNote";
 import { GuestSidebar } from "./GuestSidebar";
 import { ProductSidebar } from "./ProductSidebar";
 import { SignupGate } from "./SignupGate";
@@ -124,6 +125,9 @@ export function ChatScreen({
   const [message, setMessage] = useState<string | null>(initialMessage ?? null);
   const [scenario, setScenario] = useState<Scenario | null>(initialMessage ? pickScenario(initialMessage) : null);
   const [delivered, setDelivered] = useState(false);
+  // Guest Mode only: what Conductor Mode saved is an argument for signing up, and
+  // an account holder has already been made it.
+  const conductorNote = useConductorNote(delivered && isGuest);
   const [value, setValue] = useState("");
   const guest = isGuest;
   const [tasksRemaining, setTasksRemaining] = useState(initialMessage ? 1 : 2);
@@ -535,15 +539,12 @@ export function ChatScreen({
                 </div>
               </div>
 
-              {/* The answer goes inside the flow rather than after it: the Conductor
-                  Mode header is sticky, and sticky only holds within its own container.
-                  Outside, the explanation would scroll away the moment the response
-                  started — which is the thing it exists to survive. */}
+              {/* The answer goes inside the flow rather than after it, so the run and
+                  the answer it produced stay one block on the page. */}
               <StepFlow
                 scenario={scenario!}
                 onStep={scrollToBottom}
                 onDone={() => setDelivered(true)}
-                showSavings={guest}
               >
                 {delivered && (
                   <motion.div
@@ -556,6 +557,16 @@ export function ChatScreen({
                   </motion.div>
                 )}
               </StepFlow>
+
+              {/* Under the answer and above the ask: close enough to what it is
+                  describing that "this task" needs no pointing at, and far enough
+                  from the signup CTA that the two are not read as one block. */}
+              {scenario && (
+                <ConductorNote
+                  saved={scenario.stat.withoutTokens - scenario.stat.withTokens}
+                  control={conductorNote}
+                />
+              )}
 
               {/* The ask still comes last and on its own — result, then what it
                   saved, then, past a rule and a delay, what to do next. What
