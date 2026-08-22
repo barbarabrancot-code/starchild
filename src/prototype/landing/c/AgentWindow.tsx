@@ -188,15 +188,14 @@ export function AgentWindow({ story }: { story: AgentStory }) {
         </AnimatePresence>
       </div>
 
-      {/* The banner drops in over the top of the window, the way the real one drops
-          over whatever you are looking at. Covering the request is not a collision —
-          it is the point: the answer arrives on top of the asking, somewhere else
-          entirely, and you did not have to be here for it. */}
+      {/* Bottom right, over the window, the way a desktop notification arrives —
+          and rising into the corner rather than dropping into it, because that is
+          the direction the real ones come from. */}
       <AnimatePresence>
         {shown(deliveryAt) && (
           <motion.div
             key="delivery"
-            initial={{ opacity: 0, y: -18 }}
+            initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
             className="aw-notif"
@@ -247,7 +246,7 @@ export function AgentWindow({ story }: { story: AgentStory }) {
         /* a floor, so the frame does not grow a row at a time as the log fills */
         .aw-body {
           display: flex; flex-direction: column; align-items: flex-start; gap: 20px;
-          padding: 22px 22px 26px; min-height: 360px;
+          padding: 22px 22px 26px; min-height: 480px;
         }
 
         /* the only thing here shaped like a message, because it is the only thing
@@ -300,12 +299,12 @@ export function AgentWindow({ story }: { story: AgentStory }) {
         .aw-row--hit .aw-action { color: #fff; font-weight: 500; }
         .aw-row--hit .aw-result { color: rgba(248,70,0,.85); }
 
-        /* A notification banner, at the size and shape a phone draws one, sitting
-           over the window rather than in it. Absolute so it never adds height —
-           a banner that pushed the interface down would be a panel again. */
+        /* A notification, at the size and shape a system draws one, sitting over the
+           window rather than in it. Absolute so it never adds height — one that
+           pushed the interface down would be a panel again. */
         .aw-notif {
-          position: absolute; top: 14px; left: 50%; transform: translateX(-50%);
-          z-index: 5; width: min(352px, calc(100% - 28px));
+          position: absolute; right: 16px; bottom: 16px;
+          z-index: 5; width: min(352px, calc(100% - 32px));
           padding: 13px 15px 12px; border-radius: 20px;
           background: rgba(38,38,42,.86);
           border: 1px solid rgba(255,255,255,.12);
