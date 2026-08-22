@@ -1,5 +1,6 @@
 import { useRef } from "react";
 import { HeroScreenC } from "./c/HeroScreenC";
+import { PointerDot } from "./c/PointerDot";
 import type { TaskCard } from "../data";
 import { CapabilityGridSection } from "./c/CapabilityGridSection";
 import { AgentsSection } from "./c/AgentsSection";
@@ -37,6 +38,9 @@ export function LandingPageC({
 
   return (
     <div>
+      {/* the orange dot replaces the cursor for the whole page, not just the hero */}
+      <PointerDot />
+
       <HeroScreenC
         onEnterGuest={onEnterGuest}
         onStartTask={onStartTask}
