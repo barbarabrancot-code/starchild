@@ -1,15 +1,19 @@
 type IconProps = { className?: string };
 export type IconComponent = (props: IconProps) => JSX.Element;
 
+// The real symbol, replacing the CSS stand-in that used to be here — a rounded
+// square with an orange polygon clipped across it, which at 15px read as the mark
+// cut in half. Every window chrome in the prototype draws this one component, so
+// the asset lands in all of them at once.
 export function LogoMark({ className }: IconProps) {
   return (
-    <div className={`relative overflow-hidden rounded-[7px] ${className ?? "size-6"}`}>
-      <div className="absolute inset-0 bg-[#1c1c1c]" />
-      <div
-        className="absolute inset-0 bg-[#f84600]"
-        style={{ clipPath: "polygon(45% 0%, 100% 0%, 100% 100%, 55% 100%)" }}
-      />
-    </div>
+    <img
+      src={`${import.meta.env.BASE_URL}images/starchild-symbol.svg`}
+      alt=""
+      width={32}
+      height={32}
+      className={className ?? "size-6"}
+    />
   );
 }
 

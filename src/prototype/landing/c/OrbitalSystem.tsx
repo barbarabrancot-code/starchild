@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { publishAttractors, clearAttractors } from "./attractors";
 
 /**
  * The claim the hero makes on its right-hand side: many models, one thing
@@ -55,6 +56,12 @@ const PROVIDERS: { id: string; name: string; file: string; ring: number; angle: 
 /** the most the plane ever leans, in degrees, at the very corner of the stage */
 const MAX_TILT = 6;
 
+/** The resting lean. Declared here rather than only in the CSS because the magnet
+ *  has to measure distances in the plane the symbols actually live in, which means
+ *  undoing this lean first — two copies of these numbers would drift apart. */
+const TILT_X = 30;
+const TILT_Y = -10;
+
 export function OrbitalSystem() {
   const stageRef = useRef<HTMLDivElement>(null);
   const planeRef = useRef<HTMLDivElement>(null);
@@ -99,6 +106,9 @@ export function OrbitalSystem() {
       // fighting you. Time simply stops accumulating.
       if (!activeRef.current && !reduced) travelled += dt;
 
+      /** the nodes written this frame, so their rects can be read in one batch */
+      const moved: HTMLDivElement[] = [];
+
       PROVIDERS.forEach((provider, i) => {
         const el = nodeRefs.current[i];
         if (!el) return;
@@ -110,6 +120,7 @@ export function OrbitalSystem() {
         const y = Math.sin(angle) * r;
 
         el.style.transform = `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0)`;
+        moved.push(el);
         // the name opens away from the centre, so it never crosses the core
         const side = x < 0 ? "left" : "right";
         if (el.dataset.side !== side) el.dataset.side = side;
@@ -123,6 +134,21 @@ export function OrbitalSystem() {
           linkRef.current.setAttribute("y2", `${((y / half) * 100).toFixed(2)}`);
         }
       });
+
+      // Hand the dot somewhere to be caught. Read after every write rather than
+      // inside the loop: measuring an element forces the browser to settle the
+      // layout, and doing that six times interleaved with six writes would mean
+      // six of those a frame instead of one.
+      //
+      // The rect is taken rather than computed because these symbols are inside
+      // a plane leaning in two axes under a perspective — where they land on
+      // screen is the browser's answer to give, not one worth re-deriving.
+      publishAttractors(
+        moved.map((el) => {
+          const box = el.getBoundingClientRect();
+          return { x: box.left + box.width / 2, y: box.top + box.height / 2 };
+        }),
+      );
     };
 
     placeRef.current = place;
@@ -141,6 +167,8 @@ export function OrbitalSystem() {
     const stop = () => {
       running = false;
       cancelAnimationFrame(frame);
+      // scrolled away or hidden: nothing on screen, so nothing to catch on
+      clearAttractors();
     };
 
     // The tilt. Cursor position maps to a lean on the two axes — left of centre
@@ -184,6 +212,7 @@ export function OrbitalSystem() {
 
     return () => {
       placeRef.current = null;
+      clearAttractors();
       resizeObserver.disconnect();
       io.disconnect();
       document.removeEventListener("visibilitychange", onVisibility);
@@ -280,8 +309,8 @@ export function OrbitalSystem() {
         .orb-plane {
           position: absolute;
           inset: 0;
-          --tilt-rest-x: 30deg;
-          --tilt-rest-y: -10deg;
+          --tilt-rest-x: ${TILT_X}deg;
+          --tilt-rest-y: ${TILT_Y}deg;
           transform:
             rotateX(calc(var(--tilt-rest-x) + var(--rx, 0deg)))
             rotateY(calc(var(--tilt-rest-y) + var(--ry, 0deg)));

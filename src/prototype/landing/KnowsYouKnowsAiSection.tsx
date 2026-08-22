@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { motion, useMotionValueEvent, useScroll } from "motion/react";
+import { motion } from "motion/react";
 import { Container } from "../Container";
 import { Presence, frameTransform, type Frame } from "../presence/presence";
-import { ScrollPin, usePinFits, usePinnedProgress } from "./ScrollPin";
+import { ScrollPin } from "./ScrollPin";
 
 /**
  * `size` is the rendered height, tuned per mark rather than shared: these logos
@@ -64,6 +64,9 @@ const OUT_START = 0.66, OUT_END = 0.96; // Conductor → Result
 // DECIDE is the pause, and the pause is the part that has to be there: an
 // instant reconciliation would read as a lookup, and a lookup is not judgment.
 const ABSORB = 0.56, DECIDE = 0.62;
+
+/** how long the whole journey takes once it starts, in ms */
+const RUN_MS = 3520;
 
 const clamp01 = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v);
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
@@ -229,16 +232,8 @@ export function KnowsYouKnowsAiSection({
   const [phase, setPhase] = useState<Phase>("waiting");
   const [delivered, setDelivered] = useState(false);
   const [reduced, setReduced] = useState(false);
-  // pinned: the diagram holds still on screen and the scroll drives the whole
-  // choreography. Same rule as the showcase sections — where it can't pin, the
-  // animation plays as the section passes by instead.
-  const pinned = usePinFits();
-
-  // unpinned fallback: the choreography plays as the section crosses the viewport
-  const { scrollYProgress: flowProgress } = useScroll({
-    target: stageRef,
-    offset: ["start 0.85", "end 0.55"],
-  });
+  /** whether the timeline has already run — it plays once, on arrival */
+  const played = useRef(false);
 
   useEffect(() => {
     const reducedMq = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -313,11 +308,54 @@ export function KnowsYouKnowsAiSection({
     };
   }, []);
 
-  // the stage moves when pinning switches on or off, so the anchors have to be
-  // re-read before the next dot position is computed
+  /**
+   * The clock. This used to be the scroll position: the section pinned itself,
+   * took a couple of screens of scroll distance, and you drove the choreography
+   * by scrolling through it. Now it has its own timeline and plays once, when
+   * you arrive — the section is an ordinary block again, and what you see does
+   * not depend on how fast you happen to be scrolling.
+   *
+   * Once, not on every pass: it is a demonstration, and a demonstration that
+   * restarts each time it scrolls back into view turns into wallpaper.
+   */
   useEffect(() => {
-    window.dispatchEvent(new Event("resize"));
-  }, [pinned]);
+    const stage = stageRef.current;
+    if (!stage) return;
+
+    // reduced motion: no timeline at all, just the state it ends in
+    if (reduced) {
+      applyProgress(1);
+      return;
+    }
+
+    let frame = 0;
+    let startedAt = 0;
+
+    const run = (now: number) => {
+      if (!startedAt) startedAt = now;
+      const p = clamp01((now - startedAt) / (RUN_MS));
+      applyProgress(p);
+      if (p < 1) frame = requestAnimationFrame(run);
+    };
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting || played.current) return;
+        played.current = true;
+        observer.disconnect();
+        frame = requestAnimationFrame(run);
+      },
+      // enough of the diagram on screen that the whole journey is watchable
+      { threshold: 0.4 },
+    );
+    observer.observe(stage);
+
+    return () => {
+      observer.disconnect();
+      cancelAnimationFrame(frame);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reduced]);
 
   // The frame loop. Scroll is the clock, but it is not the animation: every frame
   // it works out where each dot is *wanted* and hands that to the body, which
@@ -456,20 +494,16 @@ export function KnowsYouKnowsAiSection({
     setDelivered(out > 0.88);
   };
 
-  // pinned: progress comes from the track itself, same as the showcase sections
-  usePinnedProgress(trackRef, pinned, applyProgress);
-  useMotionValueEvent(flowProgress, "change", (p) => {
-    if (!pinned) applyProgress(p);
-  });
-
   // reduced motion: skip the choreography, show the end state
   const showResult = reduced || delivered;
 
   return (
     <section className="ky-section bg-[#0a0a0a] py-[var(--section-pad)]">
-      {/* While pinned, the track supplies the scroll distance and the pane inside it
-          holds the headline and the diagram still until the choreography finishes. */}
-      <ScrollPin trackRef={trackRef} pinned={pinned} screens={2.1}>
+      {/* Never pinned now. The choreography runs on its own clock, so the section
+          has no reason to hold the viewport or to claim screens of scroll
+          distance — unpinned, this wrapper is a plain div. It stays because it
+          is what the diagram's geometry is measured against. */}
+      <ScrollPin trackRef={trackRef} pinned={false} screens={2.1}>
           <Container>
             <div className="grid grid-cols-12 gap-6">
               <div className="col-span-12 mx-auto max-w-[52ch] text-center">

@@ -1,4 +1,5 @@
 import { useEffect, useRef, type RefObject } from "react";
+import { attract } from "./attractors";
 import {
   Presence,
   frameTransform,
@@ -29,6 +30,12 @@ const WARM: [number, number, number] = [255, 146, 62];
 const LIGHT_EASE = 0.15;
 const FADE_EASE = 0.08;
 const DOT_SIZE = 14; // matches the hero dot on A/B
+
+/** How near a provider symbol has to be before the dot starts leaning into it,
+ *  and how much of the remaining gap it gives up at the strongest point. 0.75
+ *  peaks at roughly a fifth of the reach — plenty to feel, never a snap. */
+const MAGNET_REACH = 92;
+const MAGNET_STRENGTH = 0.75;
 
 // How the dot carries itself over each part of the hero. It is the same body
 // throughout — this only changes its posture, the way someone's walk changes
@@ -86,6 +93,10 @@ export function PixelMesh({ targetRef }: { targetRef: RefObject<HTMLElement | nu
 
     let width = 0;
     let height = 0;
+    // where the hero sits in the viewport, so attractors published in viewport
+    // coordinates can be compared against a pointer measured inside it
+    let hostLeft = 0;
+    let hostTop = 0;
     let particles: Particle[] = [];
 
     // The dot is a body with weight, not a follower: it notices the pointer,
@@ -211,6 +222,8 @@ export function PixelMesh({ targetRef }: { targetRef: RefObject<HTMLElement | nu
 
     const resize = () => {
       const rect = host.getBoundingClientRect();
+      hostLeft = rect.left;
+      hostTop = rect.top;
       const dpr = Math.min(window.devicePixelRatio || 1, 1.75);
       width = Math.max(1, Math.round(rect.width));
       height = Math.max(1, Math.round(rect.height));
@@ -224,10 +237,17 @@ export function PixelMesh({ targetRef }: { targetRef: RefObject<HTMLElement | nu
     };
 
     const tick = (now: number) => {
-      // Re-aiming every frame rather than only on pointermove is deliberate: it
-      // is what makes the dot keep going after the pointer has stopped, then
-      // come back and settle, instead of freezing the instant the input does.
-      presence.aim(tx, ty, now);
+      // The provider symbols catch the dot. It is aimed at the pointer, but if a
+      // symbol is close that aim gets bent toward it — so the dot leans into a
+      // logo as it passes and lets go once you carry on, the way a cursor snags
+      // on a button. The pull is on the *aim*, never on the body: the presence
+      // still crosses the gap in its own time, and being caught is one more
+      // thing it notices rather than a place it is teleported to.
+      //
+      // Attractors arrive in viewport coordinates, so they are shifted into the
+      // hero's own space here. See ./attractors.
+      const caught = attract(tx + hostLeft, ty + hostTop, MAGNET_REACH, MAGNET_STRENGTH);
+      presence.aim(caught.x - hostLeft, caught.y - hostTop, now);
       const body = presence.step(now);
       dx = body.x;
       dy = body.y;
@@ -255,6 +275,10 @@ export function PixelMesh({ targetRef }: { targetRef: RefObject<HTMLElement | nu
 
     const onMove = (event: PointerEvent) => {
       const rect = host.getBoundingClientRect();
+      // kept fresh here rather than only on resize: the hero moves under the
+      // viewport as the page scrolls, and this rect is already being read
+      hostLeft = rect.left;
+      hostTop = rect.top;
       tx = event.clientX - rect.left;
       ty = event.clientY - rect.top;
       if (!seeded) {

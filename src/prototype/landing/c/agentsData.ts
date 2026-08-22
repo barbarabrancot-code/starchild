@@ -1,70 +1,85 @@
 import type { TaskCard } from "../../data";
 
 // Version C, layer 2 — persistence. Three ways to hand Starchild work that keeps
-// happening. Deliberately plain language: none of the three is called an agent,
-// and none of them needs the visitor to know the word. The product view is where
-// "Agents" appears, so the term is learned from the thing rather than taught.
+// happening, each shown as an agent actually working: what it was asked once, what
+// it was connected to, what it has been doing since, and where it came back.
 //
-// Each example also names the tools and sources that agent works with. That is how
-// integrations show up here — inside a real job, never as a wall of logos.
+// The integrations are not decoration. Every tool named in the header turns up
+// again in the activity, doing something — that is the only way "connected to"
+// means anything rather than being a row of badges.
+//
+// Deliberately plain language: none of the three tabs is called an agent. The word
+// appears once, inside the product view, where it labels the thing being watched.
 
-export type AgentPanel =
-  | {
-      kind: "monitor";
-      agentName: string;
-      cadence: string;
-      /** what this agent is connected to and watching */
-      sources: string[];
-      checks: { time: string; text: string; hit?: boolean }[];
-      alert: { heading: string; title: string; detail: string };
-    }
-  | {
-      kind: "recurring";
-      agentName: string;
-      /** tools it pulls from before it runs */
-      uses: string[];
-      runs: string;
-      outputName: string;
-      output: { heading: string; items: { text: string; note: string }[] };
-    }
-  | {
-      kind: "config";
-      agentName: string;
-      fields: { label: string; value: string }[];
-      tools: string[];
-      status: string;
-    };
+/** No real marks exist for any of these, so the glyph says the category and the
+ *  name says the brand. A drawn approximation of someone's logo would be worse
+ *  than an honest generic one. */
+export type ToolKind =
+  | "flights"
+  | "search"
+  | "telegram"
+  | "mail"
+  | "calendar"
+  | "slack"
+  | "drive"
+  | "web";
 
-export type AgentExample = {
+export type Tool = { name: string; kind: ToolKind };
+
+export type AgentStory = {
   id: string;
+  /** the tab: a verb and an object, nothing longer */
   label: string;
-  blurb: string;
-  prompt: string;
-  panel: AgentPanel;
+  /** what the person said, once */
+  request: string;
+  agent: { name: string; cadence: string; tools: Tool[] };
+  /** what it has done since, oldest first. The last one is what it came back for. */
+  activity: { time: string; tool: Tool; action: string; result: string; hit?: boolean }[];
+  /** where it reached them — the point being that they did not have to come back */
+  delivery: {
+    app: Tool;
+    lead: string;
+    title: string;
+    figure: string;
+    detail: string;
+    cta: string;
+  };
   task: TaskCard;
 };
 
-export const AGENT_EXAMPLES: AgentExample[] = [
+const GOOGLE_FLIGHTS: Tool = { name: "Google Flights", kind: "flights" };
+const SKYSCANNER: Tool = { name: "Skyscanner", kind: "search" };
+const TELEGRAM: Tool = { name: "Telegram", kind: "telegram" };
+const GMAIL: Tool = { name: "Gmail", kind: "mail" };
+const CALENDAR: Tool = { name: "Google Calendar", kind: "calendar" };
+const SLACK: Tool = { name: "Slack", kind: "slack" };
+const DRIVE: Tool = { name: "Google Drive", kind: "drive" };
+const WEB: Tool = { name: "Web", kind: "web" };
+const EMAIL: Tool = { name: "Email", kind: "mail" };
+
+export const AGENT_STORIES: AgentStory[] = [
   {
-    id: "monitor",
-    label: "Keep an eye on something",
-    blurb: "Starchild can follow what changes and bring you what matters.",
-    prompt: "Let me know when flights to Tokyo drop below $700.",
-    panel: {
-      kind: "monitor",
-      agentName: "Tokyo flights",
-      cadence: "Checking every hour",
-      sources: ["Google Flights", "Skyscanner", "Airlines", "Fare alerts"],
-      checks: [
-        { time: "09:00", text: "Checked 6 airlines — cheapest $842" },
-        { time: "13:00", text: "Checked 6 airlines — cheapest $828" },
-        { time: "17:40", text: "Dropped below your $700", hit: true },
-      ],
-      alert: {
-        heading: "Worth your attention",
-        title: "Tokyo in October — $684 return",
-        detail: "Down from $828 this morning. Direct both ways, and it lands inside the dates you wanted.",
-      },
+    id: "watch",
+    label: "Watch something",
+    request: "Let me know when flights to Tokyo drop below $700.",
+    agent: {
+      name: "Tokyo flight watcher",
+      cadence: "Checks every hour",
+      tools: [GOOGLE_FLIGHTS, SKYSCANNER, TELEGRAM],
+    },
+    activity: [
+      { time: "9:00", tool: GOOGLE_FLIGHTS, action: "Checked Google Flights", result: "Cheapest fare: $842" },
+      { time: "10:00", tool: SKYSCANNER, action: "Checked Skyscanner", result: "Cheapest fare: $828" },
+      { time: "11:00", tool: GOOGLE_FLIGHTS, action: "Compared 6 airlines", result: "No match yet" },
+      { time: "12:00", tool: SKYSCANNER, action: "Found a fare below your target", result: "Tokyo — $684 return", hit: true },
+    ],
+    delivery: {
+      app: TELEGRAM,
+      lead: "Found a flight below $700.",
+      title: "Tokyo in October",
+      figure: "$684 return",
+      detail: "Direct both ways · matches your dates",
+      cta: "View flight",
     },
     task: {
       id: "agent-monitor",
@@ -74,24 +89,27 @@ export const AGENT_EXAMPLES: AgentExample[] = [
     },
   },
   {
-    id: "recurring",
-    label: "Take care of a routine",
-    blurb: "Let Starchild handle something you do again and again.",
-    prompt: "Every Sunday, help me plan the week ahead.",
-    panel: {
-      kind: "recurring",
-      agentName: "Week ahead",
-      uses: ["Calendar", "Gmail", "Notes", "Reminders"],
-      runs: "Every Sunday at 6:00 PM",
-      outputName: "Plan for the week",
-      output: {
-        heading: "This week",
-        items: [
-          { text: "Thursday is your only clear day", note: "the one to protect" },
-          { text: "Two deadlines both land on Friday", note: "start the smaller one Tuesday" },
-          { text: "Dentist still isn't booked", note: "third week it's slipped" },
-        ],
-      },
+    id: "routine",
+    label: "Run a routine",
+    request: "Every Sunday, help me plan the week ahead.",
+    agent: {
+      name: "Week ahead",
+      cadence: "Runs every Sunday",
+      tools: [CALENDAR, GMAIL, SLACK],
+    },
+    activity: [
+      { time: "18:00", tool: CALENDAR, action: "Read your calendar", result: "12 events, 3 of them clash" },
+      { time: "18:01", tool: GMAIL, action: "Scanned your inbox", result: "4 threads still need you" },
+      { time: "18:02", tool: CALENDAR, action: "Checked your deadlines", result: "Two both land on Friday" },
+      { time: "18:03", tool: SLACK, action: "Put the week together", result: "One clear day: Thursday", hit: true },
+    ],
+    delivery: {
+      app: SLACK,
+      lead: "Your week is ready.",
+      title: "Thursday is your only clear day",
+      figure: "3 things to move",
+      detail: "Both deadlines land on Friday · start the smaller one Tuesday",
+      cta: "Open the plan",
     },
     task: {
       id: "agent-recurring",
@@ -101,20 +119,27 @@ export const AGENT_EXAMPLES: AgentExample[] = [
     },
   },
   {
-    id: "specialist",
+    id: "job",
     label: "Give it a job",
-    blurb: "Tell Starchild what you want done, what matters, and when to step in.",
-    prompt: "Plan our trip in October. You know the budget and the dates — check with me before booking anything.",
-    panel: {
-      kind: "config",
-      agentName: "October trip",
-      fields: [
-        { label: "The job", value: "Plan the trip end to end" },
-        { label: "What matters", value: "Budget, the dates, who's coming" },
-        { label: "When to step in", value: "Ask me before booking anything" },
-      ],
-      tools: ["Web", "Gmail", "Calendar", "Maps"],
-      status: "Active · first plan ready tomorrow",
+    request: "Plan our trip in October. Check with me before booking anything.",
+    agent: {
+      name: "October trip",
+      cadence: "Works in the background",
+      tools: [WEB, DRIVE, EMAIL],
+    },
+    activity: [
+      { time: "Mon", tool: DRIVE, action: "Read your trip notes", result: "Dates and budget confirmed" },
+      { time: "Tue", tool: WEB, action: "Compared routes", result: "40 options, 6 inside budget" },
+      { time: "Wed", tool: WEB, action: "Checked hotels for those dates", result: "3 that fit" },
+      { time: "Thu", tool: EMAIL, action: "Put three options together", result: "Nothing booked yet", hit: true },
+    ],
+    delivery: {
+      app: EMAIL,
+      lead: "Three options, all inside budget.",
+      title: "Best one leaves on the 14th",
+      figure: "$210 saved",
+      detail: "Nothing is booked — say the word and I'll confirm",
+      cta: "See the options",
     },
     task: {
       id: "agent-specialist",
