@@ -36,6 +36,9 @@ export type HeroIntent = {
   label: string;
   icon: IconComponent;
   badge?: string;
+  /** One short line, shown on hover. For a chip whose label alone does not say
+   *  what it does — the picker renders nothing extra for the chips without it. */
+  hint?: string;
   tasks: TaskCard[];
 };
 

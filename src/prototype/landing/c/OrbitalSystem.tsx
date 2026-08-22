@@ -317,20 +317,20 @@ export function OrbitalSystem() {
           transition: transform .5s cubic-bezier(.16, 1, .3, 1);
         }
 
-        /* hairlines. Two values darker than the faintest thing the hero already
-           draws, so they read as structure rather than as an element */
+        /* hairlines. Bright enough to trace the whole path against the near-black
+           field, but still thin enough to read as structure, not as an element */
         .orb-ring {
           position: absolute;
           top: 50%;
           left: 50%;
           transform: translate(-50%, -50%);
-          border: 1px solid rgba(255, 255, 255, .11);
+          border: 1px solid rgba(255, 255, 255, .2);
           border-radius: 50%;
           transition: border-color .45s ease;
         }
         /* still a step down while a provider is being read, so the paths recede
            behind the one thing being looked at — just from a brighter start */
-        .orb-stage[data-active] .orb-ring { border-color: rgba(255, 255, 255, .07); }
+        .orb-stage[data-active] .orb-ring { border-color: rgba(255, 255, 255, .12); }
 
         .orb-link {
           position: absolute;

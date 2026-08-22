@@ -23,30 +23,46 @@ export function IntentPicker({
   return (
     <div className={align === "center" ? "flex w-full flex-col items-center" : undefined}>
       <div className={`flex flex-wrap gap-2.5 ${justify}`}>
-        {intents.map(({ id, label, icon: Icon, badge }) => {
+        {intents.map(({ id, label, icon: Icon, badge, hint }) => {
           const isOpen = openIntent === id;
           return (
-            // data-presence tells the hero dot it is over an option being weighed
-            // up rather than over open space — see landing/c/PixelMesh
-            <button
-              key={id}
-              type="button"
-              onClick={() => setOpenIntent(isOpen ? null : id)}
-              aria-expanded={isOpen}
-              data-presence="chip"
-              className={`relative flex items-center gap-2 rounded-full px-4 py-2.5 text-[13px] transition-colors ${
-                isOpen ? "bg-white text-neutral-900" : "bg-white/[0.07] text-[var(--color-text-body)] hover:bg-white/[0.13]"
-              }`}
-              style={{ fontFamily: "var(--font-google-sans)" }}
-            >
-              <Icon className={`size-4 ${isOpen ? "text-neutral-500" : "text-white/55"}`} />
-              {label}
-              {badge && (
-                <span className="absolute -top-2 -right-1.5 rounded-full bg-[#f84600] px-1.5 py-[1.5px] text-[8.5px] font-semibold tracking-wide text-white">
-                  {badge}
+            // The hint lives outside the button so it stays a description and
+            // does not get swept into the button's own accessible name.
+            <div key={id} className="group relative">
+              {/* data-presence tells the hero dot it is over an option being
+                  weighed up rather than over open space — see landing/c/PixelMesh */}
+              <button
+                type="button"
+                onClick={() => setOpenIntent(isOpen ? null : id)}
+                aria-expanded={isOpen}
+                aria-describedby={hint ? `${id}-hint` : undefined}
+                data-presence="chip"
+                className={`relative flex items-center gap-2 rounded-full px-4 py-2.5 text-[13px] transition-colors ${
+                  isOpen ? "bg-white text-neutral-900" : "bg-white/[0.07] text-[var(--color-text-body)] hover:bg-white/[0.13]"
+                }`}
+                style={{ fontFamily: "var(--font-google-sans)" }}
+              >
+                <Icon className={`size-4 ${isOpen ? "text-neutral-500" : "text-white/55"}`} />
+                {label}
+                {badge && (
+                  <span className="absolute -top-2 -right-1.5 rounded-full bg-[#f84600] px-1.5 py-[1.5px] text-[8.5px] font-semibold tracking-wide text-white">
+                    {badge}
+                  </span>
+                )}
+              </button>
+              {/* Above the chip: the task cards open underneath it, so a tooltip
+                  down there would be covered the moment the chip is pressed. */}
+              {hint && (
+                <span
+                  id={`${id}-hint`}
+                  role="tooltip"
+                  className="pointer-events-none absolute bottom-[calc(100%+9px)] left-1/2 -translate-x-1/2 translate-y-1 rounded-full border border-white/12 bg-[#161616] px-3 py-1.5 text-[11.5px] whitespace-nowrap text-white/65 opacity-0 transition-[opacity,transform] duration-200 ease-out group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:translate-y-0 group-focus-within:opacity-100"
+                  style={{ fontFamily: "var(--font-google-sans)" }}
+                >
+                  {hint}
                 </span>
               )}
-            </button>
+            </div>
           );
         })}
       </div>

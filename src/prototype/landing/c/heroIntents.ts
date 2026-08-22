@@ -1,10 +1,11 @@
-import { SparkleIcon, GradCapIcon, CodeIcon, BriefcaseIcon, FolderIcon } from "../../icons";
+import { SparkleIcon, GradCapIcon, CodeIcon, BriefcaseIcon, RunDotIcon } from "../../icons";
 import type { HeroIntent } from "../../data";
 
 // Version C's hero chips. Same shape and behaviour as the shared HERO_INTENTS —
 // chip opens ready-made task cards — but cut for a general visitor: no Trade and
-// no Monetize, and no "NEW" badge on anything. They echo the six cards further
-// down the page, so the chip you press and the card you scroll to agree.
+// no Monetize, and no badge on anything. They echo the six cards further down the
+// page. The last one is the exception: "Run for me" is the delegation entry
+// point, and has no card of its own yet.
 export const HERO_INTENTS_C: HeroIntent[] = [
   {
     id: "talk",
@@ -83,21 +84,22 @@ export const HERO_INTENTS_C: HeroIntent[] = [
     ],
   },
   {
-    id: "organize",
-    label: "Organize",
-    icon: FolderIcon,
+    id: "run",
+    label: "Run for me",
+    icon: RunDotIcon,
+    hint: "Keeps working after you leave",
     tasks: [
       {
-        id: "organize-work",
-        label: "Get on top of things",
-        basePrompt: "Help me bring some structure to everything I've got going on.",
-        question: "What do you need to get on top of?",
+        id: "run-task",
+        label: "Take something off my plate",
+        basePrompt: "Take this off my plate and run it end to end — come back to me when it's done.",
+        question: "What should I take on?",
       },
       {
-        id: "organize-project",
-        label: "Bring order to a project",
-        basePrompt: "Take this project and give it a structure I can actually follow.",
-        question: "What's the project?",
+        id: "run-recurring",
+        label: "Keep something running",
+        basePrompt: "Set this up to run on its own and keep it current without me having to ask.",
+        question: "What should keep running?",
       },
     ],
   },

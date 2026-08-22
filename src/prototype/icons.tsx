@@ -206,6 +206,28 @@ export function BoltIcon({ className }: IconProps) {
   );
 }
 
+// The brand dot, small enough to sit in a chip. Same orange and the same soft
+// halo the hero dot carries, so "Run for me" reads as the thing that is already
+// alive and moving on the page rather than as one more outlined glyph. Colour is
+// set explicitly on purpose — it must not inherit the chip's text colour. The
+// breath and the hover lift are in index.css, next to the other .sd-* motion.
+export function RunDotIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className ?? "size-3.5"}>
+      <defs>
+        <radialGradient id="run-dot-halo">
+          <stop offset="35%" stopColor="#f84600" stopOpacity="0.5" />
+          <stop offset="100%" stopColor="#f84600" stopOpacity="0" />
+        </radialGradient>
+      </defs>
+      <g className="run-dot">
+        <circle className="run-dot-glow" cx="12" cy="12" r="9" fill="url(#run-dot-halo)" />
+        <circle className="run-dot-core" cx="12" cy="12" r="3.4" fill="var(--color-orange-400)" />
+      </g>
+    </svg>
+  );
+}
+
 export function ActivityIcon({ className }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" fill="none" className={className ?? "size-3.5"}>

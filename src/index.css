@@ -171,6 +171,42 @@ body {
   .sd-halo { transition: opacity .3s ease; }
 }
 
+/* The same mark shrunk into a chip — see RunDotIcon. Two transforms on two
+   elements, because one element cannot both run the breath and take the hover
+   lift: the animation would win and the hover would never land. */
+
+.run-dot,
+.run-dot-core,
+.run-dot-glow {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+/* Long and shallow on purpose. It should be noticed only after the chip has
+   been looked at for a moment, never out of the corner of the eye. */
+.run-dot-core { animation: run-dot-breath 3.8s ease-in-out infinite; }
+.run-dot-glow { animation: run-dot-glow 3.8s ease-in-out infinite; }
+
+/* and it answers when the chip is actually pointed at */
+.run-dot { transition: transform .32s cubic-bezier(.16, 1, .3, 1); }
+button:hover .run-dot { transform: scale(1.18); }
+button:hover .run-dot-glow { animation-duration: 2.2s; }
+
+@keyframes run-dot-breath {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.09); }
+}
+
+@keyframes run-dot-glow {
+  0%, 100% { opacity: .5; }
+  50% { opacity: .85; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .run-dot-core, .run-dot-glow { animation: none; }
+  .run-dot-glow { opacity: .6; }
+}
+
 /* Starchild at full size — the product's empty screen. Same grammar as .sd-*,
    scaled up; see src/prototype/presence/PresenceOrb.tsx. */
 
