@@ -58,37 +58,6 @@ export function TalkArt({ className = "" }: ArtProps) {
   );
 }
 
-// Think — a field of possible moves with one route threaded through it. Hover
-// draws the route, which is what thinking something through actually looks like.
-export function ThinkArt({ className = "" }: ArtProps) {
-  const columns = [
-    { x: 26, ys: [26, 48, 70] },
-    { x: 80, ys: [20, 48, 76] },
-    { x: 134, ys: [32, 62] },
-  ];
-  const route = "M26 48 L80 20 L134 32";
-  return (
-    <svg viewBox={BOX} className={`cg-svg cg-svg--think ${className}`} fill="none" aria-hidden="true">
-      {/* every link that was on the table */}
-      {columns[0].ys.map((y1) =>
-        columns[1].ys.map((y2) => (
-          <line key={`${y1}-${y2}`} x1="26" y1={y1} x2="80" y2={y2} stroke={faint} strokeWidth="1" />
-        )),
-      )}
-      {columns[1].ys.map((y1) =>
-        columns[2].ys.map((y2) => (
-          <line key={`b${y1}-${y2}`} x1="80" y1={y1} x2="134" y2={y2} stroke={faint} strokeWidth="1" />
-        )),
-      )}
-      <path className="cg-route" d={route} stroke="var(--color-primary)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-      {columns.map(({ x, ys }) =>
-        ys.map((y) => <circle key={`${x}-${y}`} cx={x} cy={y} r="2.2" fill="rgba(255,255,255,.34)" />),
-      )}
-      <circle cx="134" cy="32" r="3" fill="var(--color-primary)" />
-    </svg>
-  );
-}
-
 // Work — scattered inputs settling into an ordered sequence. On hover the ragged
 // left edges align, which is the whole idea of the card in one movement.
 export function WorkArt({ className = "" }: ArtProps) {
@@ -154,6 +123,25 @@ export function CreateArt({ className = "" }: ArtProps) {
         <path d="M52 38 L80 50 L108 38 L80 26 Z" stroke="var(--color-primary)" strokeWidth="1.3" />
       </g>
       <circle cx="80" cy="26" r="2.2" fill="var(--color-primary)" />
+    </svg>
+  );
+}
+
+// Run for me — a closed track with the dot already some way around it. Hover
+// carries it most of the way home. The loop is the point: it is the one card
+// whose subject does not stop when you look away.
+export function RunArt({ className = "" }: ArtProps) {
+  return (
+    <svg viewBox={BOX} className={`cg-svg cg-svg--run ${className}`} fill="none" aria-hidden="true">
+      {/* rotated so both the arc and the dot start at the top of the track */}
+      <g className="cg-run">
+        <circle cx="80" cy="48" r="28" stroke={faint} strokeWidth="1" />
+        <circle className="cg-run-arc" cx="80" cy="48" r="28" stroke="var(--color-primary)" strokeWidth="1.4" />
+        <g className="cg-run-dot">
+          <circle cx="108" cy="48" r="3.2" fill="var(--color-primary)" />
+        </g>
+      </g>
+      <line x1="80" y1="48" x2="80" y2="20" stroke={faint} strokeWidth="1" />
     </svg>
   );
 }

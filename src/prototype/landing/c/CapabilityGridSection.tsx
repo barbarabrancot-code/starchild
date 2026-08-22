@@ -7,8 +7,8 @@ import {
   CreateArt,
   ExploreArt,
   OrganizeArt,
+  RunArt,
   TalkArt,
-  ThinkArt,
   WorkArt,
 } from "./capabilityArt";
 
@@ -17,6 +17,11 @@ import {
 // Where B leads with builder/market territory (Build, Trade, Monetize), C is cut
 // for a general visitor: the six are things anyone already does in a day.
 // Every card is still a real entry point, so clicking one drops into Guest Mode.
+//
+// The first five are the hero's chips in the hero's order, down to the task each
+// one opens — press a chip or scroll to its card and you land in the same place.
+// Organize is the sixth: no chip, because the hero already carries as many as it
+// can, but it is a job of its own and not covered by the other five.
 type Capability = {
   id: string;
   tag: string;
@@ -41,16 +46,29 @@ const CAPABILITIES: Capability[] = [
     },
   },
   {
-    id: "think",
-    tag: "Decisions",
-    title: "Think",
-    copy: "Work through ideas, questions, and decisions together.",
-    art: ThinkArt,
+    id: "research",
+    tag: "Curiosity",
+    title: "Research",
+    copy: "Look into things properly and come back with a real answer.",
+    art: ExploreArt,
     task: {
-      id: "think-decision",
-      label: "Think through a decision",
-      basePrompt: "Help me think through this decision and show me what I might be missing.",
-      question: "What are you weighing up?",
+      id: "research-topic",
+      label: "Look into something",
+      basePrompt: "Look into this properly and come back with a real answer, not a pile of links.",
+      question: "What should I dig into?",
+    },
+  },
+  {
+    id: "build",
+    tag: "Make",
+    title: "Build",
+    copy: "Turn an idea into something real.",
+    art: CreateArt,
+    task: {
+      id: "build-idea",
+      label: "Turn an idea into something real",
+      basePrompt: "Turn this idea into something real I can actually use.",
+      question: "Tell me the idea — a sentence is enough.",
     },
   },
   {
@@ -67,29 +85,16 @@ const CAPABILITIES: Capability[] = [
     },
   },
   {
-    id: "explore",
-    tag: "Curiosity",
-    title: "Explore",
-    copy: "Learn, compare, and make sense of things.",
-    art: ExploreArt,
+    id: "run",
+    tag: "Autonomy",
+    title: "Run for me",
+    copy: "Hand something over and it keeps working after you leave.",
+    art: RunArt,
     task: {
-      id: "explore-topic",
-      label: "Make sense of something",
-      basePrompt: "Help me understand this properly — what matters, what doesn't, and why.",
-      question: "What do you want to get to the bottom of?",
-    },
-  },
-  {
-    id: "create",
-    tag: "Make",
-    title: "Create",
-    copy: "Turn an idea into something real.",
-    art: CreateArt,
-    task: {
-      id: "create-idea",
-      label: "Turn an idea into something real",
-      basePrompt: "Turn this idea into something real I can actually use.",
-      question: "Tell me the idea — a sentence is enough.",
+      id: "run-task",
+      label: "Take something off my plate",
+      basePrompt: "Take this off my plate and run it end to end — come back to me when it's done.",
+      question: "What should I take on?",
     },
   },
   {
@@ -233,12 +238,21 @@ export function CapabilityGridSection({ onStartTask }: { onStartTask: (task: Tas
         }
         .cg-card:hover .cg-say { transform: scaleX(1); opacity: 1; }
 
-        /* Think: the route through the options draws itself */
-        .cg-route {
-          stroke-dasharray: 200; stroke-dashoffset: 200;
-          transition: stroke-dashoffset .8s cubic-bezier(.16,1,.3,1);
+        /* Run for me: the dot carries on round the track and the covered arc
+           follows it. Both are driven off the same angle — 90deg at rest, 315deg
+           on hover — so the arc always ends exactly under the dot. The track is
+           2*pi*28 = 175.9 long, hence the dasharray. */
+        .cg-run { transform-origin: 80px 48px; transform: rotate(-90deg); }
+        .cg-run-arc {
+          stroke-dasharray: 175.9; stroke-dashoffset: 131.9;
+          transition: stroke-dashoffset .9s cubic-bezier(.16,1,.3,1);
         }
-        .cg-card:hover .cg-route { stroke-dashoffset: 0; }
+        .cg-card:hover .cg-run-arc { stroke-dashoffset: 22; }
+        .cg-run-dot {
+          transform-origin: 80px 48px; transform: rotate(90deg);
+          transition: transform .9s cubic-bezier(.16,1,.3,1);
+        }
+        .cg-card:hover .cg-run-dot { transform: rotate(315deg); }
 
         /* Work: ragged input edges snap into an ordered column */
         .cg-row {
@@ -269,7 +283,7 @@ export function CapabilityGridSection({ onStartTask }: { onStartTask: (task: Tas
         @media (prefers-reduced-motion: reduce) {
           .cg-row, .cg-block { transform: none; }
           .cg-say { transform: none; opacity: 1; }
-          .cg-route { stroke-dasharray: none; stroke-dashoffset: 0; }
+          .cg-run-arc, .cg-run-dot { transition: none; }
           .cg-rise, .cg-node, .cg-arrow, .cg-say, .cg-block { transition: none; }
         }
       `}</style>
