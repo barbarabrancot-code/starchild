@@ -12,6 +12,7 @@ import { ConductorModePage } from "./product/ConductorModePage";
 import { AgentsWorkspace } from "./agents/AgentsWorkspace";
 import { ConnectorsPage } from "./agents/ConnectorsPage";
 import { AgentsProvider } from "./agents/store";
+import type { SavedChat } from "./savedChats";
 import { ProductSidebar } from "./ProductSidebar";
 import { MarketplaceModal } from "./MarketplaceModal";
 import { SignupGate } from "./SignupGate";
@@ -70,10 +71,14 @@ export function ConductorApp() {
   const [openingMessage, setOpeningMessage] = useState<string | undefined>();
   const [task, setTask] = useState<TaskCard | undefined>();
   const [isGuest, setIsGuest] = useState(false);
-  // Whether the account was created from inside the guest chat. The first meeting
-  // reassures those users that what they were doing survives; someone who signed
-  // up straight from the homepage has nothing to be reassured about.
-  const [fromGuest, setFromGuest] = useState(false);
+  /*
+    There is no longer a "came from guest" branch to track. The meeting used to
+    reassure those users that their work survived; now the work is simply there,
+    at the top of their conversations, before the meeting has said anything. A
+    fact on the screen beats a promise about one, and it needed no state.
+  */
+  /** what they did as a guest, kept so the account opens with it already in place */
+  const [guestChats, setGuestChats] = useState<SavedChat[]>([]);
   const [marketplaceOpen, setMarketplaceOpen] = useState(false);
   /** Which product area the chat screen sits in once signed in. Set when a task is
    *  picked, so someone who asked for something to be run lands among the agents
@@ -153,13 +158,11 @@ export function ConductorApp() {
   // Log in and Sign up both land on the same auth screen for now — it carries a
   // "Already have an account? Log in" link. Split them when real auth exists.
   function goToAuth() {
-    setFromGuest(false);
     setScreen("signup");
   }
 
   // the same screen, reached from the guest chat rather than from a header
   function goToAuthFromChat() {
-    setFromGuest(isGuest);
     setScreen("signup");
   }
 
@@ -310,13 +313,14 @@ export function ConductorApp() {
           openingMessage={openingMessage}
           task={task}
           isGuest={isGuest}
-          cameFromGuest={fromGuest}
           // straight to the working product: the meeting is part of signing up,
           // and this link starts after that
           skipMeeting={signedInFromUrl}
           // Going to see it is a move between areas, not a move of the conversation:
           // the chat is still there, exactly as it was, when they come back.
           onOpenAgent={(id) => { setFocusAgent(id); setArea("agents"); }}
+          onGuestWork={(chat) => setGuestChats((prev) => [chat, ...prev])}
+          extraConversations={guestChats}
           railed={railed}
           onToggleRail={() => setRailed((v) => !v)}
         />

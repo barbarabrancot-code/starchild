@@ -44,15 +44,7 @@ const REST: Locked[] = [
   { label: "Search conversations", Icon: SearchIcon },
 ];
 
-export function GuestSidebar({
-  tasksRemaining,
-  onLockedFeature,
-}: {
-  tasksRemaining: number;
-  onLockedFeature: () => void;
-}) {
-  const left = Math.max(tasksRemaining, 0);
-
+export function GuestSidebar({ onLockedFeature }: { onLockedFeature: () => void }) {
   const lockedRow = ({ label, Icon }: Locked) => (
     <button
       key={label}
@@ -109,8 +101,10 @@ export function GuestSidebar({
 
       <nav className="flex flex-col">{REST.map(lockedRow)}</nav>
 
-      {/* The count is the pressure and the button is the release, so they belong to
-          each other rather than sitting in two places. */}
+      {/* No countdown. A number ticking down turns a look around into a resource
+          being spent, and someone counting what is left has stopped paying
+          attention to what the thing does. The limit still exists and still says so
+          when it is reached — it just does not stand over the whole visit. */}
       <div className="mt-auto rounded-xl border border-white/[0.08] bg-white/[0.03] p-3">
         <p
           className="text-[10.5px] font-semibold tracking-[0.12em] text-[#f84600] uppercase"
@@ -118,12 +112,20 @@ export function GuestSidebar({
         >
           Guest mode
         </p>
+        {/* What this is, then what an account adds. Two sentences rather than one,
+            because they are answering different questions and someone skimming
+            should be able to stop after the first. */}
         <p
-          className="mt-1.5 text-[12.5px] leading-relaxed text-white/50"
+          className="mt-1.5 text-[13px] leading-relaxed text-white/75"
           style={{ fontFamily: "var(--font-google-sans)" }}
         >
-          {left} interaction{left === 1 ? "" : "s"} left. An account keeps what Starchild learns about
-          you, and unlocks the rest.
+          Try Starchild without signing up.
+        </p>
+        <p
+          className="mt-1.5 text-[12.5px] leading-relaxed text-white/45"
+          style={{ fontFamily: "var(--font-google-sans)" }}
+        >
+          Create an account to save your chats, build memory, and create agents.
         </p>
         <button
           type="button"

@@ -20,7 +20,7 @@ import type { ConnectorId } from "./agents/connectors";
 import { SAVED, type SavedChat } from "./savedChats";
 import { SavedThread } from "./SavedThread";
 import { MarketplaceIntroPopover } from "./onboarding/MarketplaceIntroPopover";
-import { AutomateIntroPopover } from "./onboarding/AutomateIntroPopover";
+import { AgentsIntroPopover } from "./onboarding/AgentsIntroPopover";
 import {
   ArrowLeftIcon,
   PlusIcon,
@@ -110,14 +110,19 @@ export function ChatScreen({
   openingMessage,
   task,
   isGuest = false,
-  cameFromGuest = false,
   area = "chat",
   onSwitchArea,
   onOpenAgent,
   railed = false,
   onToggleRail,
   skipMeeting = false,
+  onGuestWork,
+  extraConversations = [],
 }: {
+  /** a guest asked for something — the app keeps it so the account can have it */
+  onGuestWork?: (chat: SavedChat) => void;
+  /** conversations this session produced, ahead of the seeded history */
+  extraConversations?: SavedChat[];
   /** opened at the signed-in app rather than walked to — see ConductorApp */
   skipMeeting?: boolean;
   /** an agent was made from this conversation and the person wants to go and see it */
@@ -144,8 +149,6 @@ export function ChatScreen({
   /** Came from a hero task card: Starchild asks one question, then runs with this context. */
   task?: TaskCard;
   isGuest?: boolean;
-  /** signed up from inside the guest chat — the meeting says their work survived */
-  cameFromGuest?: boolean;
 }) {
   const [message, setMessage] = useState<string | null>(initialMessage ?? null);
   const [scenario, setScenario] = useState<Scenario | null>(initialMessage ? pickScenario(initialMessage) : null);
@@ -162,7 +165,7 @@ export function ChatScreen({
   // told them by what, or that there's a Marketplace behind the sidebar.
   // How a single answer is made → what other people have made → work that keeps
   // happening on its own. Three notes, in the order they become useful.
-  const [intro, setIntro] = useState<"conductor" | "marketplace" | "automate" | null>(null);
+  const [intro, setIntro] = useState<"conductor" | "marketplace" | "agents" | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -259,6 +262,43 @@ export function ChatScreen({
     setMade(agent);
   }
 
+  /**
+   * Handed up, not kept here. A guest who signs up gets a new ChatScreen, so
+   * anything this one is holding goes with it — and the promise being made on the
+   * way out is that their work survives.
+   */
+  function keepGuestWork(said: string) {
+    onGuestWork?.({
+      id: `guest-${Date.now()}`,
+      title: said.length > 38 ? `${said.slice(0, 38).trimEnd()}…` : said,
+      when: "Just now",
+      turns: [
+        { who: "you", text: said },
+        {
+          who: "ai",
+          text: "Here's where I'd start. Three things are holding this up, and the rest is noise until they're settled.",
+        },
+      ],
+    });
+  }
+
+  // A guest who arrived from the homepage composer never went through choose() —
+  // their message came in as a prop and was on screen before this component had a
+  // say. Without this, the one conversation a guest is most likely to have is the
+  // one that would not have been kept.
+  //
+  // Latched, because StrictMode runs mount effects twice in development and this
+  // one appends to a list — without the latch the same conversation is filed
+  // under two ids, which looks exactly like a bug in the feature it is
+  // demonstrating.
+  const kept = useRef(false);
+  useEffect(() => {
+    if (kept.current || !guest || !initialMessage) return;
+    kept.current = true;
+    keepGuestWork(initialMessage.trim());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   function openGate(heading: string, sub: string) {
     setGate({ heading, sub });
   }
@@ -271,8 +311,6 @@ export function ChatScreen({
   // The first authenticated visit opens on the meeting instead of a blank chat.
   // It ends by handing back an opening line — or nothing at all, if they skipped.
   const meeting = useFirstMeeting({
-    task: guest ? undefined : task,
-    fromGuest: cameFromGuest,
     onDone: ({ topic, tone, opening: next }) => {
       onLearned?.({ topic, tone });
       setMeetingOver(true);
@@ -311,6 +349,8 @@ export function ChatScreen({
     // standing context is what actually routes the work — their reply alone wouldn't.
     const full = activeTask ? `${activeTask.basePrompt} ${trimmed}` : trimmed;
     setScenario(pickScenario(full));
+
+    if (guest) keepGuestWork(trimmed);
     // Read once, on send. Guest Mode has no account to connect anything to and no
     // Agents area to put anything in, so it reads nothing at all.
     if (!guest) {
@@ -439,7 +479,13 @@ export function ChatScreen({
               ? "Answer however you like…"
               : atHome
                 ? "Ask me anything…"
-                : "Ask anything, or pick one above"
+                : guest && message === null
+                  ? // The three shapes a first message can take, said inside the box
+                    // that takes it. As a line of its own it was a caption nobody
+                    // needed; in here it is the answer to "like what?" at the moment
+                    // the question comes up, and it leaves when they start typing.
+                    "Ask, explore, or hand something over."
+                  : "Ask anything, or pick one above"
         }
         className="w-full bg-transparent text-[14.5px] text-white placeholder:text-white/35 focus:outline-none"
         style={{ fontFamily: "var(--font-google-sans)" }}
@@ -495,7 +541,6 @@ export function ChatScreen({
     <div className="relative flex h-screen overflow-hidden bg-[#0a0a0a]">
       {guest ? (
         <GuestSidebar
-          tasksRemaining={tasksRemaining}
           onLockedFeature={() => onRequestSignup?.()}
         />
       ) : (
@@ -506,7 +551,7 @@ export function ChatScreen({
           onToggleCollapsed={onToggleRail}
           onNewChat={newChat}
           onOpenMarketplace={onOpenMarketplace}
-          conversations={SAVED}
+          conversations={[...extraConversations, ...SAVED]}
           openConversation={reading?.id}
           onOpenConversation={openSaved}
           intro={
@@ -522,16 +567,22 @@ export function ChatScreen({
                         onOpenMarketplace();
                       }}
                       // dismissing it hands over to the last note
-                      onClose={() => setIntro("automate")}
+                      onClose={() => setIntro("agents")}
                     />
                   ),
                 }
-              : intro === "automate" && !guest
+              : intro === "agents" && !guest
                 ? {
-                    label: "Work",
+                    label: "Agents",
                     node: (
-                      <AutomateIntroPopover
-                        onExplore={() => setIntro(null)}
+                      <AgentsIntroPopover
+                        // going there ends the run, the same way exploring the
+                        // Marketplace does: someone who has arrived is no longer
+                        // being introduced to anything
+                        onOpen={() => {
+                          setIntro(null);
+                          onSwitchArea?.("agents");
+                        }}
                         onClose={() => setIntro(null)}
                       />
                     ),
@@ -574,11 +625,15 @@ export function ChatScreen({
             >
               <ArrowLeftIcon className="size-4" />
             </button>
+            {/* Where you are, not what routed the answer. Conductor Mode is a thing
+                that happens to a message and it has its own label on the composer;
+                up here it was answering a question nobody asked, while the one
+                someone would ask — why does this look cut down — went unanswered. */}
             <span
               className="text-[13.5px] font-medium text-white/55"
               style={{ fontFamily: "var(--font-google-sans)" }}
             >
-              Conductor Mode
+              Guest mode
             </span>
 
             {/* same pair as the site header — a guest can create the account from
@@ -650,7 +705,7 @@ export function ChatScreen({
               empty-screen one. */}
           {message === null && !reading ? (
             <div className="flex min-h-full flex-col items-center justify-center gap-6 px-5 py-10">
-              {opening ? (
+              {opening && !guest ? (
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -678,20 +733,49 @@ export function ChatScreen({
                   </div>
                 </motion.div>
               ) : guest ? (
-                // same picker as the hero: the visitor keeps choosing where they left off
+                // The same screen an account holder gets, with a different thing to
+                // say. A visitor who is shown a cut-down version of the empty state
+                // has been told the product is cut down before they have used it —
+                // and Guest Mode's argument is the opposite: this is the real thing,
+                // you just have not kept it yet.
+                //
+                // Arriving from a suggestion on the homepage lands here too, on the
+                // same screen, with the choice carried in: the label of what they
+                // picked, and Starchild's one question about it in place of the
+                // standing invitation. Dropping them somewhere that looked
+                // different would read as having left the product rather than
+                // having gone one step into it.
                 <motion.div
-                  initial={{ opacity: 0, y: 8 }}
+                  key={opening ? "asked" : "open"}
+                  initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                  className="w-full max-w-[620px]"
+                  transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+                  className="flex flex-col items-center"
                 >
-                  <IntentPicker onStartTask={startTask} align="center" intents={intents} />
+                  <PresenceOrb state={value.trim() ? "listening" : "resting"} size={124} />
+
+                  {/* No label above the question. The question is already about the
+                      thing they picked, so the label was restating a choice they
+                      had just made — and doing it in the loudest colour on the
+                      screen, above the sentence that actually needs answering.
+
+                      Not "let's get to work": nobody arrives here with work, and
+                      being told to get to it is the wrong thing to hear on a first
+                      visit. This asks for whatever they already have — or, if they
+                      have already said what kind of thing it is, for the one detail
+                      that is still missing. */}
+                  <h1
+                    className="mt-9 max-w-[18ch] text-center text-[34px] leading-[1.15] font-semibold text-white"
+                    style={{ fontFamily: "var(--font-google-sans)" }}
+                  >
+                    {opening ?? <>Start with whatever&rsquo;s on your mind.</>}
+                  </h1>
                 </motion.div>
               ) : meetingOpen ? (
                 // First authenticated entry: Starchild is already there. No empty
                 // box, no setup screen — the onboarding is this conversation, and
                 // it can be walked past in one click.
-                <FirstMeeting meeting={meeting} fromGuest={cameFromGuest} />
+                <FirstMeeting meeting={meeting} />
               ) : (
                 // Starchild itself, at rest and waiting. The whole screen is one
                 // question, so there is nothing to read before starting.
@@ -716,6 +800,26 @@ export function ChatScreen({
               )}
 
               {!pinComposer && composerBox}
+
+              {/* Under the field, not over it. Above, they were the first thing on
+                  the screen and read as the only way in — a menu you had to pick
+                  from. Below, the box is the offer and they are the shortcut for
+                  someone who would rather not think of one.
+
+                  And gone entirely once one has been picked on the homepage. They
+                  are the question "what kind of thing?", and re-offering it under
+                  Starchild's follow-up would make the answer look undecided — as
+                  though the choice already made had not counted. */}
+              {!pinComposer && guest && !activeTask && (
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.45, delay: 0.12, ease: [0.16, 1, 0.3, 1] }}
+                  className="w-full max-w-[620px]"
+                >
+                  <IntentPicker onStartTask={startTask} align="center" intents={intents} />
+                </motion.div>
+              )}
 
               {!pinComposer && !guest && (
                 <p

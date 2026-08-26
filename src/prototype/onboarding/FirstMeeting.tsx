@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { StarchildDot, type DotState } from "./StarchildDot";
+import { PresenceOrb, type OrbState } from "../presence/PresenceOrb";
 import { usePrefersReducedMotion } from "../presence/usePresence";
-import type { TaskCard } from "../data";
 
 // Meeting Starchild, not configuring it. This runs inside the real chat — same
 // chrome, same composer, same dot — and its whole job is to gather just enough to
@@ -19,12 +18,20 @@ export type MeetingResult = {
   opening?: string;
 };
 
-type Step = "continuity" | "guided" | "preference" | "read" | "adjust";
+type Step = "guided" | "preference" | "read";
 // `stage` marks the three questions and nothing else: the asides Starchild makes
 // along the way ("Tell me what I got wrong") aren't steps and aren't counted.
 type Turn = { id: string; from: "starchild" | "you"; text: string; stage?: number };
 
-const STAGES = 3;
+/*
+  Two questions, not three. What Starchild understood used to be the third, with
+  "Looks right" and "Adjust" under it — which asked someone to sign off on a
+  sentence about themselves before anything had happened. It is a remark now: said
+  once, at the end, and the conversation simply carries on. Nobody has to agree
+  with it, and if it is wrong the next thing they say fixes it, which is how being
+  read wrong works everywhere else.
+*/
+const STAGES = 2;
 
 // Each chip is written in the user's voice, so it can't be said back verbatim —
 // "Something I'm building" in Starchild's mouth is Starchild's own project. `echo`
@@ -43,15 +50,6 @@ const UNSURE = "I'm not sure yet";
 // than inline so the label that goes into the transcript is literally the label
 // that was clicked — the two drifting apart is exactly how a choice ends up
 // recorded as something the person didn't say.
-const ACTIONS = {
-  "keep-going": "Keep going",
-  "get-to-know": "Get to know me",
-  adjust: "Adjust",
-  accept: "Looks right",
-} as const;
-
-type Action = keyof typeof ACTIONS;
-
 const GUIDED_LINE = "What's taking up most of your attention lately?";
 const PREFERENCE_LINE =
   "One thing that helps me work better with you: do you want me to be more direct, or give you more room to think things through?";
@@ -89,43 +87,24 @@ function openingFor(topic?: Topic) {
   return `Got it. Let's start there. What would have to happen this week for ${subject} to feel handled?`;
 }
 
-// Whatever they were doing as a guest, said back to them. A task card has a
-// label written in Starchild's voice and is worth naming; anything typed was
-// written in theirs, so it stays "something" rather than being quoted back.
-function continuityLine(task?: TaskCard) {
-  const what = task ? task.label.toLowerCase() : "something";
-  return `You were working on ${what}. Want to keep going, or should I get to know how you like to work first?`;
-}
-
-// picking the thread back up when there's no task card to re-ask its question
-const RESUME_OPENING = "Picking up where we left off — what's the next thing you need?";
-
 let turnId = 0;
 const nextId = () => `t${turnId++}`;
 
-export function useFirstMeeting({
-  task,
-  fromGuest = false,
-  onDone,
-}: {
-  /** carried over from Guest Mode, if they were in the middle of something */
-  task?: TaskCard;
-  /** signed up from inside the guest chat — there is a conversation to resume */
-  fromGuest?: boolean;
-  onDone: (result: MeetingResult) => void;
-}) {
-  // Anyone arriving from Guest Mode is offered their thread back first, whether
-  // they got there from a task card or from something they typed. Only a brand
-  // new account opens on the guided question.
-  const resuming = fromGuest || !!task;
-  const [step, setStep] = useState<Step>(resuming ? "continuity" : "guided");
+export function useFirstMeeting({ onDone }: { onDone: (result: MeetingResult) => void }) {
+  /*
+    Everyone starts on the same question.
+
+    Arriving from Guest Mode used to be met with "want to keep going, or should I
+    get to know you first?" — a choice between two good things, asked at the one
+    moment someone has just committed. It made keeping their work sound like an
+    alternative to being understood, when it is neither: the conversation is
+    already saved, it is in the sidebar, and it will still be there afterwards.
+    Nothing was being decided, so nothing needed asking. The flag survives only
+    to say that once, under the first question.
+  */
+  const [step, setStep] = useState<Step>("guided");
   const [turns, setTurns] = useState<Turn[]>([
-    {
-      id: nextId(),
-      from: "starchild",
-      text: resuming ? continuityLine(task) : GUIDED_LINE,
-      stage: resuming ? undefined : 0,
-    },
+    { id: nextId(), from: "starchild", text: GUIDED_LINE, stage: 0 },
   ]);
   const [topic, setTopic] = useState<Topic | undefined>();
   const [tone, setTone] = useState<Tone | undefined>();
@@ -162,15 +141,6 @@ export function useFirstMeeting({
 
     const said = { said: trimmed.replace(/.$/, "") };
 
-    if (step === "adjust") {
-      setTopic(said);
-      consider(() => {
-        say("starchild", readLine(said, tone), 2);
-        setStep("read");
-      });
-      return;
-    }
-
     setTopic(said);
     consider(askPreference);
   };
@@ -196,86 +166,51 @@ export function useFirstMeeting({
       const picked: Tone | undefined =
         label === "More direct" ? "direct" : label === "More space" ? "space" : undefined;
       setTone(picked);
+      // Said, and then done. The pause between the two is the whole of the
+      // ceremony — the line is a remark on the way past, not a checkpoint.
       consider(() => {
-        say("starchild", readLine(topic, picked), 2);
+        say("starchild", readLine(topic, picked));
         setStep("read");
+        consider(() =>
+          onDone({ topic: topic?.echo ?? topic?.said, tone: picked, opening: openingFor(topic) }),
+        );
       });
     }
-  };
-
-  /**
-   * A pressed button is a turn like any other. These four used to change the step
-   * without ever being said: the transcript jumped from Starchild's question
-   * straight to Starchild's next line, with the answer missing from between them —
-   * so the conversation read as though it had asked something and then ignored it.
-   *
-   * They also go through `consider` now, for the same reason `choose` does: the
-   * answer lands on its own and Starchild takes a moment over it, rather than
-   * replying in the same tick like a form advancing.
-   */
-  const act = (action: Action) => {
-    say("you", ACTIONS[action]);
-
-    if (action === "keep-going") {
-      consider(() => onDone({ opening: task ? task.question : RESUME_OPENING }));
-      return;
-    }
-    if (action === "get-to-know") {
-      consider(() => {
-        say("starchild", GUIDED_LINE, 0);
-        setStep("guided");
-      });
-      return;
-    }
-    if (action === "adjust") {
-      consider(() => {
-        say("starchild", "Tell me what I got wrong.");
-        setStep("adjust");
-      });
-      return;
-    }
-    consider(() => onDone({ topic: topic?.echo ?? topic?.said, tone, opening: openingFor(topic) }));
   };
 
   return {
     step,
     turns,
     /** the composer feeds the meeting while it's open in a free-text step */
-    acceptsText: step === "guided" || step === "adjust",
+    acceptsText: step === "guided",
     submit,
     choose,
-    act,
   };
 }
 
 type Meeting = ReturnType<typeof useFirstMeeting>;
 
-export function FirstMeeting({ meeting, fromGuest = false }: { meeting: Meeting; fromGuest?: boolean }) {
-  const { step, turns, choose, act } = meeting;
+export function FirstMeeting({ meeting }: { meeting: Meeting }) {
+  const { step, turns, choose } = meeting;
   const last = turns[turns.length - 1];
   const thinking = last?.from === "you";
 
-  // Only the line Starchild is currently on has a live dot. The ones above it are
-  // finished thoughts, and a column of dots all reacting at once would turn the
-  // meeting into a light show.
-  const currentId = [...turns].reverse().find((turn) => turn.from === "starchild")?.id;
+  /*
+    One presence, at the size it has everywhere else it has the screen to itself.
 
-  const dotFor = (turnId: string): DotState => {
-    if (turnId !== currentId) return "settled";
-    // the answer has landed and Starchild is taking it in
-    if (thinking) return "thinking";
-    // the read: it contracts over what it has understood, then settles
-    if (step === "read") return "acknowledging";
-    // a question is on the table — it holds close and waits
-    return "listening";
-  };
-  // Only under the opening question — whether that's "keep going?" or the guided
-  // one — and gone the moment they answer. It's a reassurance, not a banner.
-  const showGuestNote = fromGuest && turns.length === 1;
+    Every Starchild line used to carry its own small dot, which read as a list of
+    speakers rather than as one thing paying attention — and the first thing
+    someone saw after signing up was a paragraph, not the product's face. Now the
+    orb sits above the conversation the way it does on the hero and on the empty
+    screen, and the lines below it are simply what it is saying.
+  */
+  const orbState: OrbState = thinking ? "working" : step === "read" ? "resolved" : "listening";
 
   return (
-    <div className="w-full max-w-[560px]">
-      <div className="flex flex-col gap-6">
+    <div className="flex w-full max-w-[560px] flex-col items-center">
+      <PresenceOrb state={orbState} size={124} />
+
+      <div className="mt-9 flex w-full flex-col gap-6">
         {turns.map((turn) =>
           turn.from === "starchild" ? (
             <motion.div
@@ -283,28 +218,27 @@ export function FirstMeeting({ meeting, fromGuest = false }: { meeting: Meeting;
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-              className="flex items-start gap-3"
+              // Centred under the orb, not ranged left beside it. The question is
+              // the only thing on the screen and it is what the orb is asking —
+              // hung off the left edge it read as the first line of a document
+              // that happened to have a logo above it.
+              className="text-center"
             >
-              <span className="mt-1.5 shrink-0">
-                <StarchildDot state={dotFor(turn.id)} depth={1} size={9} />
-              </span>
-              <div>
-                {/* quiet enough to skip, there for anyone wondering how much is left */}
-                {turn.stage !== undefined && (
-                  <p
-                    className="mb-1.5 text-[10px] font-medium tracking-[0.16em] text-white/25 uppercase"
-                    style={{ fontFamily: "var(--font-google-sans)" }}
-                  >
-                    {`${turn.stage + 1} of ${STAGES}`}
-                  </p>
-                )}
+              {/* quiet enough to skip, there for anyone wondering how much is left */}
+              {turn.stage !== undefined && (
                 <p
-                  className="text-[17px] leading-relaxed text-white/90"
+                  className="mb-1.5 text-[10px] font-medium tracking-[0.16em] text-white/25 uppercase"
                   style={{ fontFamily: "var(--font-google-sans)" }}
                 >
-                  {turn.text}
+                  {`${turn.stage + 1} of ${STAGES}`}
                 </p>
-              </div>
+              )}
+              <p
+                className="text-[17px] leading-relaxed text-white/90"
+                style={{ fontFamily: "var(--font-google-sans)" }}
+              >
+                {turn.text}
+              </p>
             </motion.div>
           ) : (
             <motion.p
@@ -321,20 +255,6 @@ export function FirstMeeting({ meeting, fromGuest = false }: { meeting: Meeting;
         )}
       </div>
 
-      {/* Answering anything here reads like walking away from what they were in
-          the middle of. It isn't, and saying so is cheaper than a confirm. */}
-      {showGuestNote && (
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.4, delay: 0.35 }}
-          className="mt-5 text-[12.5px] text-white/35"
-          style={{ fontFamily: "var(--font-google-sans)" }}
-        >
-          Your guest conversation is saved either way.
-        </motion.p>
-      )}
-
       {/* one row of choices at a time, never a wall of them */}
       <AnimatePresence mode="wait">
         <motion.div
@@ -343,14 +263,8 @@ export function FirstMeeting({ meeting, fromGuest = false }: { meeting: Meeting;
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.4, delay: 0.35, ease: [0.16, 1, 0.3, 1] }}
-          className={`flex flex-wrap gap-2.5 ${showGuestNote ? "mt-3" : "mt-7"}`}
+          className="mt-7 flex w-full flex-wrap justify-center gap-2.5"
         >
-          {step === "continuity" && (
-            <>
-              <Choice primary onClick={() => act("keep-going")}>{ACTIONS["keep-going"]}</Choice>
-              <Choice onClick={() => act("get-to-know")}>{ACTIONS["get-to-know"]}</Choice>
-            </>
-          )}
 
           {step === "guided" && (
             <>
@@ -373,12 +287,6 @@ export function FirstMeeting({ meeting, fromGuest = false }: { meeting: Meeting;
             </>
           )}
 
-          {step === "read" && (
-            <>
-              <Choice primary onClick={() => act("accept")}>{ACTIONS.accept}</Choice>
-              <Choice onClick={() => act("adjust")}>{ACTIONS.adjust}</Choice>
-            </>
-          )}
         </motion.div>
       </AnimatePresence>
     </div>

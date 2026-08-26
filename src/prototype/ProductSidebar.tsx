@@ -187,24 +187,32 @@ export function ProductSidebar({
       <div className="mt-4 flex flex-col gap-0.5">
         {areas.map(({ id, label, Icon }) => {
           const on = area === id;
+          // The areas can host a first-run note as well as the list below them —
+          // Agents is a destination, and the note about it belongs on the door.
+          const lit = intro?.label === label;
           return (
-            <button
-              key={id}
-              type="button"
-              onClick={() => onSwitchArea?.(id)}
-              aria-current={on ? "page" : undefined}
-              className={`flex w-full items-center gap-3 rounded-lg px-2.5 py-2.5 text-left text-[14px] transition-colors duration-200 ${
-                on
-                  ? "bg-white/[0.09] text-white"
-                  : "text-white/60 hover:bg-white/[0.05] hover:text-white"
-              }`}
-              style={{ fontFamily: "var(--font-google-sans)" }}
-            >
-              <span className={`shrink-0 ${on ? "text-[#f84600]" : "text-white/45"}`}>
-                <Icon className="size-[18px]" />
-              </span>
-              {label}
-            </button>
+            <div key={id} className="relative">
+              <button
+                type="button"
+                onClick={() => onSwitchArea?.(id)}
+                aria-current={on ? "page" : undefined}
+                className={`flex w-full items-center gap-3 rounded-lg px-2.5 py-2.5 text-left text-[14px] transition-colors duration-200 ${
+                  lit
+                    ? "bg-[#f84600]/10 text-[#f84600] ring-1 ring-[#f84600]/40"
+                    : on
+                      ? "bg-white/[0.09] text-white"
+                      : "text-white/60 hover:bg-white/[0.05] hover:text-white"
+                }`}
+                style={{ fontFamily: "var(--font-google-sans)" }}
+              >
+                <span className={`shrink-0 ${lit || on ? "text-[#f84600]" : "text-white/45"}`}>
+                  <Icon className="size-[18px]" />
+                </span>
+                {label}
+              </button>
+
+              {lit && intro.node}
+            </div>
           );
         })}
       </div>
