@@ -32,6 +32,8 @@ export type AgentStory = {
   label: string;
   /** what the person said, once */
   request: string;
+  /** what it said back, before it went away and did anything — see AgentWindow */
+  ack: string;
   agent: { name: string; cadence: string; tools: Tool[] };
   /** what it has done since, oldest first. The last one is what it came back for. */
   activity: { time: string; tool: Tool; action: string; result: string; hit?: boolean }[];
@@ -62,6 +64,7 @@ export const AGENT_STORIES: AgentStory[] = [
     id: "watch",
     label: "Watch something",
     request: "Let me know when flights to Tokyo drop below $700.",
+    ack: "Got it. I'll check every hour and tell you the moment one drops under $700.",
     agent: {
       name: "Tokyo flight watcher",
       cadence: "Checks every hour",
@@ -92,6 +95,7 @@ export const AGENT_STORIES: AgentStory[] = [
     id: "routine",
     label: "Run a routine",
     request: "Every Sunday, help me plan the week ahead.",
+    ack: "Got it. I'll put your week together on Sunday evening and send it over.",
     agent: {
       name: "Week ahead",
       cadence: "Runs every Sunday",
@@ -122,6 +126,7 @@ export const AGENT_STORIES: AgentStory[] = [
     id: "job",
     label: "Give it a job",
     request: "Plan our trip in October. Check with me before booking anything.",
+    ack: "Got it. I'll work on it in the background and check with you before booking anything.",
     agent: {
       name: "October trip",
       cadence: "Works in the background",

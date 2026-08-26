@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { motion } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import { pickScenario, type HeroIntent, type Scenario, type TaskCard } from "./data";
 import { StepFlow } from "./StepFlow";
-import { ConductorNote, useConductorNote } from "./ConductorNote";
 import { GuestSidebar } from "./GuestSidebar";
 import { ProductSidebar } from "./ProductSidebar";
 import { SignupGate } from "./SignupGate";
@@ -10,7 +9,16 @@ import { IntentPicker } from "./IntentPicker";
 import { StarchildDot } from "./onboarding/StarchildDot";
 import { PresenceOrb } from "./presence/PresenceOrb";
 import { FirstMeeting, useFirstMeeting, type Tone } from "./onboarding/FirstMeeting";
+import { Reactable } from "./Reactable";
 import { ConductorIntroPopover } from "./onboarding/ConductorIntroPopover";
+import { AgentSuggestion, AgentMade, ConnectFirst } from "./agents/ChatHandoff";
+import { readRequest, sameAsk, type Request } from "./agents/readRequest";
+import { useAgents } from "./agents/store";
+import { ACCENTS } from "./agents/onboardingData";
+import type { Agent } from "./agents/agentsData";
+import type { ConnectorId } from "./agents/connectors";
+import { SAVED, type SavedChat } from "./savedChats";
+import { SavedThread } from "./SavedThread";
 import { MarketplaceIntroPopover } from "./onboarding/MarketplaceIntroPopover";
 import { AutomateIntroPopover } from "./onboarding/AutomateIntroPopover";
 import {
@@ -22,6 +30,7 @@ import {
   WalletIcon,
   PanelIcon,
   BracketsIcon,
+  CloseIcon,
 } from "./icons";
 
 /**
@@ -102,7 +111,23 @@ export function ChatScreen({
   task,
   isGuest = false,
   cameFromGuest = false,
+  area = "chat",
+  onSwitchArea,
+  onOpenAgent,
+  railed = false,
+  onToggleRail,
+  skipMeeting = false,
 }: {
+  /** opened at the signed-in app rather than walked to — see ConductorApp */
+  skipMeeting?: boolean;
+  /** an agent was made from this conversation and the person wants to go and see it */
+  onOpenAgent?: (id: string) => void;
+  /** the nav sidebar is down to icons — owned by the app, since two screens share it */
+  railed?: boolean;
+  onToggleRail?: () => void;
+  /** which product area the shell is showing — the sidebar switch reads it */
+  area?: "chat" | "agents" | "connectors";
+  onSwitchArea?: (next: "chat" | "agents" | "connectors") => void;
   onBack: () => void;
   /** opened from the signed-in sidebar */
   onOpenMarketplace: () => void;
@@ -125,14 +150,13 @@ export function ChatScreen({
   const [message, setMessage] = useState<string | null>(initialMessage ?? null);
   const [scenario, setScenario] = useState<Scenario | null>(initialMessage ? pickScenario(initialMessage) : null);
   const [delivered, setDelivered] = useState(false);
-  // Guest Mode only: what Conductor Mode saved is an argument for signing up, and
-  // an account holder has already been made it.
-  const conductorNote = useConductorNote(delivered && isGuest);
   const [value, setValue] = useState("");
+  /** the message a reply is being written against — a quote, not a thread */
+  const [replyTo, setReplyTo] = useState<string | null>(null);
   const guest = isGuest;
   const [tasksRemaining, setTasksRemaining] = useState(initialMessage ? 1 : 2);
   const [gate, setGate] = useState<{ heading: string; sub: string } | null>(null);
-  const [meetingOver, setMeetingOver] = useState(false);
+  const [meetingOver, setMeetingOver] = useState(skipMeeting);
   // The two first-run notes, shown one after the other the moment the meeting
   // ends: the first thing they send is about to be routed, and nothing so far has
   // told them by what, or that there's a Marketplace behind the sidebar.
@@ -147,6 +171,93 @@ export function ChatScreen({
   // its one question, and the card's context is what routes the work afterwards.
   const [activeTask, setActiveTask] = useState<TaskCard | undefined>(task);
   const [opening, setOpening] = useState<string | undefined>(openingMessage);
+
+  /* ── Chat is "do this now"; an Agent is "keep doing this for me". Everything
+     below exists to keep that line from blurring, and all of it stays inert unless
+     the person's own words crossed it. ── */
+
+  const { isConnected, addAgent } = useAgents();
+  /** what the last message turned out to be asking for */
+  const [request, setRequest] = useState<Request | null>(null);
+  /**
+   * Tools the task reaches for that the account has not authenticated yet. While
+   * this is non-empty the work is genuinely blocked, so the run does not start —
+   * a progress bar over a missing login is a lie about what is happening.
+   */
+  const [pending, setPending] = useState<ConnectorId[]>([]);
+  /**
+   * Everything asked for in this account, across conversations — deliberately not
+   * cleared by "New chat", because the same request turning up in three separate
+   * chats is the strongest version of the signal, not a weaker one.
+   */
+  const [askedBefore, setAskedBefore] = useState<string[]>([]);
+  /**
+   * "Not now" is a real answer about a request, not about a wording. It is matched
+   * back the same way repeats are found — otherwise saying no and then asking the
+   * same thing in slightly different words gets the question asked again, which is
+   * how a product learns to be ignored.
+   */
+  const [declined, setDeclined] = useState<string[]>([]);
+  /** the agent this conversation produced, if the person asked for one */
+  const [made, setMade] = useState<Agent | null>(null);
+  /** the saved conversation being read back, if any */
+  const [reading, setReading] = useState<SavedChat | null>(null);
+
+  /**
+   * Opening something that already happened. The transcript is restored, not
+   * replayed — the work was done at the time, and running it again would be a lie
+   * about what is on screen. Everything that was in the conversation comes back,
+   * the tool that got connected halfway through included.
+   */
+  function openSaved(chat: SavedChat) {
+    setReading(chat);
+    setMessage(null);
+    setScenario(null);
+    setDelivered(false);
+    setOpening(undefined);
+    setActiveTask(undefined);
+    setMade(null);
+    setPending([]);
+    setValue("");
+    setMeetingOver(true);
+  }
+
+  /**
+   * Only what the job needs. The conversation may have wandered; the agent
+   * inherits the objective, the schedule and the tools that objective reaches for,
+   * and nothing else. Connections already belong to the account, so what happens
+   * here is a permission rather than a second login.
+   */
+  function createAgent(job: { name: string; role: string; tools: ConnectorId[]; cadence?: string }) {
+    const tools = job.tools.filter((id) => isConnected(id));
+    const agent: Agent = {
+      id: `a${Date.now()}`,
+      name: job.name,
+      role: job.role,
+      status: "scheduled",
+      mood: job.cadence ? `Set up. Runs ${job.cadence}.` : "Set up. Watching from here.",
+      resting: `${job.name} has nothing to report yet.`,
+      preview: "Just created",
+      lastActive: "just now",
+      accent: ACCENTS.ember.hex,
+      cadence: job.cadence,
+      tools,
+      thread: [
+        // The objective in the person's own words. Paraphrasing it here is how an
+        // agent ends up quietly doing a slightly different job than was asked for.
+        { kind: "you", text: job.role },
+        {
+          kind: "agent",
+          text: job.cadence
+            ? `Got it. I'll do this ${job.cadence} and tell you what I find.`
+            : "Got it. I'll keep at this and tell you when something changes.",
+        },
+        { kind: "agent", text: "I'll check with you first before anything I can't undo." },
+      ],
+    };
+    addAgent(agent);
+    setMade(agent);
+  }
 
   function openGate(heading: string, sub: string) {
     setGate({ heading, sub });
@@ -171,13 +282,15 @@ export function ChatScreen({
   });
   const meetingOpen = !guest && !meetingOver && message === null && !openingMessage;
   // the signed-in home — reached after the meeting, and again on every New chat
-  const atHome = !guest && message === null && !opening && !meetingOpen;
+  const atHome = !guest && message === null && !opening && !meetingOpen && !reading;
   // The composer sits in the middle of an empty screen because it's the only thing
   // to do there. The moment something appears above it to read — an answer given to
   // the meeting, Starchild's opening line, a task under way — it drops to the bottom
   // and stays out of the way. "New chat" empties the screen and brings it back.
   const pinComposer =
-    message !== null || (!guest && (Boolean(opening) || (!meetingOver && meeting.turns.length > 1)));
+    message !== null ||
+    Boolean(reading) ||
+    (!guest && (Boolean(opening) || (!meetingOver && meeting.turns.length > 1)));
   const meetingTakesText = meetingOpen && meeting.acceptsText;
 
   function choose(text: string) {
@@ -191,11 +304,22 @@ export function ChatScreen({
       return;
     }
     setMessage(trimmed);
+    setReading(null);
     // the composer outlives the send now, so it has to be emptied by hand
     setValue("");
     // On a task card the user only supplies the missing detail ("BTC"), so the
     // standing context is what actually routes the work — their reply alone wouldn't.
-    setScenario(pickScenario(activeTask ? `${activeTask.basePrompt} ${trimmed}` : trimmed));
+    const full = activeTask ? `${activeTask.basePrompt} ${trimmed}` : trimmed;
+    setScenario(pickScenario(full));
+    // Read once, on send. Guest Mode has no account to connect anything to and no
+    // Agents area to put anything in, so it reads nothing at all.
+    if (!guest) {
+      const req = readRequest(full, askedBefore);
+      setAskedBefore((prev) => [...prev, full]);
+      setRequest(req);
+      setPending(req.needs.filter((id) => !isConnected(id)));
+      setMade(null);
+    }
     if (guest) setTasksRemaining((r) => r - 1);
   }
 
@@ -208,6 +332,12 @@ export function ChatScreen({
     setValue("");
     setOpening(undefined);
     setActiveTask(undefined);
+    setRequest(null);
+    setPending([]);
+    setMade(null);
+    setReading(null);
+    // askedBefore and declined survive: both are things the account knows, not
+    // things this conversation knows.
   }
 
   function scrollToBottom() {
@@ -219,6 +349,32 @@ export function ChatScreen({
     return () => clearTimeout(t);
   }, [message, delivered]);
 
+  // The suggestion and the connect card both arrive after their own delay, by
+  // which time the page has finished scrolling for the answer. A question that
+  // lands below the fold has not been asked.
+  /**
+   * Two independent signals, and either is enough: the person described something
+   * ongoing, or they have now asked for the same thing three times. Neither
+   * creates anything — both only put a question on screen.
+   */
+  /**
+   * Two signals for a live conversation — the person described something ongoing,
+   * or they have now asked for the same favour twice — and, for one being read
+   * back, whatever that transcript recorded. None of them creates anything.
+   */
+  const worthOffering = Boolean(request && (request.recurring || request.repeats >= 2));
+  const offering =
+    !guest &&
+    !made &&
+    (reading
+      ? Boolean(reading.offer)
+      : delivered && worthOffering && !declined.some((no) => sameAsk(no, request?.summary ?? "")));
+  useEffect(() => {
+    if (!offering && !made && pending.length === 0) return;
+    const t = setTimeout(scrollToBottom, 620);
+    return () => clearTimeout(t);
+  }, [offering, made, pending.length]);
+
   // One composer, rendered in one of two places. In Guest Mode it's pinned to the
   // bottom of the screen and everything else moves around it; signed in, it sits in
   // the middle of the empty state until there's a conversation to sit under.
@@ -229,6 +385,38 @@ export function ChatScreen({
       transition={{ duration: 0.4, delay: 0.05, ease: [0.16, 1, 0.3, 1] }}
       className="w-full max-w-[560px] rounded-[22px] border border-white/12 bg-white/[0.04] p-4 transition-colors focus-within:border-white/30"
     >
+      {/* Inside the composer rather than above it: what you are replying to is
+          part of the message you are writing, and a bar floating over the box
+          would read as a notification about it instead. */}
+      <AnimatePresence initial={false}>
+        {replyTo && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+            className="overflow-hidden"
+          >
+            <div className="mb-3 flex items-start gap-2.5 border-l-2 border-[#f84600] pl-3">
+              <p
+                className="min-w-0 flex-1 truncate text-[13px] text-white/45"
+                style={{ fontFamily: "var(--font-google-sans)" }}
+              >
+                {replyTo}
+              </p>
+              <button
+                type="button"
+                onClick={() => setReplyTo(null)}
+                className="shrink-0 rounded-full p-0.5 text-white/35 transition-colors hover:text-white"
+                aria-label="Cancel reply"
+              >
+                <CloseIcon className="size-3.5" />
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <input
         ref={inputRef}
         value={value}
@@ -312,8 +500,15 @@ export function ChatScreen({
         />
       ) : (
         <ProductSidebar
+          area={area}
+          onSwitchArea={onSwitchArea}
+          collapsed={railed}
+          onToggleCollapsed={onToggleRail}
           onNewChat={newChat}
           onOpenMarketplace={onOpenMarketplace}
+          conversations={SAVED}
+          openConversation={reading?.id}
+          onOpenConversation={openSaved}
           intro={
             intro === "marketplace" && !guest
               ? {
@@ -450,7 +645,10 @@ export function ChatScreen({
         )}
 
         <div className="flex-1 overflow-y-auto">
-          {message === null ? (
+          {/* A transcript counts as something on screen even though nothing was
+              typed into this session — so it takes the conversation branch, not the
+              empty-screen one. */}
+          {message === null && !reading ? (
             <div className="flex min-h-full flex-col items-center justify-center gap-6 px-5 py-10">
               {opening ? (
                 <motion.div
@@ -530,17 +728,30 @@ export function ChatScreen({
             </div>
           ) : (
             <div className="mx-auto flex w-full max-w-[640px] flex-col gap-7 px-5 py-8 sm:px-0">
-              <div className="flex justify-end">
+              {/* Read back out of history: every turn of it, as it happened. */}
+              {reading && <SavedThread chat={reading} onReply={setReplyTo} />}
+
+              {!reading && (
+              <Reactable align="right" onReply={() => setReplyTo(message)}>
                 <div
-                  className="max-w-[80%] rounded-2xl rounded-tr-sm bg-white/[0.07] px-4 py-2.5 text-[14.5px] text-white/90"
+                  className="max-w-full rounded-2xl rounded-tr-sm bg-white/[0.07] px-4 py-2.5 text-[14.5px] text-white/90"
                   style={{ fontFamily: "var(--font-google-sans)" }}
                 >
                   {message}
                 </div>
-              </div>
+              </Reactable>
+              )}
+
+              {/* Blocked, and honestly so: what this needs is not connected, so
+                  nothing is running yet. Asked here, answered here, and the work
+                  carries on here. */}
+              {!reading && pending.length > 0 && (
+                <ConnectFirst needs={pending} onReady={() => { setPending([]); scrollToBottom(); }} />
+              )}
 
               {/* The answer goes inside the flow rather than after it, so the run and
                   the answer it produced stay one block on the page. */}
+              {!reading && pending.length === 0 && (
               <StepFlow
                 scenario={scenario!}
                 onStep={scrollToBottom}
@@ -553,20 +764,42 @@ export function ChatScreen({
                     transition={{ duration: 0.45, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
                     className="mt-7"
                   >
-                    <PlaceholderAnswer />
+                    {/* Starchild's turn is reactable too. Only reacting to your own
+                        messages would make the gesture a note-to-self. */}
+                    <Reactable onReply={() => setReplyTo("Starchild's answer")}>
+                      <PlaceholderAnswer />
+                    </Reactable>
                   </motion.div>
                 )}
               </StepFlow>
+              )}
 
-              {/* Under the answer and above the ask: close enough to what it is
-                  describing that "this task" needs no pointing at, and far enough
-                  from the signup CTA that the two are not read as one block. */}
-              {scenario && (
-                <ConductorNote
-                  saved={scenario.stat.withoutTokens - scenario.stat.withTokens}
-                  control={conductorNote}
+              {/* Asked, never assumed. A one-time request never reaches this line,
+                  and a standing one only ever gets a question with two answers. */}
+              {offering && (reading?.offer || request) && (
+                <AgentSuggestion
+                  request={reading ? undefined : (request ?? undefined)}
+                  because={reading?.offer?.because}
+                  onCreate={() => {
+                    const job = reading?.offer ?? {
+                      name: request!.name,
+                      role: request!.summary,
+                      tools: request!.needs,
+                      cadence: request!.cadence,
+                    };
+                    createAgent(job);
+                    setTimeout(scrollToBottom, 60);
+                  }}
+                  onDismiss={() =>
+                    reading
+                      ? setReading({ ...reading, offer: undefined })
+                      : setDeclined((d) => [...d, request!.summary])
+                  }
                 />
               )}
+
+              {/* Made on purpose, said plainly, and the conversation does not move. */}
+              {made && <AgentMade agent={made} onOpen={() => onOpenAgent?.(made.id)} />}
 
               {/* The ask still comes last and on its own — result, then what it
                   saved, then, past a rule and a delay, what to do next. What

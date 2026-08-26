@@ -1,13 +1,18 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { LandingPage } from "./landing/LandingPage";
 import { LandingPageB } from "./landing/LandingPageB";
 import { LandingPageC } from "./landing/LandingPageC";
+import { LandingPageD } from "./landing/LandingPageD";
 import { TradersPage } from "./landing/c/TradersPage";
 import { PricesPage } from "./landing/PricesPage";
 import { HERO_INTENTS_C } from "./landing/c/heroIntents";
 import { VariantToggle } from "./landing/VariantToggle";
 import { ChatScreen } from "./ChatScreen";
 import { ConductorModePage } from "./product/ConductorModePage";
+import { AgentsWorkspace } from "./agents/AgentsWorkspace";
+import { ConnectorsPage } from "./agents/ConnectorsPage";
+import { AgentsProvider } from "./agents/store";
+import { ProductSidebar } from "./ProductSidebar";
 import { MarketplaceModal } from "./MarketplaceModal";
 import { SignupGate } from "./SignupGate";
 import { MARKETPLACE_SEED, type MarketplaceSkill, type TaskCard } from "./data";
@@ -31,7 +36,7 @@ type Screen =
 // opens C, the version being worked on, so anyone opening it sees the same thing.
 // The floating switch rewrites the query (?v=a) instead, which means a reload
 // keeps the one you're reviewing and the address bar is shareable as it stands.
-export type LandingVariant = "a" | "b" | "c";
+export type LandingVariant = "a" | "b" | "c" | "d";
 
 const VARIANT_PARAM = "v";
 const DEFAULT_VARIANT: LandingVariant = "c";
@@ -39,12 +44,28 @@ const DEFAULT_VARIANT: LandingVariant = "c";
 function readVariantFromUrl(): LandingVariant {
   if (typeof window === "undefined") return DEFAULT_VARIANT;
   const asked = new URLSearchParams(window.location.search).get(VARIANT_PARAM);
-  return asked === "a" || asked === "b" || asked === "c" ? asked : DEFAULT_VARIANT;
+  return asked === "a" || asked === "b" || asked === "c" || asked === "d" ? asked : DEFAULT_VARIANT;
+}
+
+/**
+ * `?signedin=1` opens straight into the account, past the landing, the signup form
+ * and the first meeting.
+ *
+ * It is a way in for reviewing, not a second product: nothing about the signed-in
+ * app behaves differently, and the ordinary route is untouched. It exists because
+ * every look at the workspace otherwise costs six clicks and two minutes of
+ * scripted conversation, and a review that expensive is a review that stops
+ * happening.
+ */
+function startsSignedIn(): boolean {
+  if (typeof window === "undefined") return false;
+  return new URLSearchParams(window.location.search).get("signedin") === "1";
 }
 
 export function ConductorApp() {
   const [landingVariant, setLandingVariant] = useState<LandingVariant>(readVariantFromUrl);
-  const [screen, setScreen] = useState<Screen>("landing");
+  const [signedInFromUrl] = useState(startsSignedIn);
+  const [screen, setScreen] = useState<Screen>(signedInFromUrl ? "chat" : "landing");
   const [initialPrompt, setInitialPrompt] = useState<string | undefined>();
   const [openingMessage, setOpeningMessage] = useState<string | undefined>();
   const [task, setTask] = useState<TaskCard | undefined>();
@@ -54,6 +75,21 @@ export function ConductorApp() {
   // up straight from the homepage has nothing to be reassured about.
   const [fromGuest, setFromGuest] = useState(false);
   const [marketplaceOpen, setMarketplaceOpen] = useState(false);
+  /** Which product area the chat screen sits in once signed in. Set when a task is
+   *  picked, so someone who asked for something to be run lands among the agents
+   *  rather than in a conversation about them. */
+  const [area, setArea] = useState<"chat" | "agents" | "connectors">("chat");
+  /** an agent made from a conversation — Agents opens on it, not on the top of the roster */
+  const [focusAgent, setFocusAgent] = useState<string | undefined>();
+  /**
+   * The nav rail, down to icons. Driven by the area rather than remembered,
+   * because it is a fact about the screen you are on and not a preference: Agents
+   * needs the width, Chat does not. The hamburger still overrides it, and the
+   * override lasts until the area changes — which is the only moment a person
+   * would be surprised to find their choice still in force.
+   */
+  const [railed, setRailed] = useState(false);
+  useEffect(() => { setRailed(area === "agents"); }, [area]);
   const [skills, setSkills] = useState<MarketplaceSkill[]>(MARKETPLACE_SEED);
 
   function switchVariant(next: LandingVariant) {
@@ -85,7 +121,13 @@ export function ConductorApp() {
 
   // Chip → task card → Guest Mode → one contextual question → Conductor.
   // Nothing runs until Starchild has the detail it's missing.
+  /** Handing work over rather than talking it through: the run-it-for-me chips and
+   *  everything the Agents section offers. These are the ones that belong in the
+   *  other area once there is an account to keep them in. */
+  const isAgentWork = (id: string) => id.startsWith("agent-") || id.startsWith("run-");
+
   function startTask(next: TaskCard) {
+    setArea(isAgentWork(next.id) ? "agents" : "chat");
     setInitialPrompt(undefined);
     setOpeningMessage(next.question);
     setTask(next);
@@ -121,24 +163,34 @@ export function ConductorApp() {
     setScreen("signup");
   }
 
+  const empty = typeof window !== "undefined" &&
+    new URLSearchParams(window.location.search).get("agents") === "empty";
+
   return (
-    <>
+    <AgentsProvider empty={empty}>
       {screen === "landing" && (
         <>
-          {/* C is rendered on its own because it takes one prop the others don't:
-              its header has a "Starchild for" menu with a real page behind it. */}
-          {landingVariant === "c" ? (
-            <LandingPageC
-              key="c"
+          {/* C and D are rendered apart from A and B because they take props the
+              others don't: a "Starchild for" menu with a real page behind it, and
+              a Pricing item that goes somewhere. D differs from C in its hero and
+              nothing else, so it takes exactly the same handlers. */}
+          {landingVariant === "c" || landingVariant === "d" ? (
+            (() => {
+              const Landing = landingVariant === "d" ? LandingPageD : LandingPageC;
+              return (
+                <Landing
+                  key={landingVariant}
               onEnterGuest={enterGuest}
               onStartTask={startTask}
-              onNavigateTraders={goToTraders}
-              onNavigateConductorMode={() => setScreen("conductor-mode")}
-              onOpenMarketplace={() => setMarketplaceOpen(true)}
-              onNavigatePricing={goToPricing}
-              onLogIn={goToAuth}
-              onSignUp={goToAuth}
-            />
+                  onNavigateTraders={goToTraders}
+                  onNavigateConductorMode={() => setScreen("conductor-mode")}
+                  onOpenMarketplace={() => setMarketplaceOpen(true)}
+                  onNavigatePricing={goToPricing}
+                  onLogIn={goToAuth}
+                  onSignUp={goToAuth}
+                />
+              );
+            })()
           ) : (
             (() => {
               const Landing = landingVariant === "b" ? LandingPageB : LandingPage;
@@ -215,10 +267,42 @@ export function ConductorApp() {
         </div>
       )}
 
+      {/* Signed in, Agents replaces the conversation but keeps the shell: same
+          sidebar, same switch, a different product area behind it. In Guest Mode
+          there is nothing to manage yet, so the chat is the only thing there is. */}
+      {screen === "chat" && !isGuest && area !== "chat" && (
+        <div className="relative flex h-screen overflow-hidden bg-[#0a0a0a]">
+          <ProductSidebar
+            area={area}
+            onSwitchArea={setArea}
+            collapsed={railed}
+            onToggleCollapsed={() => setRailed((v) => !v)}
+            // leaving for a new conversation is leaving the area
+            onNewChat={() => setArea("chat")}
+            onOpenMarketplace={() => setMarketplaceOpen(true)}
+          />
+          {area === "agents" ? <AgentsWorkspace focusId={focusAgent} /> : <ConnectorsPage />}
+        </div>
+      )}
+
+      {/*
+        Hidden, never unmounted.
+
+        Switching to Agents used to take ChatScreen out of the tree, which threw
+        away the conversation — so going to look at an agent and coming back left
+        someone staring at an empty composer. That is a bad thing to do to any
+        conversation and an untenable one next to a card that says "this
+        conversation stays here", so the chat now waits behind the other areas
+        rather than being rebuilt from nothing on the way back.
+      */}
       {screen === "chat" && (
+      <div className={!isGuest && area !== "chat" ? "hidden" : "contents"}>
         <ChatScreen
+          area={area}
+          onSwitchArea={setArea}
           onBack={goHome}
-          intents={landingVariant === "c" ? HERO_INTENTS_C : undefined}
+          // D uses C's hero chips, so Guest Mode has to carry the same set through
+          intents={landingVariant === "c" || landingVariant === "d" ? HERO_INTENTS_C : undefined}
           onOpenMarketplace={() => setMarketplaceOpen(true)}
           onRequestSignup={goToAuthFromChat}
           onLogIn={goToAuthFromChat}
@@ -227,7 +311,16 @@ export function ConductorApp() {
           task={task}
           isGuest={isGuest}
           cameFromGuest={fromGuest}
+          // straight to the working product: the meeting is part of signing up,
+          // and this link starts after that
+          skipMeeting={signedInFromUrl}
+          // Going to see it is a move between areas, not a move of the conversation:
+          // the chat is still there, exactly as it was, when they come back.
+          onOpenAgent={(id) => { setFocusAgent(id); setArea("agents"); }}
+          railed={railed}
+          onToggleRail={() => setRailed((v) => !v)}
         />
+      </div>
       )}
 
       <MarketplaceModal
@@ -236,6 +329,6 @@ export function ConductorApp() {
         skills={skills}
         onAddSkill={handleAddSkill}
       />
-    </>
+    </AgentsProvider>
   );
 }

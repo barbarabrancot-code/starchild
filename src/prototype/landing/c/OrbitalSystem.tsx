@@ -223,25 +223,25 @@ export function OrbitalSystem() {
   }, []);
 
   return (
-    <div className="orb-stage" ref={stageRef} data-active={active ? "true" : undefined} aria-hidden="true">
-      <div className="orb-plane" ref={planeRef}>
+    <div className="os-stage" ref={stageRef} data-active={active ? "true" : undefined} aria-hidden="true">
+      <div className="os-plane" ref={planeRef}>
         {RINGS.map((ring, i) => (
           <span
             key={i}
-            className="orb-ring"
+            className="os-ring"
             style={{ width: `${ring.radius * 100}%`, height: `${ring.radius * 100}%` }}
           />
         ))}
 
         {/* drawn from the middle outwards, and only while something is held */}
-        <svg className="orb-link" viewBox="-100 -100 200 200" preserveAspectRatio="none">
+        <svg className="os-link" viewBox="-100 -100 200 200" preserveAspectRatio="none">
           <line ref={linkRef} x1="0" y1="0" x2="0" y2="0" />
         </svg>
 
         {PROVIDERS.map((provider, i) => (
           <div
             key={provider.id}
-            className="orb-node"
+            className="os-node"
             data-on={active === provider.id ? "true" : undefined}
             ref={(el) => {
               nodeRefs.current[i] = el;
@@ -255,20 +255,20 @@ export function OrbitalSystem() {
                 decoration that reacts to a pointer, and the models it names are
                 stated for real further down the page. */}
             <span
-              className="orb-mark"
+              className="os-mark"
               onPointerEnter={() => setActive(provider.id)}
               onPointerLeave={() => setActive((cur) => (cur === provider.id ? null : cur))}
             >
               <img src={`${ICONS}${provider.file}`} alt="" />
             </span>
-            <span className="orb-name">{provider.name}</span>
+            <span className="os-name">{provider.name}</span>
           </div>
         ))}
       </div>
 
       {/* Outside the plane on purpose: everything else leans, this does not. It
           is the fixed point the rest of the composition is arranged around. */}
-      <span className="orb-core" />
+      <span className="os-core" />
 
       <style>{`
         /* Scaled rather than re-dimensioned. The stage is width:100% inside a
@@ -277,7 +277,7 @@ export function OrbitalSystem() {
            to actually be 20%. It also keeps every proportion exact: rings, marks,
            labels and the core all grow together, with no numbers to keep in sync.
            The hero clips its own overflow, so growing past the column is safe. */
-        .orb-stage {
+        .os-stage {
           position: relative;
           width: 100%;
           max-width: 460px;
@@ -306,7 +306,7 @@ export function OrbitalSystem() {
            It is also kept well under the X lean — matching them would read as a
            cube corner rather than as a plane seen at an angle. Both are dialled
            here; the cursor tilt is a deviation from this pose. */
-        .orb-plane {
+        .os-plane {
           position: absolute;
           inset: 0;
           --tilt-rest-x: ${TILT_X}deg;
@@ -319,7 +319,7 @@ export function OrbitalSystem() {
 
         /* hairlines. Bright enough to trace the whole path against the near-black
            field, but still thin enough to read as structure, not as an element */
-        .orb-ring {
+        .os-ring {
           position: absolute;
           top: 50%;
           left: 50%;
@@ -330,9 +330,9 @@ export function OrbitalSystem() {
         }
         /* still a step down while a provider is being read, so the paths recede
            behind the one thing being looked at — just from a brighter start */
-        .orb-stage[data-active] .orb-ring { border-color: rgba(255, 255, 255, .12); }
+        .os-stage[data-active] .os-ring { border-color: rgba(255, 255, 255, .12); }
 
-        .orb-link {
+        .os-link {
           position: absolute;
           inset: 0;
           width: 100%;
@@ -342,18 +342,18 @@ export function OrbitalSystem() {
           transition: opacity .35s ease;
           pointer-events: none;
         }
-        .orb-link line {
+        .os-link line {
           stroke: rgba(248, 70, 0, .5);
           stroke-width: 1;
           vector-effect: non-scaling-stroke;
         }
-        .orb-stage[data-active] .orb-link { opacity: 1; }
+        .os-stage[data-active] .os-link { opacity: 1; }
 
         /* Mark size is the one number here that fights the outer ring. At 46px
            the outermost symbol sits 198px out with a 23px radius, against a
            230px half-stage — about 9px of air. Going much past this either
            crowds the edge or means pulling the outer orbit in. */
-        .orb-node {
+        .os-node {
           position: absolute;
           top: 50%;
           left: 50%;
@@ -367,9 +367,9 @@ export function OrbitalSystem() {
           will-change: transform;
         }
         /* the one being read comes to the front, name and all */
-        .orb-node[data-on] { z-index: 4; }
+        .os-node[data-on] { z-index: 4; }
 
-        .orb-mark {
+        .os-mark {
           display: flex;
           align-items: center;
           justify-content: center;
@@ -385,7 +385,7 @@ export function OrbitalSystem() {
            a clipPath and never paints — so knocking them to black and inverting
            gives clean white with the shapes untouched. Doing it in CSS keeps the
            SVGs as they were shipped. */
-        .orb-mark img {
+        .os-mark img {
           width: 26px;
           height: 26px;
           display: block;
@@ -396,9 +396,9 @@ export function OrbitalSystem() {
         /* Hierarchy is opacity alone now. With the marks already at full white
            there is no brightness left to add on hover — so the emphasis comes
            from everything else stepping back instead. */
-        .orb-stage[data-active] .orb-mark img { opacity: .3; }
-        .orb-stage[data-active] .orb-node[data-on] .orb-mark img { opacity: 1; }
-        .orb-node[data-on] .orb-mark {
+        .os-stage[data-active] .os-mark img { opacity: .3; }
+        .os-stage[data-active] .os-node[data-on] .os-mark img { opacity: 1; }
+        .os-node[data-on] .os-mark {
           border-color: rgba(248, 70, 0, .55);
           background: rgba(18, 12, 9, .92);
           transform: scale(1.09);
@@ -406,7 +406,7 @@ export function OrbitalSystem() {
 
         /* the name sits beside the mark, on whichever side faces away from the
            centre — never a card, never a pointer, just the word */
-        .orb-name {
+        .os-name {
           position: absolute;
           top: 50%;
           transform: translateY(-50%);
@@ -419,11 +419,11 @@ export function OrbitalSystem() {
           transition: opacity .28s ease;
           pointer-events: none;
         }
-        .orb-node[data-side="right"] .orb-name { left: calc(100% + 12px); }
-        .orb-node[data-side="left"] .orb-name { right: calc(100% + 12px); }
-        .orb-node[data-on] .orb-name { opacity: 1; }
+        .os-node[data-side="right"] .os-name { left: calc(100% + 12px); }
+        .os-node[data-side="left"] .os-name { right: calc(100% + 12px); }
+        .os-node[data-on] .os-name { opacity: 1; }
 
-        .orb-core {
+        .os-core {
           position: absolute;
           top: 50%;
           left: 50%;
@@ -436,14 +436,14 @@ export function OrbitalSystem() {
           transition: box-shadow .45s ease;
         }
         /* the one place the centre reacts: something is talking to it */
-        .orb-stage[data-active] .orb-core {
+        .os-stage[data-active] .os-core {
           box-shadow: 0 0 26px rgba(248, 70, 0, .75), 0 0 84px rgba(248, 70, 0, .26);
         }
 
         @media (prefers-reduced-motion: reduce) {
-          .orb-plane { transition: none; }
-          .orb-mark { transition: border-color .3s ease, background-color .3s ease; }
-          .orb-node[data-on] .orb-mark { transform: none; }
+          .os-plane { transition: none; }
+          .os-mark { transition: border-color .3s ease, background-color .3s ease; }
+          .os-node[data-on] .os-mark { transform: none; }
         }
       `}</style>
     </div>

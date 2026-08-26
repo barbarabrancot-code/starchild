@@ -106,6 +106,41 @@ body {
   scrollbar-width: none;
 }
 
+/*
+  Scrollbars, everywhere.
+
+  The platform default is a light chunky rail, which on a near-black interface is
+  the brightest thing on the screen — brighter than any content it sits beside, and
+  drawn on every list long enough to scroll. Toned down rather than removed:
+  something has to say a list continues past its edge, and taking that away trades
+  one honest ugliness for a quiet lie about how much there is.
+*/
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.16) transparent;
+}
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  /* inset by a transparent border, so the thumb reads as a hairline rather than
+     as a filled gutter */
+  border: 3px solid transparent;
+  background-clip: padding-box;
+  border-radius: 999px;
+  background-color: rgba(255, 255, 255, 0.14);
+}
+*::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.28);
+}
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
 /* ── Starchild presence ────────────────────────────────────────────────────────
    The orange dot's behaviour lives in src/prototype/presence. What is here is
    only what has to be global: the shape of the dot, and the one-shot beats a

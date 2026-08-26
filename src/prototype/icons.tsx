@@ -17,6 +17,22 @@ export function LogoMark({ className }: IconProps) {
   );
 }
 
+// Sliders, not a gear. A ring with spokes is a sun at 14px, and a gear with real
+// teeth turns to mud at the same size — two rails with a knob each stays legible
+// and says "adjust these", which is exactly what the control behind it does.
+export function SettingsIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className ?? "size-4"}>
+      <g stroke="currentColor" strokeWidth="1.7" strokeLinecap="round">
+        {/* rails stop clear of each knob, so neither is swallowed at 14px */}
+        <path d="M3.5 8.5h11M19 8.5h1.5M3.5 15.5h5M13 15.5h7.5" />
+        <circle cx="16.5" cy="8.5" r="2.2" />
+        <circle cx="10.75" cy="15.5" r="2.2" />
+      </g>
+    </svg>
+  );
+}
+
 export function PlusIcon({ className }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" fill="none" className={className ?? "size-5"}>
