@@ -186,15 +186,97 @@ const RECENT = ["Climate adaptation strategies", "Launch poster", "Q3 planning"]
 
 /* ──────────────────────────────────────────────────────────────────────────── */
 
+/**
+ * The window on its own, so it can be drawn once — the page — or three times
+ * stacked, which is what `?still=1&tab=all` is for: a DOM importer only ever sees
+ * the open tab, and three URLs is three imports. Stacked, one import gets the set.
+ */
+function Window({ tab }: { tab: Tab }) {
+  const Main = tab.render;
+
+  return (
+    <div className="sc-window">
+      {/* The rail, in the product's order, with the tab's own area lit. */}
+      <aside className="sc-rail" aria-hidden="true">
+        <span className="sc-new">
+          <PlusIcon className="size-[13px]" />
+          New chat
+        </span>
+
+        <div className="sc-navs">
+          <span className={`sc-nav${tab.area === "chat" ? " sc-nav--on" : ""}`}>
+            <PanelIcon className="size-[14px]" />
+            Chat
+          </span>
+          <span className={`sc-nav${tab.area === "agents" ? " sc-nav--on" : ""}`}>
+            <BriefcaseIcon className="size-[14px]" />
+            Agents
+          </span>
+          <span className="sc-nav">
+            <PuzzleIcon className="size-[14px]" />
+            Connectors
+          </span>
+        </div>
+
+        <span className="sc-divider" />
+
+        <div className="sc-navs">
+          {REST.map(({ label, Icon }) => (
+            <span key={label} className="sc-nav">
+              <Icon className="size-[14px]" />
+              {label}
+            </span>
+          ))}
+        </div>
+
+        <p className="sc-recent-head">Recent</p>
+        {RECENT.map((r) => (
+          <span key={r} className="sc-recent">
+            {r}
+          </span>
+        ))}
+      </aside>
+
+      <div className="sc-main">
+        <Main />
+      </div>
+    </div>
+  );
+}
+
 export function ShowcaseSection() {
   // Only the open tab is in the DOM, so a capture gets one of the three. ?tab=
-  // picks which — import three times to collect the set.
+  // picks which, and ?tab=all lays out all three for a single import.
+  const all = STILL_TAB === "all";
   const [at, setAt] = useState(() => {
     const asked = TABS.findIndex((t) => t.id === STILL_TAB);
     return asked === -1 ? 0 : asked;
   });
+
+  if (all) {
+    return (
+      <section className="sc-section sc-section--all">
+        <Container>
+          {TABS.map((t) => (
+            <div key={t.id} className="sc-stack">
+              <div className="sc-tabs">
+                {TABS.map((o) => (
+                  <span key={o.id} className={`sc-tab${o.id === t.id ? " sc-tab--on" : ""}`}>
+                    {o.label}
+                    {o.id === t.id && <span className="sc-rule" />}
+                  </span>
+                ))}
+              </div>
+              <Window tab={t} />
+            </div>
+          ))}
+        </Container>
+        <Style />
+      </section>
+    );
+  }
+
   const tab = TABS[at];
-  const Main = tab.render;
 
   return (
     <section className="sc-section">
@@ -217,68 +299,30 @@ export function ShowcaseSection() {
           ))}
         </div>
 
-        <div className="sc-window">
-          {/* The rail, in the product's order, with the tab's own area lit. */}
-          <aside className="sc-rail" aria-hidden="true">
-            <span className="sc-new">
-              <PlusIcon className="size-[13px]" />
-              New chat
-            </span>
-
-            <div className="sc-navs">
-              <span className={`sc-nav${tab.area === "chat" ? " sc-nav--on" : ""}`}>
-                <PanelIcon className="size-[14px]" />
-                Chat
-              </span>
-              <span className={`sc-nav${tab.area === "agents" ? " sc-nav--on" : ""}`}>
-                <BriefcaseIcon className="size-[14px]" />
-                Agents
-              </span>
-              <span className="sc-nav">
-                <PuzzleIcon className="size-[14px]" />
-                Connectors
-              </span>
-            </div>
-
-            <span className="sc-divider" />
-
-            <div className="sc-navs">
-              {REST.map(({ label, Icon }) => (
-                <span key={label} className="sc-nav">
-                  <Icon className="size-[14px]" />
-                  {label}
-                </span>
-              ))}
-            </div>
-
-            <p className="sc-recent-head">Recent</p>
-            {RECENT.map((r) => (
-              <span key={r} className="sc-recent">
-                {r}
-              </span>
-            ))}
-          </aside>
-
-          <div className="sc-main">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={tab.id}
-                {...reveal({
-                  initial: { opacity: 0, y: 10 },
-                  animate: { opacity: 1, y: 0 },
-                  exit: { opacity: 0, y: -6, transition: { duration: 0.16 } },
-                  transition: { duration: 0.42, ease: [0.16, 1, 0.3, 1] },
-                })}
-                className="sc-main-in"
-              >
-                <Main />
-              </motion.div>
-            </AnimatePresence>
-          </div>
-        </div>
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={tab.id}
+            {...reveal({
+              initial: { opacity: 0, y: 10 },
+              animate: { opacity: 1, y: 0 },
+              exit: { opacity: 0, y: -6, transition: { duration: 0.16 } },
+              transition: { duration: 0.42, ease: [0.16, 1, 0.3, 1] },
+            })}
+            className="sc-main-in"
+          >
+            <Window tab={tab} />
+          </motion.div>
+        </AnimatePresence>
       </Container>
 
-      <style>{`
+      <Style />
+    </section>
+  );
+}
+
+function Style() {
+  return (
+    <style>{`
         .sc-section {
           position: relative; overflow: hidden;
           padding: 96px 0 0; background: #050506;
@@ -433,6 +477,19 @@ export function ShowcaseSection() {
           color: rgba(255,255,255,.3);
         }
 
+        /* Stacked for capture: every window whole, nothing masked away, and space
+           between them so three frames come through as three frames. */
+        .sc-section--all { padding-bottom: 96px; }
+        .sc-section--all::after { display: none; }
+        .sc-stack { margin-bottom: 72px; }
+        .sc-stack .sc-window {
+          height: auto; min-height: 420px;
+          border-bottom: 1px solid rgba(255,255,255,.08);
+          border-radius: 20px;
+          -webkit-mask-image: none; mask-image: none;
+        }
+        .sc-stack .sc-tab { cursor: default; }
+
         @media (max-width: 860px) {
           .sc-section { padding-top: 64px; }
           .sc-window { height: 360px; border-radius: 16px 16px 0 0; }
@@ -443,6 +500,5 @@ export function ShowcaseSection() {
           .sc-card, .sc-posters { width: 100%; }
         }
       `}</style>
-    </section>
   );
 }
