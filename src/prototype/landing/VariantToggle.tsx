@@ -1,8 +1,8 @@
 import type { LandingVariant } from "../ConductorApp";
 
-const VARIANTS: LandingVariant[] = ["a", "b", "c", "d"];
+const VARIANTS: LandingVariant[] = ["a", "b", "c", "d", "e"];
 
-// A/B/C/D switch for the landing page. Deliberately a small floating control rather
+// A/B/C/D/E switch for the landing page. Deliberately a small floating control rather
 // than part of the page — it is a review tool, not product chrome, so it should
 // never read as something a visitor is meant to use.
 export function VariantToggle({
@@ -59,10 +59,11 @@ export function VariantToggle({
         }
 
         .vt-track {
-          position: relative; display: grid; grid-template-columns: repeat(4, 1fr);
+          position: relative; display: grid; grid-template-columns: repeat(5, 1fr);
           align-items: center;
-          /* one 30px knob per version plus the 2px rails either side */
-          width: 128px; height: 30px; border-radius: 999px;
+          /* one 32px cell per version — the knob travels in 32px steps, so the
+             track width has to stay a multiple of it or the last stop overhangs */
+          width: 160px; height: 30px; border-radius: 999px;
           border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.05);
         }
         .vt-side {

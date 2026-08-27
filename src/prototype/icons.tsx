@@ -33,6 +33,23 @@ export function SettingsIcon({ className }: IconProps) {
   );
 }
 
+// A page with a folded corner. Deliberately generic: what a conversation
+// produced could be a plan, a table or a poster, and a specific glyph would be
+// wrong for two of the three.
+export function DocumentIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className ?? "size-4"}>
+      <path
+        d="M14 3H7.5A1.5 1.5 0 0 0 6 4.5v15A1.5 1.5 0 0 0 7.5 21h9a1.5 1.5 0 0 0 1.5-1.5V7z"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinejoin="round"
+      />
+      <path d="M14 3v3.2A1.8 1.8 0 0 0 15.8 8H18" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 export function PlusIcon({ className }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" fill="none" className={className ?? "size-5"}>

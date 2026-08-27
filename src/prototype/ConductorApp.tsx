@@ -3,6 +3,7 @@ import { LandingPage } from "./landing/LandingPage";
 import { LandingPageB } from "./landing/LandingPageB";
 import { LandingPageC } from "./landing/LandingPageC";
 import { LandingPageD } from "./landing/LandingPageD";
+import { LandingPageE } from "./landing/LandingPageE";
 import { TradersPage } from "./landing/c/TradersPage";
 import { PricesPage } from "./landing/PricesPage";
 import { HERO_INTENTS_C } from "./landing/c/heroIntents";
@@ -37,7 +38,7 @@ type Screen =
 // opens C, the version being worked on, so anyone opening it sees the same thing.
 // The floating switch rewrites the query (?v=a) instead, which means a reload
 // keeps the one you're reviewing and the address bar is shareable as it stands.
-export type LandingVariant = "a" | "b" | "c" | "d";
+export type LandingVariant = "a" | "b" | "c" | "d" | "e";
 
 const VARIANT_PARAM = "v";
 const DEFAULT_VARIANT: LandingVariant = "c";
@@ -45,7 +46,9 @@ const DEFAULT_VARIANT: LandingVariant = "c";
 function readVariantFromUrl(): LandingVariant {
   if (typeof window === "undefined") return DEFAULT_VARIANT;
   const asked = new URLSearchParams(window.location.search).get(VARIANT_PARAM);
-  return asked === "a" || asked === "b" || asked === "c" || asked === "d" ? asked : DEFAULT_VARIANT;
+  return asked === "a" || asked === "b" || asked === "c" || asked === "d" || asked === "e"
+    ? asked
+    : DEFAULT_VARIANT;
 }
 
 /**
@@ -173,13 +176,18 @@ export function ConductorApp() {
     <AgentsProvider empty={empty}>
       {screen === "landing" && (
         <>
-          {/* C and D are rendered apart from A and B because they take props the
+          {/* C, D and E are rendered apart from A and B because they take props the
               others don't: a "Starchild for" menu with a real page behind it, and
-              a Pricing item that goes somewhere. D differs from C in its hero and
-              nothing else, so it takes exactly the same handlers. */}
-          {landingVariant === "c" || landingVariant === "d" ? (
+              a Pricing item that goes somewhere. D and E differ from C in their
+              heroes, so they take exactly the same handlers. */}
+          {landingVariant === "c" || landingVariant === "d" || landingVariant === "e" ? (
             (() => {
-              const Landing = landingVariant === "d" ? LandingPageD : LandingPageC;
+              const Landing =
+                landingVariant === "e"
+                  ? LandingPageE
+                  : landingVariant === "d"
+                    ? LandingPageD
+                    : LandingPageC;
               return (
                 <Landing
                   key={landingVariant}
@@ -305,7 +313,11 @@ export function ConductorApp() {
           onSwitchArea={setArea}
           onBack={goHome}
           // D uses C's hero chips, so Guest Mode has to carry the same set through
-          intents={landingVariant === "c" || landingVariant === "d" ? HERO_INTENTS_C : undefined}
+          intents={
+            landingVariant === "c" || landingVariant === "d" || landingVariant === "e"
+              ? HERO_INTENTS_C
+              : undefined
+          }
           onOpenMarketplace={() => setMarketplaceOpen(true)}
           onRequestSignup={goToAuthFromChat}
           onLogIn={goToAuthFromChat}
