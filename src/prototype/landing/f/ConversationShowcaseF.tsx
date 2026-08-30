@@ -117,7 +117,7 @@ export function ConversationShowcaseF() {
           font-weight: 600; letter-spacing: -.035em; text-wrap: balance;
         }
         .ctf-window {
-          position: relative; box-sizing: border-box; width: min(610px, 100%);
+          position: relative; box-sizing: border-box; width: min(610px, calc(100% - 32px));
           height: 312px; margin: 0 auto; overflow: hidden; border-radius: 20px;
           border: 1px solid rgba(255,255,255,.09); background: #1a1a1b;
           box-shadow: 0 24px 70px rgba(0,0,0,.24);
@@ -126,7 +126,7 @@ export function ConversationShowcaseF() {
           content: ""; position: absolute; inset: -46% -26% -42% -42%; pointer-events: none;
           background: radial-gradient(circle at 46% 58%, rgba(248,70,0,.18), rgba(77,27,12,.09) 34%, transparent 66%);
         }
-        .ctf-bubble { position: relative; width: max-content; max-width: min(78%, 300px); margin: 0; padding: 10px 13px; border-radius: 15px; background: rgba(248,70,0,.105); color: rgba(255,255,255,.9); font-size: 14px; line-height: 1.35; }
+        .ctf-bubble { position: relative; box-sizing: border-box; width: max-content; max-width: none; margin: 0; padding: 10px 14px; border-radius: 15px; background: rgba(248,70,0,.105); color: rgba(255,255,255,.9); font-size: 14px; line-height: 1.3; white-space: nowrap; }
         .ctf-bubble--user { position: absolute; background: rgba(255,255,255,.055); color: rgba(255,255,255,.82); }
         .ctf-bubble--first { top: 38px; right: 32px; }
         .ctf-bubble--second { top: 183px; right: 32px; }
@@ -134,7 +134,7 @@ export function ConversationShowcaseF() {
         .ctf-answer > i { width: 10px; height: 10px; border-radius: 999px; background: #f84600; box-shadow: 0 0 12px rgba(248,70,0,.85); }
         .ctf-answer--first { top: 85px; left: 31px; }
         .ctf-answer--second { top: 233px; left: 31px; }
-        .ctf-plan { position: absolute; top: 133px; left: 57px; display: flex; align-items: center; gap: 10px; width: 196px; box-sizing: border-box; padding: 10px 13px; border: 1px solid rgba(248,70,0,.18); border-radius: 12px; background: rgba(70,28,20,.32); color: rgba(255,255,255,.88); font-size: 14px; }
+        .ctf-plan { position: absolute; top: 133px; left: 57px; display: flex; align-items: center; gap: 10px; width: 222px; box-sizing: border-box; padding: 10px 13px; border: 1px solid rgba(248,70,0,.18); border-radius: 12px; background: rgba(70,28,20,.32); color: rgba(255,255,255,.88); font-size: 14px; }
         .ctf-plan svg { width: 15px; height: 15px; fill: none; stroke: rgba(255,255,255,.7); stroke-width: 1.2; }
         .ctf-plan b { margin-left: auto; color: rgba(255,255,255,.38); font-size: 17px; font-weight: 400; line-height: .7; }
         .ctf-reaction { position: absolute; right: 8px; bottom: -15px; display: grid; place-items: center; width: 19px; height: 19px; border-radius: 999px; background: #0f1011; font-size: 12px; }
@@ -142,13 +142,13 @@ export function ConversationShowcaseF() {
           .ctf-section { padding: 92px 0 100px; }
           .ctf-title { margin-bottom: 34px; }
           .ctf-window { height: 330px; border-radius: 18px; }
-          .ctf-bubble { font-size: 13px; }
+          .ctf-bubble { max-width: 78%; font-size: 13px; white-space: normal; }
           .ctf-bubble--first { top: 30px; right: 18px; }
           .ctf-bubble--second { top: 196px; right: 18px; }
           .ctf-answer--first { top: 83px; left: 18px; }
           .ctf-answer--second { top: 247px; left: 18px; }
           .ctf-answer { gap: 11px; }
-          .ctf-plan { top: 136px; left: 43px; width: 184px; }
+          .ctf-plan { top: 136px; left: 43px; width: 194px; }
         }
       `}</style>
     </section>
