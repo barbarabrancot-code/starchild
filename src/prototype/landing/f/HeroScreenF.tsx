@@ -67,12 +67,14 @@ export function HeroScreenF({
   onEnterGuest,
   onStartTask,
   onNavigateHome,
+  onNavigatePricing,
   onLogIn,
   onSignUp,
 }: {
   onEnterGuest: (prompt?: string) => void;
   onStartTask: (task: TaskCard) => void;
   onNavigateHome: () => void;
+  onNavigatePricing: () => void;
   onLogIn: () => void;
   onSignUp: () => void;
 }) {
@@ -188,7 +190,12 @@ export function HeroScreenF({
 
   return (
     <section className="hero-f relative flex min-h-screen flex-col overflow-hidden">
-      <SiteHeaderF onNavigateHome={onNavigateHome} onLogIn={onLogIn} onSignUp={onSignUp} />
+      <SiteHeaderF
+        onNavigateHome={onNavigateHome}
+        onNavigatePricing={onNavigatePricing}
+        onLogIn={onLogIn}
+        onSignUp={onSignUp}
+      />
 
       <main className="relative z-10 flex flex-1 items-center pb-24">
         <Container className="w-full">

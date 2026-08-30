@@ -14,10 +14,12 @@ import { Container } from "../../Container";
  */
 export function SiteHeaderF({
   onNavigateHome,
+  onNavigatePricing,
   onLogIn,
   onSignUp,
 }: {
   onNavigateHome: () => void;
+  onNavigatePricing?: () => void;
   onLogIn: () => void;
   onSignUp: () => void;
 }) {
@@ -36,6 +38,11 @@ export function SiteHeaderF({
           </button>
 
           <div className="flex items-center gap-2">
+            {onNavigatePricing && (
+              <button type="button" onClick={onNavigatePricing} className="hf-pricing">
+                Pricing
+              </button>
+            )}
             <button type="button" onClick={onLogIn} className="hf-login">
               Log in
             </button>
@@ -55,6 +62,13 @@ export function SiteHeaderF({
           color: rgba(255,255,255,.62);
           transition: color .18s ease;
         }
+        .hf-pricing {
+          padding: 8px 10px; border: 0; background: none; cursor: pointer;
+          font-family: var(--font-google-sans); font-size: 14px; line-height: 1;
+          color: rgba(255,255,255,.62); transition: color .18s ease;
+        }
+        .hf-pricing:hover { color: #fff; }
+        .hf-pricing:focus-visible { outline: 2px solid rgba(255,255,255,.55); outline-offset: 2px; border-radius: 999px; }
         .hf-login:hover { color: #fff; }
         .hf-login:focus-visible { outline: 2px solid rgba(255,255,255,.55); outline-offset: 2px; border-radius: 999px; }
 

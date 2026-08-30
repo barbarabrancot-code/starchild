@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { motion } from "motion/react";
 import { Container } from "../../Container";
 
@@ -66,6 +67,40 @@ const PLANS: Plan[] = [
   },
 ];
 
+type PricingAudience = "general" | "traders";
+
+const TRADER_PLANS: Plan[] = PLANS.map((plan) => {
+  if (plan.name === "Pague conforme o uso") {
+    return {
+      ...plan,
+      monthly: ["Recarregue qualquer valor, a qualquer momento", "Use apenas quando uma analise ou alerta precisar", "Sem compromisso mensal"],
+      fit: "Melhor para: explorar analises e pesquisas de mercado",
+    };
+  }
+
+  if (plan.name === "Lite") {
+    return {
+      ...plan,
+      monthly: ["30 resumos de mercado ou", "40 pesquisas sobre ativos ou", "300 tarefas de analise rapida"],
+      fit: "Ideal para: acompanhar o mercado no dia a dia",
+    };
+  }
+
+  if (plan.name === "Plus") {
+    return {
+      ...plan,
+      monthly: ["150 paineis de monitoramento de mercado, ou", "200 pesquisas sobre ativos, ou", "1.500 tarefas de analise de mercado"],
+      fit: "Ideal para: traders individuais e rotinas de analise",
+    };
+  }
+
+  return {
+    ...plan,
+    monthly: ["450 paineis de monitoramento de mercado, ou", "600 pesquisas sobre ativos, ou", "4.500 tarefas de analise de mercado"],
+    fit: "Melhor para: traders profissionais e operacoes continuas",
+  };
+});
+
 function MachineIcon() {
   return (
     <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -75,9 +110,18 @@ function MachineIcon() {
   );
 }
 
-export function PricingSection({ onChoosePlan }: { onChoosePlan: () => void }) {
+export function PricingSection({
+  onChoosePlan,
+  standalone = false,
+}: {
+  onChoosePlan: () => void;
+  standalone?: boolean;
+}) {
+  const [audience, setAudience] = useState<PricingAudience>("general");
+  const plans = audience === "general" ? PLANS : TRADER_PLANS;
+
   return (
-    <section className="lp-pricing" aria-label="Planos e preços">
+    <section className={`lp-pricing${standalone ? " lp-pricing--page" : ""}`} aria-label="Planos e preços">
       <Container>
         <motion.div
           className="lp-pricing-intro"
@@ -86,7 +130,7 @@ export function PricingSection({ onChoosePlan }: { onChoosePlan: () => void }) {
           viewport={{ once: true, amount: 0.4 }}
           transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
         >
-          <h2>Don’t subscribe to every AI.</h2>
+          <h1>Don’t subscribe to every AI.</h1>
           <p>Use the right one.</p>
 
           <div className="lp-value-banner">
@@ -100,10 +144,35 @@ export function PricingSection({ onChoosePlan }: { onChoosePlan: () => void }) {
               <p>One place to chat, create, research, and run agents.</p>
             </div>
           </div>
+
+          <div className="lp-pricing-tabs" role="tablist" aria-label="Choose how you use Starchild">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={audience === "general"}
+              className={audience === "general" ? "lp-pricing-tab lp-pricing-tab--active" : "lp-pricing-tab"}
+              onClick={() => setAudience("general")}
+            >
+              General use
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={audience === "traders"}
+              className={audience === "traders" ? "lp-pricing-tab lp-pricing-tab--active" : "lp-pricing-tab"}
+              onClick={() => setAudience("traders")}
+            >
+              Traders
+            </button>
+          </div>
         </motion.div>
 
-        <div className="lp-pricing-grid">
-          {PLANS.map((plan, index) => (
+        <div
+          className="lp-pricing-grid"
+          role="tabpanel"
+          aria-label={audience === "general" ? "General use plans" : "Trader plans"}
+        >
+          {plans.map((plan, index) => (
             <motion.article
               key={plan.name}
               className="lp-price-card"
@@ -152,7 +221,7 @@ export function PricingSection({ onChoosePlan }: { onChoosePlan: () => void }) {
       <style>{`
         .lp-pricing { padding: 76px 0 116px; background: #050506; font-family: var(--font-google-sans); }
         .lp-pricing-intro { max-width: 920px; margin: 0 auto 42px; text-align: center; color: #fff; }
-        .lp-pricing-intro h2 { margin: 0; font-size: clamp(32px, 4vw, 46px); line-height: 1.08; font-weight: 600; letter-spacing: -.035em; }
+        .lp-pricing-intro h1 { margin: 0; font-size: clamp(32px, 4vw, 46px); line-height: 1.08; font-weight: 600; letter-spacing: -.035em; }
         .lp-pricing-intro > p { max-width: 620px; margin: 14px auto 0; color: #f84600; font-size: clamp(22px, 2.3vw, 28px); font-weight: 600; line-height: 1.2; letter-spacing: -.025em; text-wrap: balance; }
         .lp-value-banner { display: grid; grid-template-columns: minmax(0, 1fr) 42px minmax(0, 1fr); align-items: stretch; gap: 16px; margin-top: 28px; padding: 8px; border: 1px solid rgba(255,255,255,.1); border-radius: 16px; background: rgba(255,255,255,.018); text-align: left; }
         .lp-value-side { display: flex; flex-direction: column; justify-content: center; min-height: 76px; padding: 14px 18px; border-radius: 10px; }
@@ -162,6 +231,11 @@ export function PricingSection({ onChoosePlan }: { onChoosePlan: () => void }) {
         .lp-value-side p { margin: 6px 0 0; color: rgba(255,255,255,.72); font-size: 14px; line-height: 1.4; }
         .lp-value-side--active p { color: rgba(255,255,255,.9); }
         .lp-value-divider { display: grid; place-items: center; color: rgba(255,255,255,.34); font-size: 11px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; }
+        .lp-pricing-tabs { display: inline-flex; gap: 4px; margin-top: 26px; padding: 4px; border: 1px solid rgba(255,255,255,.1); border-radius: 999px; background: rgba(255,255,255,.025); }
+        .lp-pricing-tab { min-width: 118px; padding: 10px 16px; border: 0; border-radius: 999px; background: transparent; color: rgba(255,255,255,.52); cursor: pointer; font: 600 13px/1 var(--font-google-sans); transition: background .2s ease, color .2s ease; }
+        .lp-pricing-tab:hover { color: #fff; }
+        .lp-pricing-tab--active { background: #f84600; color: #fff; }
+        .lp-pricing-tab:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
         .lp-pricing-grid { display: grid; gap: 16px; }
         .lp-price-card { display: flex; flex-direction: column; min-height: 580px; padding: 36px; border: 1px solid rgba(255,255,255,.1); border-radius: 18px; background: rgba(255,255,255,.015); color: #fff; }
         .lp-price-top { display: flex; flex-direction: column; gap: 9px; }

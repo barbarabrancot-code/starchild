@@ -3,7 +3,6 @@ import { HeroScreenF } from "./f/HeroScreenF";
 import { SurfacesCardsSection } from "./f/SurfacesCardsSection";
 import { OrbitSection } from "./f/OrbitSection";
 import { ConductorSection } from "./f/ConductorSection";
-import { PricingSection } from "./f/PricingSection";
 import { FACES, OrbFace, type Mood } from "./f/OrbFace";
 
 /** Landing B begins as an independent copy of the current landing A. */
@@ -45,11 +44,13 @@ function askedForFaces() {
 export function LandingPageG({
   onEnterGuest,
   onStartTask,
+  onNavigatePricing,
   onLogIn,
   onSignUp,
 }: {
   onEnterGuest: (prompt?: string) => void;
   onStartTask: (task: TaskCard) => void;
+  onNavigatePricing: () => void;
   onLogIn: () => void;
   onSignUp: () => void;
 }) {
@@ -61,13 +62,13 @@ export function LandingPageG({
         onEnterGuest={onEnterGuest}
         onStartTask={onStartTask}
         onNavigateHome={() => window.scrollTo({ top: 0 })}
+        onNavigatePricing={onNavigatePricing}
         onLogIn={onLogIn}
         onSignUp={onSignUp}
       />
       <SurfacesCardsSection />
       <OrbitSection />
       <ConductorSection />
-      <PricingSection onChoosePlan={onSignUp} />
     </div>
   );
 }

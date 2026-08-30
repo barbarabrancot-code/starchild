@@ -3,7 +3,6 @@ import { HeroScreenF } from "./f/HeroScreenF";
 import { SurfacesSection } from "./f/SurfacesSection";
 import { OrbitSection } from "./f/OrbitSection";
 import { ConductorSection } from "./f/ConductorSection";
-import { PricingSection } from "./f/PricingSection";
 import { FACES, OrbFace, type Mood } from "./f/OrbFace";
 
 /**
@@ -70,11 +69,13 @@ function askedForFaces() {
 export function LandingPageF({
   onEnterGuest,
   onStartTask,
+  onNavigatePricing,
   onLogIn,
   onSignUp,
 }: {
   onEnterGuest: (prompt?: string) => void;
   onStartTask: (task: TaskCard) => void;
+  onNavigatePricing: () => void;
   onLogIn: () => void;
   onSignUp: () => void;
 }) {
@@ -86,6 +87,7 @@ export function LandingPageF({
         onEnterGuest={onEnterGuest}
         onStartTask={onStartTask}
         onNavigateHome={() => window.scrollTo({ top: 0 })}
+        onNavigatePricing={onNavigatePricing}
         onLogIn={onLogIn}
         onSignUp={onSignUp}
       />
@@ -103,7 +105,6 @@ export function LandingPageF({
              bottom of the mark in the middle. */}
       <ConductorSection />
 
-      <PricingSection onChoosePlan={onSignUp} />
     </div>
   );
 }

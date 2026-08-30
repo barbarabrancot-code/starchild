@@ -7,7 +7,7 @@ import { LandingPageE } from "./landing/LandingPageE";
 import { LandingPageF } from "./landing/LandingPageF";
 import { LandingPageG } from "./landing/LandingPageG";
 import { TradersPage } from "./landing/c/TradersPage";
-import { PricesPage } from "./landing/PricesPage";
+import { PricingPageF } from "./landing/PricingPageF";
 import { HERO_INTENTS_C } from "./landing/c/heroIntents";
 import { VariantToggle } from "./landing/VariantToggle";
 import { ChatScreen } from "./ChatScreen";
@@ -229,6 +229,7 @@ export function ConductorApp({ line = BUILT_LINE }: { line?: LandingLine } = {})
                   key={landingVariant}
                   onEnterGuest={enterGuest}
                   onStartTask={startTask}
+                  onNavigatePricing={goToPricing}
                   onLogIn={goToAuth}
                   onSignUp={goToAuth}
                 />
@@ -296,9 +297,8 @@ export function ConductorApp({ line = BUILT_LINE }: { line?: LandingLine } = {})
       )}
 
       {screen === "pricing" && (
-        <PricesPage
+        <PricingPageF
           onNavigateHome={goHome}
-          onNavigateTraders={goToTraders}
           onLogIn={goToAuth}
           onSignUp={goToAuth}
           // no billing sits behind any of these yet, so every plan button lands on
