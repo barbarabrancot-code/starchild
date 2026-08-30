@@ -96,7 +96,7 @@ export function ConductorSectionA() {
         .cda-shell { position: relative; z-index: 1; min-height: 680px; background: transparent; isolation: isolate; }
         .cda-heading { position: relative; z-index: 3; padding-top: 72px; text-align: center; }
         .cda-heading p { margin: 0 0 10px; color: #f84600; font-size: 15px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; }
-        .cda-heading h2 { margin: 0; color: #fff; font-size: 56px; line-height: 70px; font-weight: 500; letter-spacing: 0; }
+        .cda-heading h2 { margin: 0; color: #fff; font-size: 48px; line-height: 70px; font-weight: 500; letter-spacing: 0; }
         .cda-rake { position: absolute; z-index: 0; top: 128px; width: min(65vw, 1165px); height: auto; pointer-events: none; }
         .cda-rake--left { left: 0; }
         .cda-rake--right { right: 0; transform: scaleX(-1); }
