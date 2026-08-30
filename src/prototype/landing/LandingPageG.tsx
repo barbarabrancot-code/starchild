@@ -1,6 +1,6 @@
 import type { TaskCard } from "../data";
 import { HeroScreenF } from "./f/HeroScreenF";
-import { ConversationShowcaseF } from "./f/ConversationShowcaseF";
+import { SurfacesSection } from "./f/SurfacesSection";
 import { OrbitSection } from "./f/OrbitSection";
 import { ConductorSection } from "./f/ConductorSection";
 import { FinalCtaSection } from "./FinalCtaSection";
@@ -67,7 +67,7 @@ export function LandingPageG({
         onLogIn={onLogIn}
         onSignUp={onSignUp}
       />
-      <ConversationShowcaseF />
+      <SurfacesSection />
       <OrbitSection />
       <ConductorSection />
       <FinalCtaSection
