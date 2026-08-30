@@ -289,7 +289,13 @@ export function OrbitSection() {
              falloff is steepest and sparse out in the tail. The radii are also
              larger than the distance they have to cover, which spreads the same
              drop over more pixels: the same warmth, no edge to it. */
-          background: linear-gradient(180deg, #0c0c0e 0%, #09090b 100%);
+          background:
+            radial-gradient(ellipse 82% 128% at 8% 48%,
+              rgba(115, 43, 13, .30) 0%,
+              rgba(82, 30, 11, .21) 30%,
+              rgba(42, 18, 10, .11) 52%,
+              rgba(10, 10, 12, 0) 76%),
+            linear-gradient(180deg, #0c0c0e 0%, #09090b 100%);
 
           -webkit-mask-image:
             radial-gradient(50% var(--bite) at 50% 0, transparent 99.4%, #000 99.6%),
