@@ -43,7 +43,7 @@ import { Container } from "../../Container";
  *   The detail is there to be looked at; read out row by row it is noise.
  */
 
-type SurfaceId = "chat" | "agents" | "connectors";
+type SurfaceId = "chat" | "agents";
 
 type Surface = {
   id: SurfaceId;
@@ -87,7 +87,6 @@ function Rail({ on }: { on: SurfaceId }) {
       <span className="sf-new">+ New chat</span>
       <span className={on === "chat" ? "sf-nav sf-nav--on" : "sf-nav"}>Chat</span>
       <span className={on === "agents" ? "sf-nav sf-nav--on" : "sf-nav"}>Agents</span>
-      <span className={on === "connectors" ? "sf-nav sf-nav--on" : "sf-nav"}>Connectors</span>
 
       {on === "chat" && (
         <>
@@ -211,15 +210,6 @@ function Agents() {
 }
 
 /** The same six marks the orbit runs, out of the same folder. */
-const CONNECTED = [
-  { id: "gmail", name: "Gmail" },
-  { id: "telegram", name: "Telegram" },
-  { id: "notion", name: "Notion" },
-  { id: "slack", name: "Slack" },
-  { id: "canva", name: "Canva" },
-  { id: "hyper-evm", name: "HyperEVM" },
-];
-
 /**
  * Six rows, each one an account already connected.
  *
@@ -229,29 +219,6 @@ const CONNECTED = [
  * thread beside it, and they carry the word the section is actually selling —
  * connected, once, and then done.
  */
-function Connectors() {
-  return (
-    <div className="sf-pane">
-      <div className="sf-head">
-        <span className="sf-pane-title">Connectors</span>
-        <span className="sf-count">{CONNECTED.length} connected</span>
-      </div>
-
-      <div className="sf-tools">
-        {CONNECTED.map((c) => (
-          <span key={c.id} className="sf-tool">
-            <span className="sf-tool-mark">
-              <img src={`${import.meta.env.BASE_URL}connectors/${c.id}.svg`} alt="" />
-            </span>
-            {c.name}
-            <span className="sf-tool-on">Connected</span>
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 const SURFACES: Surface[] = [
   {
     id: "chat",
@@ -271,6 +238,7 @@ const SURFACES: Surface[] = [
       "The Starchild app on the Agents screen, with an agent called Inbox Manager open: the instruction it was given, what it did this morning, and four drafted replies it is holding until you approve them.",
     render: Agents,
   },
+  /*
   {
     id: "connectors",
     name: "Connectors",
@@ -279,7 +247,7 @@ const SURFACES: Surface[] = [
     described:
       "The Starchild app on the Connectors screen: Gmail, Telegram, Notion, Slack, Canva and HyperEVM, each connected once and listed as connected.",
     render: Connectors,
-  },
+  }, */
 ];
 
 /* ──────────────────────────────────────────────────────────────────────────── */

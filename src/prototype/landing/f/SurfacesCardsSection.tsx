@@ -5,7 +5,7 @@ type Surface = {
   title: string;
   lede: string;
   copy: string;
-  kind: "chat" | "agents" | "connectors";
+  kind: "chat" | "agents";
 };
 
 const SURFACES: Surface[] = [
@@ -20,12 +20,6 @@ const SURFACES: Surface[] = [
     lede: "For the work you would rather not ask for twice.",
     copy: "Hand over the things that repeat — a check every Monday, a watch on a price, an inbox kept down to what needs you. They run on their own and come back when there is something worth interrupting you for.",
     kind: "agents",
-  },
-  {
-    title: "Connectors",
-    lede: "For the tools your work already lives in.",
-    copy: "Connect Gmail, Calendar, Slack or Notion once, to your account. After that, letting an agent use one is a permission rather than another login — and you can see exactly what each of them is allowed to do.",
-    kind: "connectors",
   },
 ];
 
@@ -51,22 +45,9 @@ function AgentsPreview() {
   );
 }
 
-function ConnectorsPreview() {
-  const connectors = ["gmail", "telegram", "notion", "slack", "canva", "hyper-evm"];
-  return (
-    <div className="sc-preview sc-connectors-preview" aria-hidden="true">
-      <header><b>Connectors</b><span>6 connected</span></header>
-      <div className="sc-connector-list">
-        {connectors.map((id) => <span key={id}><img src={`${import.meta.env.BASE_URL}connectors/${id}.svg`} alt="" />Connected</span>)}
-      </div>
-    </div>
-  );
-}
-
 function Preview({ kind }: { kind: Surface["kind"] }) {
   if (kind === "chat") return <ChatPreview />;
-  if (kind === "agents") return <AgentsPreview />;
-  return <ConnectorsPreview />;
+  return <AgentsPreview />;
 }
 
 /** Version B's card treatment of the same Chat, Agents and Connectors content. */
@@ -116,11 +97,7 @@ export function SurfacesCardsSection() {
         .sc-agent-update span { color: rgba(255,255,255,.36); font-size: 9px; } .sc-agent-update b { color: rgba(255,255,255,.78); font-size: 10px; }
         .sc-agent-approval { flex-direction: row; align-items: center; justify-content: space-between; border-color: rgba(248,70,0,.22); }
         .sc-agent-approval b { color: rgba(255,255,255,.9); font-size: 10px; } .sc-agent-approval span { padding: 4px 6px; border-radius: 5px; background: rgba(248,70,0,.16); color: #ffad8a; font-size: 9px; }
-        .sc-connectors-preview { padding-bottom: 16px; }
-        .sc-connector-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 7px; padding: 13px; }
-        .sc-connector-list span { display: flex; align-items: center; gap: 6px; min-width: 0; color: rgba(255,255,255,.42); font-size: 9px; }
-        .sc-connector-list img { width: 17px; height: 17px; object-fit: contain; }
-        @media (min-width: 760px) { .sc-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } .sc-card { min-height: 454px; padding: 28px 22px 24px; } }
+        @media (min-width: 760px) { .sc-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .sc-card { min-height: 454px; padding: 28px 22px 24px; } }
         @media (min-width: 1180px) { .sc-section { padding: 92px 0 132px; } .sc-card { min-height: 454px; padding: 28px 22px 24px; } }
       `}</style>
     </section>
