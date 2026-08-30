@@ -9,6 +9,7 @@ import { OrbFace, type Mood } from "./OrbFace";
 import { PresenceOrb } from "../../presence/PresenceOrb";
 import { usePointerLean } from "../../presence/usePointerLean";
 import { SiteHeaderF } from "./SiteHeaderF";
+import heroGradientAsset from "../../../../assets/gradiente hero.svg";
 
 /**
  * Whether the orb has a face. Off for now.
@@ -294,7 +295,13 @@ export function HeroScreenF({
       </main>
 
       <style>{`
-        .hero-f { background: transparent; }
+        .hero-f {
+          background-color: transparent;
+          background-image: url(${heroGradientAsset});
+          background-position: left top;
+          background-repeat: no-repeat;
+          background-size: auto;
+        }
 
         /* The orb is a control here — it answers to hover and to being pressed —
            so it says so. */
