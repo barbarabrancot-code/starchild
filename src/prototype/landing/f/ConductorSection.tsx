@@ -329,9 +329,16 @@ export function ConductorSection() {
               between them for each task.
             </p>
 
-            {/* Two identical halves. The track travels exactly one half and
-                restarts, so the seam lands where the first slide already was. */}
+            {/* Two equal marquees make the choice of models feel active without
+                turning the model rail into the dominant part of the diagram. */}
             <div className="cd-marquee" aria-hidden="true">
+              <ul className="cd-track">
+                {[...MODELS, ...MODELS].map((m, i) => (
+                  <Model key={`${m.logo}-${i}`} name={m.name} logo={m.logo} />
+                ))}
+              </ul>
+            </div>
+            <div className="cd-marquee cd-marquee--reverse" aria-hidden="true">
               <ul className="cd-track">
                 {[...MODELS, ...MODELS].map((m, i) => (
                   <Model key={`${m.logo}-${i}`} name={m.name} logo={m.logo} />
@@ -510,7 +517,8 @@ export function ConductorSection() {
 
         .cd-models {
           position: relative;
-          padding-block: 24px;
+          display: grid; gap: 16px;
+          padding-block: 18px;
           border: 1px solid rgba(248,70,0,.32);
           border-radius: 12px;
           overflow: hidden;
@@ -530,14 +538,20 @@ export function ConductorSection() {
           animation: cd-marquee 34s linear infinite;
         }
 
+        .cd-marquee--reverse .cd-track { animation-name: cd-marquee-reverse; }
+
         /* Travels exactly one half of the doubled list, so the restart lands
            where the first slide already was and the seam is not visible. */
         @keyframes cd-marquee {
           from { transform: translateX(0); }
           to   { transform: translateX(-50%); }
         }
+        @keyframes cd-marquee-reverse {
+          from { transform: translateX(-50%); }
+          to   { transform: translateX(0); }
+        }
 
-        .cd-marquee:hover .cd-track { animation-play-state: paused; }
+        .cd-models:hover .cd-track { animation-play-state: paused; }
 
         .cd-model {
           flex: none; white-space: nowrap;
