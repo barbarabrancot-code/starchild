@@ -21,11 +21,11 @@ export function ConductorSectionA() {
 
   return (
     <section ref={sectionRef} className="cda-section" aria-labelledby="cda-title">
+      <span className="cda-rake cda-rake--left" aria-hidden="true" />
+      <span className="cda-rake cda-rake--right" aria-hidden="true" />
+
       <Container>
         <div className="cda-shell">
-          <span className="cda-rake cda-rake--left" aria-hidden="true" />
-          <span className="cda-rake cda-rake--right" aria-hidden="true" />
-
           <motion.div
             className="cda-heading"
             initial={{ opacity: 0, y: 14 }}
@@ -57,9 +57,8 @@ export function ConductorSectionA() {
                 {model.logo ? (
                   <img src={`${import.meta.env.BASE_URL}models/${model.logo}.svg`} alt="" />
                 ) : (
-                  <b>✧</b>
+                  <><b>✧</b>{model.name}</>
                 )}
-                {model.name}
               </span>
             ))}
           </motion.div>
@@ -80,12 +79,12 @@ export function ConductorSectionA() {
       </Container>
 
       <style>{`
-        .cda-section { padding: 56px 0 96px; background: transparent; font-family: var(--font-google-sans); }
-        .cda-shell { position: relative; min-height: 680px; overflow: hidden; background: transparent; isolation: isolate; }
+        .cda-section { position: relative; overflow: hidden; padding: 56px 0 96px; background: transparent; font-family: var(--font-google-sans); }
+        .cda-shell { position: relative; z-index: 1; min-height: 680px; background: transparent; isolation: isolate; }
         .cda-heading { position: relative; z-index: 3; padding-top: 72px; text-align: center; }
         .cda-heading p { margin: 0 0 10px; color: #f84600; font-size: 15px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; }
         .cda-heading h2 { margin: 0; color: #fff; font-size: clamp(31px, 3.3vw, 42px); line-height: 1.1; font-weight: 600; letter-spacing: -.03em; }
-        .cda-rake { position: absolute; z-index: 0; top: 128px; width: 52%; height: 440px; opacity: .94; filter: blur(.2px); }
+        .cda-rake { position: absolute; z-index: 0; top: 184px; width: 54vw; height: 440px; opacity: .94; filter: blur(.2px); }
         .cda-rake::before { content: ""; position: absolute; inset: 0; background: radial-gradient(80% 78% at 0 0, rgba(248,70,0,.88), rgba(147,43,10,.48) 35%, rgba(31,15,12,.12) 65%, transparent 78%); clip-path: polygon(0 0, 100% 25%, 52% 100%, 18% 100%, 0 34%); }
         .cda-rake--left { left: 0; }
         .cda-rake--right { right: 0; transform: scaleX(-1); }
@@ -104,7 +103,7 @@ export function ConductorSectionA() {
         .cda-core p { position: relative; z-index: 2; margin: 84px 0 0; color: #fff; font-size: 18px; line-height: 1.28; font-weight: 500; }
         @media (max-width: 900px) {
           .cda-shell { min-height: 720px; }
-          .cda-rake { top: 150px; width: 70%; opacity: .66; }
+          .cda-rake { top: 206px; width: 70vw; opacity: .66; }
           .cda-context { left: 8%; }
           .cda-models { right: 7%; column-gap: 24px; }
         }
@@ -113,7 +112,7 @@ export function ConductorSectionA() {
           .cda-shell { min-height: 710px; }
           .cda-heading { padding-top: 54px; }
           .cda-heading p { font-size: 12px; }
-          .cda-rake { top: 164px; width: 110%; height: 330px; opacity: .45; }
+          .cda-rake { top: 196px; width: 110vw; height: 330px; opacity: .45; }
           .cda-rake--left { left: -42%; }
           .cda-rake--right { right: -42%; }
           .cda-context, .cda-models { top: 174px; transform: none; }
