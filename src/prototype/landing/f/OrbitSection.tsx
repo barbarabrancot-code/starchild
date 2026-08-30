@@ -269,12 +269,12 @@ export function OrbitSection() {
            the mask is for. On a ground identical to the page there is nothing to
            cut. */
         .orbf-panel {
-          --bite: clamp(40px, 7vw, 110px);
+          --bite: clamp(38px, 4vw, 64px);
 
           position: relative;
           /* The scoops eat into the top and bottom of the panel, so the padding
              has to clear them or the headline sits inside the curve. */
-          padding-block: calc(130px + var(--bite));
+          padding-block: calc(116px + var(--bite));
           /* The warm ground is two layers doing different jobs. The wide one is
              the panel's own temperature — a rust wash that falls off to the
              page's black before the edges, so the scoops still read as an edge
