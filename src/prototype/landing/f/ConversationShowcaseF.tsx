@@ -117,9 +117,9 @@ export function ConversationShowcaseF() {
           background: transparent; font-family: var(--font-google-sans);
         }
         .ctf-title {
-          max-width: 22ch; margin: 0 auto 42px; text-align: center;
-          color: #fff; font-size: clamp(31px, 3.55vw, 46px); line-height: 1.1;
-          font-weight: 600; letter-spacing: -.035em; text-wrap: balance;
+          max-width: 28ch; margin: 0 auto 42px; text-align: center;
+          color: #fff; font-size: 56px; line-height: 70px;
+          font-weight: 500; letter-spacing: 0; text-wrap: balance;
         }
         .ctf-window {
           position: relative; box-sizing: border-box; width: min(610px, calc(100% - 32px));
@@ -160,7 +160,7 @@ export function ConversationShowcaseF() {
         }
         @media (max-width: 640px) {
           .ctf-section { padding: 92px 0 100px; }
-          .ctf-title { margin-bottom: 34px; }
+          .ctf-title { margin-bottom: 34px; font-size: 38px; line-height: 48px; }
           .ctf-window { height: 330px; border-radius: 18px; }
           .ctf-bubble { max-width: 78%; font-size: 13px; white-space: normal; }
           .ctf-bubble--first { top: 30px; right: 18px; }

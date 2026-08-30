@@ -390,8 +390,8 @@ export function ConductorSection() {
         .cd-title {
           margin: 0 0 80px;
           text-align: center;
-          font-size: 44px; line-height: 1.1; font-weight: 600;
-          letter-spacing: -.02em; color: #fff; text-wrap: balance;
+          font-size: 56px; line-height: 70px; font-weight: 500;
+          letter-spacing: 0; color: #fff; text-wrap: balance;
         }
 
         /* Five tracks in one row — see the note above for why the outer two are
@@ -580,7 +580,7 @@ export function ConductorSection() {
           .cd-rake { width: 460px; height: 437px; top: -40px; }
           .cd-rake--l { left: -110px; }
           .cd-rake--r { right: -110px; }
-          .cd-title { font-size: 34px; margin-bottom: 56px; }
+          .cd-title { font-size: 38px; line-height: 48px; margin-bottom: 56px; }
           .cd-stage {
             grid-template-columns: minmax(0, 1fr);
             justify-items: center; gap: 40px;

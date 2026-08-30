@@ -93,7 +93,7 @@ export function ConductorSectionA() {
         .cda-shell { position: relative; z-index: 1; min-height: 680px; background: transparent; isolation: isolate; }
         .cda-heading { position: relative; z-index: 3; padding-top: 72px; text-align: center; }
         .cda-heading p { margin: 0 0 10px; color: #f84600; font-size: 15px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; }
-        .cda-heading h2 { margin: 0; color: #fff; font-size: clamp(31px, 3.3vw, 42px); line-height: 1.1; font-weight: 600; letter-spacing: -.03em; }
+        .cda-heading h2 { margin: 0; color: #fff; font-size: 56px; line-height: 70px; font-weight: 500; letter-spacing: 0; }
         .cda-rake { position: absolute; z-index: 0; top: 184px; width: 54vw; height: 440px; opacity: .94; filter: blur(.2px); }
         .cda-rake::before { content: ""; position: absolute; inset: 0; background: radial-gradient(80% 78% at 0 0, rgba(248,70,0,.88), rgba(147,43,10,.48) 35%, rgba(31,15,12,.12) 65%, transparent 78%); clip-path: polygon(0 0, 100% 25%, 52% 100%, 18% 100%, 0 34%); }
         .cda-rake--left { left: 0; }
@@ -127,6 +127,7 @@ export function ConductorSectionA() {
           .cda-shell { min-height: 710px; }
           .cda-heading { padding-top: 54px; }
           .cda-heading p { font-size: 12px; }
+          .cda-heading h2 { font-size: 38px; line-height: 48px; }
           .cda-rake { top: 196px; width: 110vw; height: 330px; opacity: .45; }
           .cda-rake--left { left: -42%; }
           .cda-rake--right { right: -42%; }

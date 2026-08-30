@@ -29,7 +29,7 @@ export function FinalCtaSection({
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.5 }}
               transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
-              className="max-w-[26ch] text-[32px] leading-[1.14] font-semibold text-balance text-white sm:text-[44px]"
+              className="max-w-[28ch] text-[38px] leading-[48px] font-medium tracking-normal text-balance text-white sm:text-[56px] sm:leading-[70px]"
               style={{ fontFamily: "var(--font-google-sans)" }}
             >
               {headline}

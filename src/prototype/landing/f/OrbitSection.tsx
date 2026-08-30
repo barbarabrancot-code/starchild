@@ -287,7 +287,7 @@ export function OrbitSection() {
         .orbf-title {
           grid-area: 1 / 2;
           margin: 0; font-family: var(--font-google-sans);
-          font-size: 44px; line-height: 1.12; font-weight: 600; color: #fff;
+          font-size: 56px; line-height: 70px; font-weight: 500; letter-spacing: 0; color: #fff;
         }
 
         /* ---------- the system ---------- */
@@ -430,7 +430,7 @@ export function OrbitSection() {
           .orbf-panel { padding-block: 90px; }
           .orbf-grid { grid-template-columns: 1fr; gap: 56px; justify-items: center; text-align: center; }
           .orbf-stage, .orbf-title { grid-area: auto; }
-          .orbf-title { font-size: 34px; }
+          .orbf-title { font-size: 38px; line-height: 48px; }
           .orbf-stage { width: 320px; height: 320px; }
           /* the label would run off the edge on the right-hand chips */
           .orbf-tip { left: 50%; top: calc(100% + 10px); transform: translateX(-50%); }
