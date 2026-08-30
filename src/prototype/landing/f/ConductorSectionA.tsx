@@ -124,7 +124,7 @@ export function ConductorSectionA() {
         .cda-core { position: absolute; z-index: 3; top: 274px; left: calc(50% - 155px); width: 310px; height: 350px; text-align: center; }
         .cda-orb { position: relative; z-index: 2; width: 190px; height: 190px; margin: 0 auto; transform-origin: 50% 50%; animation: cda-breathe 5.6s ease-in-out infinite; will-change: transform; }
         .cda-orb > img { display: block; width: 100%; height: 100%; }
-        .cda-answer-beam { position: absolute; z-index: 1; top: 130px; left: 50%; width: 560px; height: auto; transform: translateX(-50%); pointer-events: none; }
+        .cda-answer-beam { position: absolute; z-index: 1; top: 130px; left: 50%; width: 560px; height: 420px; transform: translateX(-50%); pointer-events: none; }
         .cda-core p { position: relative; z-index: 2; margin: 84px 0 0; color: #fff; font-size: 18px; line-height: 1.28; font-weight: 500; }
         @keyframes cda-breathe {
           0%, 100% { transform: scale(1); }
