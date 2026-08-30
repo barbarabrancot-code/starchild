@@ -101,11 +101,6 @@ export function ConversationShowcaseF() {
               <i aria-hidden="true" />
               <p className="ctf-bubble">Start with a small beta.</p>
               <span className="ctf-reaction" aria-label="cool">😎</span>
-              <span className="ctf-reaction-cursor" aria-hidden="true">
-                <svg viewBox="0 0 14 19">
-                  <path d="M1 1.2v13.3l3.8-3.5 2.5 6.1 2.3-.9-2.5-6.1 5.4.3z" />
-                </svg>
-              </span>
             </motion.div>
           )}
         </motion.div>
@@ -142,22 +137,7 @@ export function ConversationShowcaseF() {
         .ctf-plan { position: absolute; top: 133px; left: 57px; display: flex; align-items: center; gap: 10px; width: 222px; box-sizing: border-box; padding: 10px 13px; border: 1px solid rgba(248,70,0,.18); border-radius: 12px; background: rgba(70,28,20,.32); color: rgba(255,255,255,.88); font-size: 14px; }
         .ctf-plan svg { width: 15px; height: 15px; fill: none; stroke: rgba(255,255,255,.7); stroke-width: 1.2; }
         .ctf-plan b { margin-left: auto; color: rgba(255,255,255,.38); font-size: 17px; font-weight: 400; line-height: .7; }
-        .ctf-reaction { position: absolute; right: 8px; bottom: -15px; display: grid; place-items: center; width: 19px; height: 19px; border-radius: 999px; background: #0f1011; font-size: 12px; transform-origin: 50% 50%; animation: ctf-reaction-click .62s 1.08s cubic-bezier(.34, 1.56, .64, 1) both; }
-        .ctf-reaction-cursor { position: absolute; right: -15px; bottom: -31px; width: 14px; height: 19px; opacity: 0; pointer-events: none; animation: ctf-cursor-click 1.04s .28s cubic-bezier(.16, 1, .3, 1) both; }
-        .ctf-reaction-cursor svg { display: block; width: 100%; height: 100%; fill: #fff; stroke: #090a0b; stroke-width: 1.1; stroke-linejoin: round; filter: drop-shadow(0 2px 3px rgba(0,0,0,.5)); }
-        @keyframes ctf-cursor-click {
-          0% { opacity: 0; transform: translate(22px, 20px) scale(.88); }
-          18% { opacity: 1; }
-          66% { opacity: 1; transform: translate(1px, 1px) scale(1); }
-          76% { opacity: 1; transform: translate(3px, 4px) scale(.9); }
-          100% { opacity: 0; transform: translate(4px, 5px) scale(.9); }
-        }
-        @keyframes ctf-reaction-click {
-          0%, 52% { transform: scale(1); box-shadow: 0 0 0 rgba(248,70,0,0); }
-          68% { transform: scale(1.28); background: #222326; box-shadow: 0 0 0 5px rgba(248,70,0,.18); }
-          84% { transform: scale(.9); }
-          100% { transform: scale(1); box-shadow: 0 0 0 rgba(248,70,0,0); }
-        }
+        .ctf-reaction { position: absolute; right: 8px; bottom: -15px; display: grid; place-items: center; width: 19px; height: 19px; border-radius: 999px; background: #0f1011; font-size: 12px; }
         @media (max-width: 640px) {
           .ctf-section { padding: 92px 0 100px; }
           .ctf-title { margin-bottom: 34px; font-size: 38px; line-height: 48px; }

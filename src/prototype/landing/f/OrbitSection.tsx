@@ -6,7 +6,7 @@ import { BY_ID, type ConnectorId } from "../../agents/connectors";
 import { PresenceOrb } from "../../presence/PresenceOrb";
 import { usePrefersReducedMotion } from "../../presence/usePresence";
 import { usePointerLean } from "../../presence/usePointerLean";
-import connectorsBackground from "../../../../assets/background connectors svg.svg";
+import connectorsBackground from "../../../../assets/background connectors.png";
 
 /**
  * F's section 3 — what it plugs into.
