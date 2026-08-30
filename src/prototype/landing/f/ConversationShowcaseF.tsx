@@ -1,4 +1,5 @@
-import { motion } from "motion/react";
+import { useEffect, useRef, useState } from "react";
+import { motion, useInView } from "motion/react";
 import { Container } from "../../Container";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
@@ -6,6 +7,18 @@ const EASE = [0.16, 1, 0.3, 1] as const;
 /** The first thing after the hero is deliberately a single, familiar exchange.
  * The product does the organizing; the person only has to say what they need. */
 export function ConversationShowcaseF() {
+  const windowRef = useRef<HTMLDivElement>(null);
+  const isInView = useInView(windowRef, { once: true, amount: 0.55 });
+  const [shown, setShown] = useState(0);
+
+  useEffect(() => {
+    if (!isInView) return;
+
+    const timings = [140, 900, 1250, 1780, 2490];
+    const timers = timings.map((delay, index) => window.setTimeout(() => setShown(index + 1), delay));
+    return () => timers.forEach(window.clearTimeout);
+  }, [isInView]);
+
   return (
     <section className="ctf-section" aria-labelledby="ctf-title">
       <Container>
@@ -22,68 +35,74 @@ export function ConversationShowcaseF() {
 
         <motion.div
           className="ctf-window"
+          ref={windowRef}
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.35 }}
           transition={{ duration: 0.6, delay: 0.08, ease: EASE }}
           aria-label="An example chat where Starchild turns a request into a launch plan."
         >
-          <motion.p
-            className="ctf-bubble ctf-bubble--user ctf-bubble--first"
-            initial={{ opacity: 0, y: 8 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.38, delay: 0.26, ease: EASE }}
-          >
-            Turn this into a launch plan
-          </motion.p>
+          {shown >= 1 && (
+            <motion.p
+              className="ctf-bubble ctf-bubble--user ctf-bubble--first"
+              initial={{ opacity: 0, x: 26, y: 12, scale: 0.94 }}
+              animate={{ opacity: 1, x: 0, y: 0, scale: 1 }}
+              transition={{ duration: 0.38, ease: EASE }}
+            >
+              Turn this into a launch plan
+            </motion.p>
+          )}
 
-          <motion.div
-            className="ctf-answer ctf-answer--first"
-            initial={{ opacity: 0, y: 8 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.38, delay: 0.4, ease: EASE }}
-          >
-            <i aria-hidden="true" />
-            <p className="ctf-bubble">Let&apos;s make it happen.</p>
-          </motion.div>
+          {shown >= 2 && (
+            <motion.div
+              className="ctf-answer ctf-answer--first"
+              initial={{ opacity: 0, x: -18, y: 10, scale: 0.96 }}
+              animate={{ opacity: 1, x: 0, y: 0, scale: 1 }}
+              transition={{ duration: 0.42, ease: EASE }}
+            >
+              <i aria-hidden="true" />
+              <p className="ctf-bubble">Let&apos;s make it happen.</p>
+            </motion.div>
+          )}
 
-          <motion.div
-            className="ctf-plan"
-            initial={{ opacity: 0, y: 8 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.38, delay: 0.52, ease: EASE }}
-          >
-            <svg viewBox="0 0 16 16" aria-hidden="true">
-              <path d="M4.1 1.8h5l2.8 2.8v9.6H4.1zM9.1 1.8v2.9H12" />
-            </svg>
-            <span>Launch plan</span>
-            <b aria-hidden="true">→</b>
-          </motion.div>
+          {shown >= 3 && (
+            <motion.div
+              className="ctf-plan"
+              initial={{ opacity: 0, x: -10, y: 10, scale: 0.96 }}
+              animate={{ opacity: 1, x: 0, y: 0, scale: 1 }}
+              transition={{ duration: 0.4, ease: EASE }}
+            >
+              <svg viewBox="0 0 16 16" aria-hidden="true">
+                <path d="M4.1 1.8h5l2.8 2.8v9.6H4.1zM9.1 1.8v2.9H12" />
+              </svg>
+              <span>Launch plan</span>
+              <b aria-hidden="true">→</b>
+            </motion.div>
+          )}
 
-          <motion.p
-            className="ctf-bubble ctf-bubble--user ctf-bubble--second"
-            initial={{ opacity: 0, y: 8 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.38, delay: 0.66, ease: EASE }}
-          >
-            What should I do first?
-          </motion.p>
+          {shown >= 4 && (
+            <motion.p
+              className="ctf-bubble ctf-bubble--user ctf-bubble--second"
+              initial={{ opacity: 0, x: 26, y: 12, scale: 0.94 }}
+              animate={{ opacity: 1, x: 0, y: 0, scale: 1 }}
+              transition={{ duration: 0.38, ease: EASE }}
+            >
+              What should I do first?
+            </motion.p>
+          )}
 
-          <motion.div
-            className="ctf-answer ctf-answer--second"
-            initial={{ opacity: 0, y: 8 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.38, delay: 0.8, ease: EASE }}
-          >
-            <i aria-hidden="true" />
-            <p className="ctf-bubble">Start with a small beta.</p>
-            <span className="ctf-reaction" aria-label="cool">😎</span>
-          </motion.div>
+          {shown >= 5 && (
+            <motion.div
+              className="ctf-answer ctf-answer--second"
+              initial={{ opacity: 0, x: -18, y: 10, scale: 0.96 }}
+              animate={{ opacity: 1, x: 0, y: 0, scale: 1 }}
+              transition={{ duration: 0.42, ease: EASE }}
+            >
+              <i aria-hidden="true" />
+              <p className="ctf-bubble">Start with a small beta.</p>
+              <span className="ctf-reaction" aria-label="cool">😎</span>
+            </motion.div>
+          )}
         </motion.div>
       </Container>
 
