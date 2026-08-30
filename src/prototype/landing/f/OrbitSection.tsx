@@ -269,7 +269,10 @@ export function OrbitSection() {
            the mask is for. On a ground identical to the page there is nothing to
            cut. */
         .orbf-panel {
-          --bite: clamp(38px, 4vw, 64px);
+          --bite: clamp(72px, 7vw, 118px);
+          --curve-radius: clamp(740px, 78vw, 1460px);
+          --curve-top: calc(var(--bite) - var(--curve-radius));
+          --curve-bottom: calc(100% - var(--bite) + var(--curve-radius));
 
           position: relative;
           /* The scoops eat into the top and bottom of the panel, so the padding
@@ -298,11 +301,11 @@ export function OrbitSection() {
             linear-gradient(180deg, #0c0c0e 0%, #09090b 100%);
 
           -webkit-mask-image:
-            radial-gradient(50% var(--bite) at 50% 0, transparent 99.4%, #000 99.6%),
-            radial-gradient(50% var(--bite) at 50% 100%, transparent 99.4%, #000 99.6%);
+            radial-gradient(circle var(--curve-radius) at 50% var(--curve-top), transparent calc(100% - 1px), #000 100%),
+            radial-gradient(circle var(--curve-radius) at 50% var(--curve-bottom), transparent calc(100% - 1px), #000 100%);
           mask-image:
-            radial-gradient(50% var(--bite) at 50% 0, transparent 99.4%, #000 99.6%),
-            radial-gradient(50% var(--bite) at 50% 100%, transparent 99.4%, #000 99.6%);
+            radial-gradient(circle var(--curve-radius) at 50% var(--curve-top), transparent calc(100% - 1px), #000 100%),
+            radial-gradient(circle var(--curve-radius) at 50% var(--curve-bottom), transparent calc(100% - 1px), #000 100%);
           -webkit-mask-composite: source-in;
           mask-composite: intersect;
         }
