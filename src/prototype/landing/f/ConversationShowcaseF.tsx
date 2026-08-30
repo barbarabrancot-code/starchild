@@ -113,7 +113,7 @@ export function ConversationShowcaseF() {
         }
         .ctf-title {
           max-width: 28ch; margin: 0 auto 42px; text-align: center;
-          color: #fff; font-size: 42px; line-height: 70px;
+          color: #fff; font-size: 42px; line-height: 50px;
           font-weight: 500; letter-spacing: 0; text-wrap: balance;
         }
         .ctf-window {

@@ -390,7 +390,7 @@ export function ConductorSection() {
         .cd-title {
           margin: 0 0 80px;
           text-align: center;
-          font-size: 42px; line-height: 70px; font-weight: 500;
+          font-size: 42px; line-height: 50px; font-weight: 500;
           letter-spacing: 0; color: #fff; text-wrap: balance;
         }
 
