@@ -72,8 +72,6 @@ export function ConductorSectionA() {
           >
             <div className="cda-orb" aria-hidden="true">
               <img src={conductorAsset} alt="" />
-              <span className="cda-eye cda-eye--left" />
-              <span className="cda-eye cda-eye--right" />
             </div>
             <span className="cda-answer-beam" aria-hidden="true" />
             <p>The right model.<br />The right answer.</p>
@@ -102,9 +100,6 @@ export function ConductorSectionA() {
         .cda-core { position: absolute; z-index: 3; top: 274px; left: calc(50% - 155px); width: 310px; height: 350px; text-align: center; }
         .cda-orb { position: relative; z-index: 2; width: 190px; height: 190px; margin: 0 auto; }
         .cda-orb > img { display: block; width: 100%; height: 100%; }
-        .cda-eye { position: absolute; top: 99px; width: 39px; height: 25px; border-radius: 58% 42% 55% 45%; background: repeating-linear-gradient(8deg, rgba(255,255,255,.98) 0 1.5px, transparent 1.5px 4px); filter: drop-shadow(0 0 7px rgba(255,239,176,.92)); transform: rotate(21deg); }
-        .cda-eye--left { left: 45px; }
-        .cda-eye--right { right: 45px; transform: scaleX(-1) rotate(21deg); }
         .cda-answer-beam { position: absolute; z-index: 1; top: 134px; left: 50%; width: 340px; height: 248px; transform: translateX(-50%); clip-path: polygon(38% 0, 62% 0, 100% 92%, 0 92%); background: radial-gradient(55% 24% at 50% 82%, rgba(247,198,94,.4), transparent 72%), linear-gradient(180deg, rgba(255,211,125,.94), rgba(220,145,47,.43) 46%, transparent 95%); filter: blur(4px); opacity: .9; }
         .cda-core p { position: relative; z-index: 2; margin: 84px 0 0; color: #fff; font-size: 18px; line-height: 1.28; font-weight: 500; }
         @media (max-width: 900px) {
