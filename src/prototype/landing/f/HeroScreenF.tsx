@@ -191,6 +191,13 @@ export function HeroScreenF({
 
   return (
     <section className="hero-f relative flex min-h-screen flex-col overflow-hidden">
+      <img
+        className="hf-hero-gradient"
+        src={heroGradientAsset}
+        alt=""
+        aria-hidden="true"
+      />
+
       <SiteHeaderF
         onNavigateHome={onNavigateHome}
         onNavigatePricing={onNavigatePricing}
@@ -295,12 +302,11 @@ export function HeroScreenF({
       </main>
 
       <style>{`
-        .hero-f {
-          background-color: transparent;
-          background-image: url(${heroGradientAsset});
-          background-position: left top;
-          background-repeat: no-repeat;
-          background-size: auto;
+        .hero-f { background: transparent; }
+        .hf-hero-gradient {
+          position: absolute; z-index: 0; top: 0; left: 0;
+          width: min(100vw, 1472px); height: auto; max-width: none;
+          pointer-events: none; user-select: none;
         }
 
         /* The orb is a control here — it answers to hover and to being pressed —
