@@ -100,58 +100,52 @@ export function ConductorSectionA() {
       </Container>
 
       <style>{`
-        .cda-section { position: relative; overflow: hidden; padding: 56px 0 96px; background: transparent; font-family: var(--font-google-sans); }
-        .cda-shell { position: relative; z-index: 1; min-height: 680px; background: transparent; isolation: isolate; }
-        .cda-heading { position: relative; z-index: 3; padding-top: 72px; text-align: center; }
+        .cda-section { position: relative; overflow: hidden; padding: 0 0 64px; background: transparent; font-family: var(--font-google-sans); }
+        .cda-shell { position: relative; z-index: 1; min-height: 560px; background: transparent; isolation: isolate; }
+        .cda-heading { position: relative; z-index: 3; padding-top: 24px; text-align: center; }
         .cda-heading p { margin: 0 0 10px; color: #f84600; font-size: 15px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; }
         .cda-heading h2 { margin: 0; color: #fff; font-size: 42px; line-height: 50px; font-weight: 500; letter-spacing: 0; }
-        .cda-rake { position: absolute; z-index: 0; top: 128px; width: min(65vw, 1165px); height: auto; pointer-events: none; }
+        .cda-rake { position: absolute; z-index: 0; top: 82px; width: 50vw; height: 340px; object-fit: fill; pointer-events: none; }
         .cda-rake--left { left: 0; }
         .cda-rake--right { right: 0; }
-        .cda-context, .cda-models { position: absolute; z-index: 2; top: 260px; display: flex; align-items: center; gap: 10px; max-width: 240px; }
-        .cda-context { left: 15.5%; flex-direction: column; align-items: center; }
+        .cda-context, .cda-models { position: absolute; z-index: 2; top: 174px; display: flex; align-items: center; gap: 10px; max-width: 240px; }
+        .cda-context { top: 155px; left: 15.5%; flex-direction: column; align-items: center; gap: 6px; }
         .cda-context-row { display: flex; align-items: center; justify-content: center; gap: 10px; width: max-content; }
-        .cda-context span { padding: 7px 15px; border: 1px solid rgba(242,242,242,.08); border-radius: 999px; background: rgba(242,242,242,.30); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); color: rgba(255,255,255,.94); font-size: 16px; line-height: 1; white-space: nowrap; }
-        .cda-models { right: 10%; display: grid; width: 390px; max-width: 30vw; gap: 18px; }
+        .cda-context span { padding: 5px 12px; border: 1px solid rgba(242,242,242,.08); border-radius: 999px; background: rgba(242,242,242,.30); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); color: rgba(255,255,255,.94); font-size: 14px; line-height: 1; white-space: nowrap; }
+        .cda-models { right: 10%; display: grid; width: 250px; max-width: 25vw; gap: 16px; }
         .cda-model-mask { width: 100%; overflow: hidden; -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 10%, #000 90%, transparent 100%); mask-image: linear-gradient(to right, transparent 0%, #000 10%, #000 90%, transparent 100%); }
-        .cda-model-track { display: flex; align-items: center; gap: 46px; width: max-content; padding-right: 46px; animation: cda-model-marquee 26s linear infinite; }
+        .cda-model-track { display: flex; align-items: center; gap: 34px; width: max-content; padding-right: 34px; animation: cda-model-marquee 26s linear infinite; }
         .cda-model-mask--reverse .cda-model-track { animation-direction: reverse; }
         .cda-models:hover .cda-model-track { animation-play-state: paused; }
         @keyframes cda-model-marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-        .cda-model { display: inline-flex; align-items: center; gap: 7px; color: rgba(255,255,255,.82); font-size: 17px; font-weight: 600; white-space: nowrap; }
-        .cda-model img { display: block; width: auto; height: 21px; max-width: 100px; filter: grayscale(1) brightness(2); opacity: .82; }
+        .cda-model { display: inline-flex; align-items: center; gap: 7px; color: rgba(255,255,255,.82); font-size: 14px; font-weight: 600; white-space: nowrap; }
+        .cda-model img { display: block; width: auto; height: 17px; max-width: 86px; filter: grayscale(1) brightness(2); opacity: .82; }
         .cda-model b { display: grid; place-items: center; width: 18px; height: 18px; color: rgba(255,255,255,.82); font-size: 21px; font-weight: 400; }
-        .cda-core { position: absolute; z-index: 3; top: 274px; left: calc(50% - 155px); width: 310px; height: 350px; text-align: center; }
-        .cda-orb { position: relative; z-index: 2; width: 190px; height: 190px; margin: 0 auto; transform-origin: 50% 50%; animation: cda-breathe 5.6s ease-in-out infinite; will-change: transform; }
+        .cda-core { position: absolute; z-index: 3; top: 140px; left: calc(50% - 215px); width: 430px; height: 410px; text-align: center; }
+        .cda-orb { position: relative; z-index: 2; width: 180px; height: 180px; margin: 0 auto; transform-origin: 50% 50%; animation: cda-breathe 5.6s ease-in-out infinite; will-change: transform; }
         .cda-orb > img { display: block; width: 100%; height: 100%; }
-        .cda-answer-beam { position: absolute; z-index: 1; top: 130px; left: 50%; width: 560px; height: 420px; transform: translateX(-50%); pointer-events: none; }
-        .cda-core p { position: relative; z-index: 2; margin: 84px 0 0; color: #fff; font-size: 18px; line-height: 1.28; font-weight: 500; }
+        .cda-answer-beam { position: absolute; z-index: 1; top: 120px; left: 50%; width: 430px; height: 300px; object-fit: fill; transform: translateX(-50%); pointer-events: none; }
+        .cda-core p { position: absolute; z-index: 2; top: 204px; left: 0; width: 100%; margin: 0; color: #fff; font-size: 15px; line-height: 1.22; font-weight: 500; }
         @keyframes cda-breathe {
           0%, 100% { transform: scale(1); }
           50% { transform: scale(1.025); }
         }
-        @media (max-width: 900px) {
-          .cda-shell { min-height: 720px; }
-          .cda-rake { top: 150px; width: 76vw; }
-          .cda-context { left: 8%; }
-          .cda-models { right: 5%; width: 310px; }
-        }
         @media (max-width: 680px) {
-          .cda-section { padding: 32px 0 70px; }
-          .cda-shell { min-height: 710px; }
-          .cda-heading { padding-top: 54px; }
+          .cda-section { padding: 0 0 70px; }
+          .cda-shell { min-height: 660px; }
+          .cda-heading { padding-top: 30px; }
           .cda-heading p { font-size: 12px; }
           .cda-heading h2 { font-size: 38px; line-height: 48px; }
-          .cda-rake { top: 164px; width: 116vw; }
+          .cda-rake { top: 126px; width: 116vw; height: 280px; }
           .cda-rake--left { left: -42%; }
           .cda-rake--right { right: -42%; }
-          .cda-context, .cda-models { top: 174px; transform: none; }
-          .cda-context { left: 50%; width: 270px; max-width: calc(100% - 32px); transform: translateX(-50%); }
+          .cda-context, .cda-models { top: 132px; transform: none; }
+          .cda-context { top: 132px; left: 50%; width: 270px; max-width: calc(100% - 32px); transform: translateX(-50%); }
           .cda-context span { padding: 6px 11px; font-size: 13px; }
-          .cda-models { top: 488px; left: 50%; right: auto; width: min(310px, calc(100% - 36px)); max-width: none; transform: translateX(-50%); gap: 16px; }
+          .cda-models { top: 438px; left: 50%; right: auto; width: min(280px, calc(100% - 36px)); max-width: none; transform: translateX(-50%); gap: 16px; }
           .cda-model { font-size: 14px; }
           .cda-model img { height: 17px; }
-          .cda-core { top: 282px; }
+          .cda-core { top: 220px; }
         }
         @media (prefers-reduced-motion: reduce) {
           .cda-model-track, .cda-orb { animation: none; }
