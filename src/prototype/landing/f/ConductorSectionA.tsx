@@ -122,10 +122,14 @@ export function ConductorSectionA() {
         .cda-model img { display: block; width: auto; height: 21px; max-width: 100px; filter: grayscale(1) brightness(2); opacity: .82; }
         .cda-model b { display: grid; place-items: center; width: 18px; height: 18px; color: rgba(255,255,255,.82); font-size: 21px; font-weight: 400; }
         .cda-core { position: absolute; z-index: 3; top: 274px; left: calc(50% - 155px); width: 310px; height: 350px; text-align: center; }
-        .cda-orb { position: relative; z-index: 2; width: 190px; height: 190px; margin: 0 auto; }
+        .cda-orb { position: relative; z-index: 2; width: 190px; height: 190px; margin: 0 auto; transform-origin: 50% 50%; animation: cda-breathe 5.6s ease-in-out infinite; will-change: transform; }
         .cda-orb > img { display: block; width: 100%; height: 100%; }
-        .cda-answer-beam { position: absolute; z-index: 1; top: 130px; left: 50%; width: 430px; height: auto; transform: translateX(-50%); pointer-events: none; }
+        .cda-answer-beam { position: absolute; z-index: 1; top: 130px; left: 50%; width: 560px; height: auto; transform: translateX(-50%); pointer-events: none; }
         .cda-core p { position: relative; z-index: 2; margin: 84px 0 0; color: #fff; font-size: 18px; line-height: 1.28; font-weight: 500; }
+        @keyframes cda-breathe {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.025); }
+        }
         @media (max-width: 900px) {
           .cda-shell { min-height: 720px; }
           .cda-rake { top: 150px; width: 76vw; }
@@ -149,7 +153,9 @@ export function ConductorSectionA() {
           .cda-model img { height: 17px; }
           .cda-core { top: 282px; }
         }
-        @media (prefers-reduced-motion: reduce) { .cda-model-track { animation: none; } }
+        @media (prefers-reduced-motion: reduce) {
+          .cda-model-track, .cda-orb { animation: none; }
+        }
       `}</style>
     </section>
   );
