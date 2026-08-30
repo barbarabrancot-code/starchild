@@ -5,7 +5,7 @@ type Surface = {
   title: string;
   lede: string;
   copy: string;
-  kind: "chat" | "agents" | "connectors" | "conductor";
+  kind: "chat" | "agents" | "connectors";
 };
 
 const SURFACES: Surface[] = [
@@ -26,12 +26,6 @@ const SURFACES: Surface[] = [
     lede: "For the tools your work already lives in.",
     copy: "Connect Gmail, Calendar, Slack or Notion once, to your account. After that, letting an agent use one is a permission rather than another login — and you can see exactly what each of them is allowed to do.",
     kind: "connectors",
-  },
-  {
-    title: "Conductor Mode",
-    lede: "For using the right AI without having to choose it.",
-    copy: "Starchild compares leading models for the work in front of you, then routes each task to the one best suited to help. You focus on the work, not the model names.",
-    kind: "conductor",
   },
 ];
 
@@ -69,24 +63,9 @@ function ConnectorsPreview() {
   );
 }
 
-function ConductorPreview() {
-  const models = ["GPT", "Claude", "Gemini", "DeepSeek", "Kimi", "Qwen"];
-  return (
-    <div className="sc-preview sc-conductor-preview" aria-hidden="true">
-      <header><b>Conductor Mode</b><span>Model routing</span></header>
-      <p>Finding the right model for this task</p>
-      <div className="sc-model-grid">
-        {models.map((model) => <span key={model}>{model}</span>)}
-      </div>
-      <small>Models selected for their strengths, not a fixed default.</small>
-    </div>
-  );
-}
-
 function Preview({ kind }: { kind: Surface["kind"] }) {
   if (kind === "chat") return <ChatPreview />;
   if (kind === "agents") return <AgentsPreview />;
-  if (kind === "conductor") return <ConductorPreview />;
   return <ConnectorsPreview />;
 }
 
@@ -141,13 +120,8 @@ export function SurfacesCardsSection() {
         .sc-connector-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 7px; padding: 13px; }
         .sc-connector-list span { display: flex; align-items: center; gap: 6px; min-width: 0; color: rgba(255,255,255,.42); font-size: 9px; }
         .sc-connector-list img { width: 17px; height: 17px; object-fit: contain; }
-        .sc-conductor-preview { padding-bottom: 13px; }
-        .sc-conductor-preview > p { margin: 13px 13px 10px; color: rgba(255,255,255,.64); font-size: 10px; }
-        .sc-model-grid { display: flex; flex-wrap: wrap; gap: 7px; padding: 0 13px 12px; }
-        .sc-model-grid span { padding: 6px 8px; border: 1px solid rgba(248,70,0,.22); border-radius: 7px; background: rgba(248,70,0,.07); color: rgba(255,255,255,.78); font-size: 10px; font-weight: 500; }
-        .sc-conductor-preview small { display: block; padding: 0 13px; color: rgba(255,255,255,.35); font-size: 9px; line-height: 1.35; }
-        @media (min-width: 760px) { .sc-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .sc-card { min-height: 454px; padding: 28px 22px 24px; } }
-        @media (min-width: 1180px) { .sc-section { padding: 92px 0 132px; } .sc-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } .sc-card { min-height: 454px; padding: 28px 22px 24px; } }
+        @media (min-width: 760px) { .sc-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } .sc-card { min-height: 454px; padding: 28px 22px 24px; } }
+        @media (min-width: 1180px) { .sc-section { padding: 92px 0 132px; } .sc-card { min-height: 454px; padding: 28px 22px 24px; } }
       `}</style>
     </section>
   );
