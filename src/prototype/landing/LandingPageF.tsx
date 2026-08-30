@@ -1,6 +1,6 @@
 import type { TaskCard } from "../data";
 import { HeroScreenF } from "./f/HeroScreenF";
-import { SurfacesSection } from "./f/SurfacesSection";
+import { ConversationShowcaseF } from "./f/ConversationShowcaseF";
 import { OrbitSection } from "./f/OrbitSection";
 import { ConductorSection } from "./f/ConductorSection";
 import { FinalCtaSection } from "./FinalCtaSection";
@@ -93,9 +93,8 @@ export function LandingPageF({
         onSignUp={onSignUp}
       />
 
-      {/* 2 · What the hero hands over to: the three places the work happens,
-             one at a time, with a drawing of each. */}
-      <SurfacesSection />
+      {/* 2 · You talk; Starchild turns the request into the next concrete step. */}
+      <ConversationShowcaseF />
 
       {/* 3 · What it plugs into. Carried over from E, on its own concave ground —
              the one section here that is a panel rather than a stretch of page. */}
