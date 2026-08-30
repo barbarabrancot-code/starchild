@@ -121,7 +121,7 @@ export function PricingSection({
               className={audience === "general" ? "lp-pricing-tab lp-pricing-tab--active" : "lp-pricing-tab"}
               onClick={() => setAudience("general")}
             >
-              General use
+              Everyday use
             </button>
             <button
               type="button"
@@ -130,7 +130,7 @@ export function PricingSection({
               className={audience === "traders" ? "lp-pricing-tab lp-pricing-tab--active" : "lp-pricing-tab"}
               onClick={() => setAudience("traders")}
             >
-              Traders
+              Advanced workflows
             </button>
           </div>
         </motion.div>
@@ -138,7 +138,7 @@ export function PricingSection({
         <div
           className="lp-pricing-grid"
           role="tabpanel"
-          aria-label={audience === "general" ? "General use plans" : "Trader plans"}
+          aria-label={audience === "general" ? "Everyday use plans" : "Advanced workflow plans"}
         >
           {plans.map((plan, index) => (
             <motion.article
