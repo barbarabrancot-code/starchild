@@ -221,7 +221,7 @@ export function PricingSection({
       <style>{`
         .lp-pricing { padding: 76px 0 116px; background: transparent; font-family: var(--font-google-sans); }
         .lp-pricing-intro { max-width: 920px; margin: 0 auto 42px; text-align: center; color: #fff; }
-        .lp-pricing-intro h1 { margin: 0; font-size: 48px; line-height: 70px; font-weight: 500; letter-spacing: 0; }
+        .lp-pricing-intro h1 { margin: 0; font-size: 42px; line-height: 70px; font-weight: 500; letter-spacing: 0; }
         .lp-pricing-intro > p { max-width: 620px; margin: 14px auto 0; color: #f84600; font-size: clamp(22px, 2.3vw, 28px); font-weight: 600; line-height: 1.2; letter-spacing: -.025em; text-wrap: balance; }
         .lp-value-banner { display: grid; grid-template-columns: minmax(0, 1fr) 42px minmax(0, 1fr); align-items: stretch; gap: 16px; margin-top: 28px; padding: 8px; border: 1px solid rgba(255,255,255,.1); border-radius: 16px; background: rgba(255,255,255,.018); text-align: left; }
         .lp-value-side { display: flex; flex-direction: column; justify-content: center; min-height: 76px; padding: 14px 18px; border-radius: 10px; }

@@ -287,7 +287,7 @@ export function OrbitSection() {
         .orbf-title {
           grid-area: 1 / 2;
           margin: 0; font-family: var(--font-google-sans);
-          font-size: 48px; line-height: 70px; font-weight: 500; letter-spacing: 0; color: #fff;
+          font-size: 42px; line-height: 70px; font-weight: 500; letter-spacing: 0; color: #fff;
         }
 
         /* ---------- the system ---------- */
