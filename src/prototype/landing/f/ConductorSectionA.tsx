@@ -52,14 +52,24 @@ export function ConductorSectionA() {
             transition={{ duration: 0.6, delay: 0.16, ease: EASE }}
             aria-label="OpenAI, SpaceX, DeepSeek and Qwen models"
           >
-            {MODELS.map((model) => (
-              <span className="cda-model" key={model.name}>
-                {model.logo ? (
-                  <img src={`${import.meta.env.BASE_URL}models/${model.logo}.svg`} alt="" />
-                ) : (
-                  <><b>✧</b>{model.name}</>
-                )}
-              </span>
+            {([false, true] as const).map((reverse) => (
+              <div
+                key={String(reverse)}
+                className={reverse ? "cda-model-mask cda-model-mask--reverse" : "cda-model-mask"}
+                aria-hidden="true"
+              >
+                <div className="cda-model-track">
+                  {[...MODELS, ...MODELS].map((model, index) => (
+                    <span className="cda-model" key={`${model.name}-${index}`}>
+                      {model.logo ? (
+                        <img src={`${import.meta.env.BASE_URL}models/${model.logo}.svg`} alt="" />
+                      ) : (
+                        <><b>✧</b>{model.name}</>
+                      )}
+                    </span>
+                  ))}
+                </div>
+              </div>
             ))}
           </motion.div>
 
@@ -92,7 +102,12 @@ export function ConductorSectionA() {
         .cda-context { left: 15.5%; justify-content: center; }
         .cda-context span { padding: 7px 15px; border-radius: 999px; background: rgba(127,87,71,.9); color: rgba(255,255,255,.94); font-size: 16px; line-height: 1; white-space: nowrap; }
         .cda-context span:last-child { margin-inline: 26px; }
-        .cda-models { right: 14%; display: grid; grid-template-columns: repeat(2, max-content); justify-content: start; column-gap: 46px; row-gap: 28px; max-width: none; }
+        .cda-models { right: 10%; display: grid; width: 390px; max-width: 30vw; gap: 18px; }
+        .cda-model-mask { width: 100%; overflow: hidden; -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 10%, #000 90%, transparent 100%); mask-image: linear-gradient(to right, transparent 0%, #000 10%, #000 90%, transparent 100%); }
+        .cda-model-track { display: flex; align-items: center; gap: 46px; width: max-content; padding-right: 46px; animation: cda-model-marquee 26s linear infinite; }
+        .cda-model-mask--reverse .cda-model-track { animation-direction: reverse; }
+        .cda-models:hover .cda-model-track { animation-play-state: paused; }
+        @keyframes cda-model-marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
         .cda-model { display: inline-flex; align-items: center; gap: 7px; color: rgba(255,255,255,.82); font-size: 17px; font-weight: 600; white-space: nowrap; }
         .cda-model img { display: block; width: auto; height: 21px; max-width: 100px; filter: grayscale(1) brightness(2); opacity: .82; }
         .cda-model b { display: grid; place-items: center; width: 18px; height: 18px; color: rgba(255,255,255,.82); font-size: 21px; font-weight: 400; }
@@ -105,7 +120,7 @@ export function ConductorSectionA() {
           .cda-shell { min-height: 720px; }
           .cda-rake { top: 206px; width: 70vw; opacity: .66; }
           .cda-context { left: 8%; }
-          .cda-models { right: 7%; column-gap: 24px; }
+          .cda-models { right: 5%; width: 310px; }
         }
         @media (max-width: 680px) {
           .cda-section { padding: 32px 0 70px; }
@@ -119,11 +134,12 @@ export function ConductorSectionA() {
           .cda-context { left: 50%; width: 270px; max-width: calc(100% - 32px); transform: translateX(-50%); }
           .cda-context span { padding: 6px 11px; font-size: 13px; }
           .cda-context span:last-child { margin-inline: 28px; }
-          .cda-models { top: 488px; left: 50%; right: auto; transform: translateX(-50%); column-gap: 28px; row-gap: 16px; }
+          .cda-models { top: 488px; left: 50%; right: auto; width: min(310px, calc(100% - 36px)); max-width: none; transform: translateX(-50%); gap: 16px; }
           .cda-model { font-size: 14px; }
           .cda-model img { height: 17px; }
           .cda-core { top: 282px; }
         }
+        @media (prefers-reduced-motion: reduce) { .cda-model-track { animation: none; } }
       `}</style>
     </section>
   );
