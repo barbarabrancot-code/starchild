@@ -305,7 +305,7 @@ export function HeroScreenF({
         .hero-f { background: transparent; }
         .hf-hero-gradient {
           position: absolute; z-index: 0; top: 0; left: 0;
-          width: min(100vw, 1472px); height: auto; max-width: none;
+          width: min(90vw, 1324.8px); height: auto; max-width: none;
           pointer-events: none; user-select: none;
         }
 
