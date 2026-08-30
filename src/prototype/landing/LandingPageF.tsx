@@ -2,7 +2,7 @@ import type { TaskCard } from "../data";
 import { HeroScreenF } from "./f/HeroScreenF";
 import { ConversationShowcaseF } from "./f/ConversationShowcaseF";
 import { OrbitSection } from "./f/OrbitSection";
-import { ConductorSection } from "./f/ConductorSection";
+import { ConductorSectionA } from "./f/ConductorSectionA";
 import { FinalCtaSection } from "./FinalCtaSection";
 import { FACES, OrbFace, type Mood } from "./f/OrbFace";
 
@@ -103,7 +103,7 @@ export function LandingPageF({
       {/* 4 · How it decides. One drawing: what it knows about you on the left,
              what it can reach on the right, and the answer falling out of the
              bottom of the mark in the middle. */}
-      <ConductorSection />
+      <ConductorSectionA />
 
       <FinalCtaSection
         headline="Whatever comes next, Starchild is already with you."
