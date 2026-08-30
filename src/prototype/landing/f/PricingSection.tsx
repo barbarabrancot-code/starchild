@@ -69,38 +69,6 @@ const PLANS: Plan[] = [
 
 type PricingAudience = "general" | "traders";
 
-const TRADER_PLANS: Plan[] = PLANS.map((plan) => {
-  if (plan.name === "Pague conforme o uso") {
-    return {
-      ...plan,
-      monthly: ["Recarregue qualquer valor, a qualquer momento", "Use apenas quando uma analise ou alerta precisar", "Sem compromisso mensal"],
-      fit: "Melhor para: explorar analises e pesquisas de mercado",
-    };
-  }
-
-  if (plan.name === "Lite") {
-    return {
-      ...plan,
-      monthly: ["30 resumos de mercado ou", "40 pesquisas sobre ativos ou", "300 tarefas de analise rapida"],
-      fit: "Ideal para: acompanhar o mercado no dia a dia",
-    };
-  }
-
-  if (plan.name === "Plus") {
-    return {
-      ...plan,
-      monthly: ["150 paineis de monitoramento de mercado, ou", "200 pesquisas sobre ativos, ou", "1.500 tarefas de analise de mercado"],
-      fit: "Ideal para: traders individuais e rotinas de analise",
-    };
-  }
-
-  return {
-    ...plan,
-    monthly: ["450 paineis de monitoramento de mercado, ou", "600 pesquisas sobre ativos, ou", "4.500 tarefas de analise de mercado"],
-    fit: "Melhor para: traders profissionais e operacoes continuas",
-  };
-});
-
 function MachineIcon() {
   return (
     <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -118,7 +86,7 @@ export function PricingSection({
   standalone?: boolean;
 }) {
   const [audience, setAudience] = useState<PricingAudience>("general");
-  const plans = audience === "general" ? PLANS : TRADER_PLANS;
+  const plans = audience === "general" ? PLANS.slice(0, 2) : PLANS.slice(2);
 
   return (
     <section className={`lp-pricing${standalone ? " lp-pricing--page" : ""}`} aria-label="Planos e preços">
@@ -236,7 +204,7 @@ export function PricingSection({
         .lp-pricing-tab:hover { color: #fff; }
         .lp-pricing-tab--active { background: #f84600; color: #fff; }
         .lp-pricing-tab:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
-        .lp-pricing-grid { display: grid; gap: 16px; }
+        .lp-pricing-grid { display: grid; width: 100%; max-width: 900px; margin: 0 auto; gap: 16px; }
         .lp-price-card { display: flex; flex-direction: column; min-height: 580px; padding: 36px; border: 1px solid rgba(255,255,255,.1); border-radius: 18px; background: rgba(255,255,255,.015); color: #fff; }
         .lp-price-top { display: flex; flex-direction: column; gap: 9px; }
         .lp-price-name { display: flex; align-items: center; gap: 10px; margin: 0; font-size: 28px; line-height: 1.08; font-weight: 600; letter-spacing: -.035em; }
@@ -262,7 +230,7 @@ export function PricingSection({
         .lp-price-fit { margin: 22px 0 0; padding: 10px 12px; border-left: 2px solid rgba(248,70,0,.8); border-radius: 0 8px 8px 0; background: rgba(248,70,0,.07); color: rgba(255,255,255,.82); font-size: 14px; font-weight: 500; line-height: 1.45; }
         .lp-price-machine small { color: rgba(255,255,255,.28); font-size: 13px; }
         @media (min-width: 720px) { .lp-pricing-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-        @media (min-width: 1180px) { .lp-pricing-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 26px; } .lp-price-card { min-height: 720px; padding: 38px 36px; } .lp-price-name { font-size: 30px; } }
+        @media (min-width: 1180px) { .lp-pricing-grid { gap: 26px; } .lp-price-card { min-height: 720px; padding: 38px 36px; } .lp-price-name { font-size: 30px; } }
         @media (max-width: 640px) { .lp-pricing { padding-top: 60px; } .lp-pricing-intro { margin-bottom: 32px; } .lp-pricing-intro h1 { font-size: 38px; line-height: 48px; } .lp-value-banner { grid-template-columns: 1fr; gap: 3px; } .lp-value-divider { height: 22px; } .lp-value-side { min-height: 0; padding: 14px 15px; } }
         @media (max-width: 480px) { .lp-pricing { padding-bottom: 72px; } .lp-price-card { min-height: 0; padding: 28px 24px; } .lp-price-amount { font-size: 46px; } }
         @media (prefers-reduced-motion: reduce) { .lp-price-cta { transition: none; } }
