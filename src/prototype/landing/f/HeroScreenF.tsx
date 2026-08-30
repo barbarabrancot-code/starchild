@@ -190,7 +190,7 @@ export function HeroScreenF({
   };
 
   return (
-    <section className="hero-f relative flex min-h-screen flex-col overflow-hidden">
+    <section className="hero-f relative flex min-h-screen flex-col overflow-visible">
       <img
         className="hf-hero-gradient"
         src={heroGradientAsset}
