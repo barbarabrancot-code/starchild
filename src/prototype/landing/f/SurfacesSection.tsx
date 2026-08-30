@@ -345,7 +345,7 @@ export function SurfacesSection() {
       <style>{`
         .sf-section {
           padding: 100px 0;
-          background: #050506;
+          background: transparent;
           font-family: var(--font-google-sans);
         }
 

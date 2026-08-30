@@ -75,7 +75,7 @@ export function SurfacesCardsSection() {
       </Container>
 
       <style>{`
-        .sc-section { padding: 72px 0 112px; background: #050506; font-family: var(--font-google-sans); }
+        .sc-section { padding: 72px 0 112px; background: transparent; font-family: var(--font-google-sans); }
         .sc-grid { display: grid; gap: 20px; max-width: 1220px; margin: 0 auto; }
         .sc-card { display: flex; flex-direction: column; min-height: 454px; padding: 28px 22px 24px; border: 1px solid rgba(255,255,255,.1); border-radius: 19px; background: rgba(255,255,255,.025); color: #fff; }
         .sc-card h2 { margin: 0; font-size: 22px; line-height: 1.15; font-weight: 600; letter-spacing: -.025em; }

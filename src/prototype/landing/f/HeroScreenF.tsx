@@ -294,23 +294,7 @@ export function HeroScreenF({
       </main>
 
       <style>{`
-        /* Darker than the rest of the product on purpose: the orb is the only
-           source of light in the frame and it needs somewhere to fall off to. */
-        .hero-f {
-          background:
-            radial-gradient(circle 1080px at 0 0,
-              rgba(90, 33, 9, .30) 0%,
-              rgba(59, 25, 11, .24) 42%,
-              rgba(24, 12, 9, .16) 67%,
-              rgba(5, 5, 6, 0) 100%),
-            #050506;
-        }
-
-        /* the glow the orb throws into the room, sitting behind everything */
-        .hero-f::before {
-          content: ""; position: absolute; inset: 0; pointer-events: none;
-          background: radial-gradient(52% 42% at 50% 44%, rgba(248,70,0,.10) 0%, rgba(248,70,0,0) 70%);
-        }
+        .hero-f { background: transparent; }
 
         /* The orb is a control here — it answers to hover and to being pressed —
            so it says so. */

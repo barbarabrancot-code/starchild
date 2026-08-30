@@ -109,7 +109,7 @@ export function ConversationShowcaseF() {
       <style>{`
         .ctf-section {
           padding: 122px 0 136px; overflow: hidden;
-          background: #090c0e; font-family: var(--font-google-sans);
+          background: transparent; font-family: var(--font-google-sans);
         }
         .ctf-title {
           max-width: 22ch; margin: 0 auto 42px; text-align: center;

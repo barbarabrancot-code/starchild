@@ -219,7 +219,7 @@ export function PricingSection({
       </Container>
 
       <style>{`
-        .lp-pricing { padding: 76px 0 116px; background: #050506; font-family: var(--font-google-sans); }
+        .lp-pricing { padding: 76px 0 116px; background: transparent; font-family: var(--font-google-sans); }
         .lp-pricing-intro { max-width: 920px; margin: 0 auto 42px; text-align: center; color: #fff; }
         .lp-pricing-intro h1 { margin: 0; font-size: clamp(32px, 4vw, 46px); line-height: 1.08; font-weight: 600; letter-spacing: -.035em; }
         .lp-pricing-intro > p { max-width: 620px; margin: 14px auto 0; color: #f84600; font-size: clamp(22px, 2.3vw, 28px); font-weight: 600; line-height: 1.2; letter-spacing: -.025em; text-wrap: balance; }

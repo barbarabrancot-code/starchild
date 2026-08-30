@@ -357,7 +357,7 @@ export function ConductorSection() {
              negative inside of */
           isolation: isolate;
           padding: 100px 0;
-          background: #050506;
+          background: transparent;
           font-family: var(--font-google-sans);
         }
 

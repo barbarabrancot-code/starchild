@@ -82,8 +82,8 @@ export function ConductorSectionA() {
       </Container>
 
       <style>{`
-        .cda-section { padding: 56px 0 96px; background: #050506; font-family: var(--font-google-sans); }
-        .cda-shell { position: relative; min-height: 680px; overflow: hidden; background: #0b0e10; isolation: isolate; }
+        .cda-section { padding: 56px 0 96px; background: transparent; font-family: var(--font-google-sans); }
+        .cda-shell { position: relative; min-height: 680px; overflow: hidden; background: transparent; isolation: isolate; }
         .cda-heading { position: relative; z-index: 3; padding-top: 72px; text-align: center; }
         .cda-heading p { margin: 0 0 10px; color: #f84600; font-size: 15px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; }
         .cda-heading h2 { margin: 0; color: #fff; font-size: clamp(31px, 3.3vw, 42px); line-height: 1.1; font-weight: 600; letter-spacing: -.03em; }

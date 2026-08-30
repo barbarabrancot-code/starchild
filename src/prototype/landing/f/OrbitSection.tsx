@@ -251,7 +251,7 @@ export function OrbitSection() {
       </div>
 
       <style>{`
-        .orbf-section { position: relative; background: #050506; }
+        .orbf-section { position: relative; background: transparent; }
 
         /* ---------- the concave panel ----------
 

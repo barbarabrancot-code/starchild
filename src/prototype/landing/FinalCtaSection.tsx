@@ -20,7 +20,7 @@ export function FinalCtaSection({
   const ctaLabel = "Meet Starchild";
 
   return (
-    <section className="bg-[#0a0a0a] py-[var(--section-pad)] text-center">
+    <section className="bg-transparent py-[var(--section-pad)] text-center">
       <Container>
         <div className="grid grid-cols-12 gap-6">
           <div className="col-span-12 flex flex-col items-center gap-8">
