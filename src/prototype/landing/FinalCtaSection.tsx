@@ -10,9 +10,11 @@ const DEFAULT_HEADLINE = "The best AI for the job changes constantly. Starchild 
 
 export function FinalCtaSection({
   onStartFree,
+  onNavigatePricing,
   headline = DEFAULT_HEADLINE,
 }: {
   onStartFree: () => void;
+  onNavigatePricing?: () => void;
   headline?: string;
 }) {
   const ctaLabel = "Meet Starchild";
@@ -45,16 +47,15 @@ export function FinalCtaSection({
               {ctaLabel}
             </motion.button>
 
-            {/* Placeholder: the pricing page doesn't exist yet, so this deliberately
-                goes nowhere. Wire it up when there's a page to send people to. */}
             <motion.button
               type="button"
-              onClick={() => {}}
+              onClick={onNavigatePricing}
+              disabled={!onNavigatePricing}
               initial={{ opacity: 0, y: 10 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.5 }}
               transition={{ duration: 0.5, delay: 0.18, ease: [0.16, 1, 0.3, 1] }}
-              className="group -mt-3 flex items-center gap-2 text-[14px] text-[var(--color-text-body)] transition-colors hover:text-white"
+              className="group -mt-3 flex items-center gap-2 text-[14px] text-[var(--color-text-body)] transition-colors hover:text-white disabled:cursor-default disabled:opacity-70"
               style={{ fontFamily: "var(--font-google-sans)" }}
             >
               See pricing

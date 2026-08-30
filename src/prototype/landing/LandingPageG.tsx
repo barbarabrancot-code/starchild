@@ -3,6 +3,7 @@ import { HeroScreenF } from "./f/HeroScreenF";
 import { SurfacesCardsSection } from "./f/SurfacesCardsSection";
 import { OrbitSection } from "./f/OrbitSection";
 import { ConductorSection } from "./f/ConductorSection";
+import { FinalCtaSection } from "./FinalCtaSection";
 import { FACES, OrbFace, type Mood } from "./f/OrbFace";
 
 /** Landing B begins as an independent copy of the current landing A. */
@@ -69,6 +70,11 @@ export function LandingPageG({
       <SurfacesCardsSection />
       <OrbitSection />
       <ConductorSection />
+      <FinalCtaSection
+        headline="Whatever comes next, Starchild is already with you."
+        onStartFree={() => onEnterGuest()}
+        onNavigatePricing={onNavigatePricing}
+      />
     </div>
   );
 }

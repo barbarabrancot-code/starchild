@@ -3,6 +3,7 @@ import { HeroScreenF } from "./f/HeroScreenF";
 import { SurfacesSection } from "./f/SurfacesSection";
 import { OrbitSection } from "./f/OrbitSection";
 import { ConductorSection } from "./f/ConductorSection";
+import { FinalCtaSection } from "./FinalCtaSection";
 import { FACES, OrbFace, type Mood } from "./f/OrbFace";
 
 /**
@@ -104,6 +105,12 @@ export function LandingPageF({
              what it can reach on the right, and the answer falling out of the
              bottom of the mark in the middle. */}
       <ConductorSection />
+
+      <FinalCtaSection
+        headline="Whatever comes next, Starchild is already with you."
+        onStartFree={() => onEnterGuest()}
+        onNavigatePricing={onNavigatePricing}
+      />
 
     </div>
   );
