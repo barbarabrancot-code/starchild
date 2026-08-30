@@ -6,6 +6,7 @@ import { BY_ID, type ConnectorId } from "../../agents/connectors";
 import { PresenceOrb } from "../../presence/PresenceOrb";
 import { usePrefersReducedMotion } from "../../presence/usePresence";
 import { usePointerLean } from "../../presence/usePointerLean";
+import connectorsBackground from "../../../../assets/background connectors svg.svg";
 
 /**
  * F's section 3 — what it plugs into.
@@ -269,45 +270,9 @@ export function OrbitSection() {
            the mask is for. On a ground identical to the page there is nothing to
            cut. */
         .orbf-panel {
-          --bite: clamp(72px, 7vw, 118px);
-          --curve-radius: clamp(740px, 78vw, 1460px);
-          --curve-top: calc(var(--bite) - var(--curve-radius));
-          --curve-bottom: calc(100% - var(--bite) + var(--curve-radius));
-
-          position: relative;
-          /* The scoops eat into the top and bottom of the panel, so the padding
-             has to clear them or the headline sits inside the curve. */
-          padding-block: calc(116px + var(--bite));
-          /* The warm ground is two layers doing different jobs. The wide one is
-             the panel's own temperature — a rust wash that falls off to the
-             page's black before the edges, so the scoops still read as an edge
-             rather than dissolving. The tight one is light coming off the orb,
-             centred on the stage column and not on the panel: a glow centred on
-             the panel would be decoration, this one has a source.
-
-             Both are written with more stops than they strictly need. A radial
-             with three stops interpolates in straight lines between them, and
-             the kinks where those lines meet are visible as rings on a wash this
-             wide — so the stops are placed along a curve instead, dense where the
-             falloff is steepest and sparse out in the tail. The radii are also
-             larger than the distance they have to cover, which spreads the same
-             drop over more pixels: the same warmth, no edge to it. */
-          background:
-            radial-gradient(ellipse 82% 128% at 8% 48%,
-              rgba(115, 43, 13, .30) 0%,
-              rgba(82, 30, 11, .21) 30%,
-              rgba(42, 18, 10, .11) 52%,
-              rgba(10, 10, 12, 0) 76%),
-            linear-gradient(180deg, #0c0c0e 0%, #09090b 100%);
-
-          -webkit-mask-image:
-            radial-gradient(circle var(--curve-radius) at 50% var(--curve-top), transparent calc(100% - 1px), #000 100%),
-            radial-gradient(circle var(--curve-radius) at 50% var(--curve-bottom), transparent calc(100% - 1px), #000 100%);
-          mask-image:
-            radial-gradient(circle var(--curve-radius) at 50% var(--curve-top), transparent calc(100% - 1px), #000 100%),
-            radial-gradient(circle var(--curve-radius) at 50% var(--curve-bottom), transparent calc(100% - 1px), #000 100%);
-          -webkit-mask-composite: source-in;
-          mask-composite: intersect;
+          position: relative; display: grid; align-items: center;
+          min-height: 100vh; padding-block: 96px;
+          background: #090c0e url(${connectorsBackground}) center / cover no-repeat;
         }
 
         .orbf-grid {
@@ -462,7 +427,7 @@ export function OrbitSection() {
         }
 
         @media (max-width: 940px) {
-          .orbf-panel { padding-block: calc(90px + var(--bite)); }
+          .orbf-panel { padding-block: 90px; }
           .orbf-grid { grid-template-columns: 1fr; gap: 56px; justify-items: center; text-align: center; }
           .orbf-stage, .orbf-title { grid-area: auto; }
           .orbf-title { font-size: 34px; }
