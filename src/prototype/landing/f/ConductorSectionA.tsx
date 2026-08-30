@@ -8,7 +8,11 @@ import conductorBeamAsset from "../../../../assets/feixe conductor.svg";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
-const CONTEXT = ["Context", "Goals", "Tools", "Preferences", "Current task"];
+const CONTEXT_ROWS = [
+  ["Context", "Goals"],
+  ["Tools", "Preferences"],
+  ["Current task"],
+];
 const MODELS = [
   { name: "OpenAI", logo: "openai" },
   { name: "SpaceX", logo: "spacex" },
@@ -45,7 +49,11 @@ export function ConductorSectionA() {
             animate={isInView ? { opacity: 1, x: 0 } : undefined}
             transition={{ duration: 0.6, delay: 0.16, ease: EASE }}
           >
-            {CONTEXT.map((item) => <span key={item}>{item}</span>)}
+            {CONTEXT_ROWS.map((row) => (
+              <div className="cda-context-row" key={row.join("-")}>
+                {row.map((item) => <span key={item}>{item}</span>)}
+              </div>
+            ))}
           </motion.div>
 
           <motion.div
@@ -100,10 +108,10 @@ export function ConductorSectionA() {
         .cda-rake { position: absolute; z-index: 0; top: 128px; width: min(65vw, 1165px); height: auto; pointer-events: none; }
         .cda-rake--left { left: 0; }
         .cda-rake--right { right: 0; }
-        .cda-context, .cda-models { position: absolute; z-index: 2; top: 260px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; max-width: 240px; }
-        .cda-context { left: 15.5%; justify-content: center; }
+        .cda-context, .cda-models { position: absolute; z-index: 2; top: 260px; display: flex; align-items: center; gap: 10px; max-width: 240px; }
+        .cda-context { left: 15.5%; flex-direction: column; align-items: center; }
+        .cda-context-row { display: flex; align-items: center; justify-content: center; gap: 10px; width: max-content; }
         .cda-context span { padding: 7px 15px; border: 1px solid rgba(242,242,242,.08); border-radius: 999px; background: rgba(242,242,242,.30); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); color: rgba(255,255,255,.94); font-size: 16px; line-height: 1; white-space: nowrap; }
-        .cda-context span:last-child { margin-inline: 26px; }
         .cda-models { right: 10%; display: grid; width: 390px; max-width: 30vw; gap: 18px; }
         .cda-model-mask { width: 100%; overflow: hidden; -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 10%, #000 90%, transparent 100%); mask-image: linear-gradient(to right, transparent 0%, #000 10%, #000 90%, transparent 100%); }
         .cda-model-track { display: flex; align-items: center; gap: 46px; width: max-content; padding-right: 46px; animation: cda-model-marquee 26s linear infinite; }
@@ -136,7 +144,6 @@ export function ConductorSectionA() {
           .cda-context, .cda-models { top: 174px; transform: none; }
           .cda-context { left: 50%; width: 270px; max-width: calc(100% - 32px); transform: translateX(-50%); }
           .cda-context span { padding: 6px 11px; font-size: 13px; }
-          .cda-context span:last-child { margin-inline: 28px; }
           .cda-models { top: 488px; left: 50%; right: auto; width: min(310px, calc(100% - 36px)); max-width: none; transform: translateX(-50%); gap: 16px; }
           .cda-model { font-size: 14px; }
           .cda-model img { height: 17px; }
