@@ -4,6 +4,8 @@ import { LandingPageB } from "./landing/LandingPageB";
 import { LandingPageC } from "./landing/LandingPageC";
 import { LandingPageD } from "./landing/LandingPageD";
 import { LandingPageE } from "./landing/LandingPageE";
+import { LandingPageF } from "./landing/LandingPageF";
+import { LandingPageG } from "./landing/LandingPageG";
 import { TradersPage } from "./landing/c/TradersPage";
 import { PricesPage } from "./landing/PricesPage";
 import { HERO_INTENTS_C } from "./landing/c/heroIntents";
@@ -38,17 +40,54 @@ type Screen =
 // opens C, the version being worked on, so anyone opening it sees the same thing.
 // The floating switch rewrites the query (?v=a) instead, which means a reload
 // keeps the one you're reviewing and the address bar is shareable as it stands.
-export type LandingVariant = "a" | "b" | "c" | "d" | "e";
+export type LandingVariant = "a" | "b" | "c" | "d" | "e" | "f" | "g";
 
 const VARIANT_PARAM = "v";
-const DEFAULT_VARIANT: LandingVariant = "c";
 
-function readVariantFromUrl(): LandingVariant {
-  if (typeof window === "undefined") return DEFAULT_VARIANT;
+/**
+ * A line of landing versions, and the page it lives on.
+ *
+ * There are two pages now. `app.html` is where A through F were built, and it
+ * keeps all six. `landing.html` is the page being taken forward, and on it F is
+ * version A — the first of a new line rather than the sixth of the old one.
+ *
+ * The letter in the URL is a position on the line, not the name of a component.
+ * That is what lets the same page be F on one link and A on the other without
+ * being built twice: `slots` maps position to version, and on the old line the
+ * two happen to coincide because the line is the whole alphabet in order.
+ *
+ * Which one you land on is in the URL, never in storage: the bare link always
+ * opens the line's own default, so anyone opening it sees the same thing. The
+ * floating switch rewrites the query (?v=a) instead, which means a reload keeps
+ * the one you're reviewing and the address bar is shareable as it stands.
+ *
+ * Everything past the landing — Guest Mode, signup, the first meeting, chat, the
+ * marketplace — is shared by both lines, so every version is being compared on
+ * the same product. The one exception is the hero chips, which Guest Mode
+ * reopens: those have to be the set the visitor was just choosing from, so C
+ * carries its own through to the chat.
+ */
+export type LandingLine = {
+  /** version at each position, so index 0 is the switch's A, index 1 its B */
+  slots: LandingVariant[];
+  /** the position the bare link opens */
+  opensAt: number;
+};
+
+/** app.html — where A through F were built, and where all six stay reachable */
+export const BUILT_LINE: LandingLine = { slots: ["a", "b", "c", "d", "e", "f"], opensAt: 2 };
+
+/** landing.html — the page being taken forward. F is its A. */
+export const NEXT_LINE: LandingLine = { slots: ["f", "g"], opensAt: 0 };
+
+/** "a" → 0, "b" → 1 … the switch's letters are positions, and so is the URL's */
+const LETTERS = "abcdefghijklmnopqrstuvwxyz";
+
+function readSlotFromUrl(line: LandingLine): number {
+  if (typeof window === "undefined") return line.opensAt;
   const asked = new URLSearchParams(window.location.search).get(VARIANT_PARAM);
-  return asked === "a" || asked === "b" || asked === "c" || asked === "d" || asked === "e"
-    ? asked
-    : DEFAULT_VARIANT;
+  const at = asked ? LETTERS.indexOf(asked) : -1;
+  return at >= 0 && at < line.slots.length ? at : line.opensAt;
 }
 
 /**
@@ -66,8 +105,9 @@ function startsSignedIn(): boolean {
   return new URLSearchParams(window.location.search).get("signedin") === "1";
 }
 
-export function ConductorApp() {
-  const [landingVariant, setLandingVariant] = useState<LandingVariant>(readVariantFromUrl);
+export function ConductorApp({ line = BUILT_LINE }: { line?: LandingLine } = {}) {
+  const [slot, setSlot] = useState(() => readSlotFromUrl(line));
+  const landingVariant = line.slots[slot];
   const [signedInFromUrl] = useState(startsSignedIn);
   const [screen, setScreen] = useState<Screen>(signedInFromUrl ? "chat" : "landing");
   const [initialPrompt, setInitialPrompt] = useState<string | undefined>();
@@ -100,14 +140,14 @@ export function ConductorApp() {
   useEffect(() => { setRailed(area === "agents"); }, [area]);
   const [skills, setSkills] = useState<MarketplaceSkill[]>(MARKETPLACE_SEED);
 
-  function switchVariant(next: LandingVariant) {
-    setLandingVariant(next);
+  function switchVariant(next: number) {
+    setSlot(next);
 
     // replaceState, not push: the switch is a review tool, and every flip landing
     // in the history would turn Back into a walk through the versions
     const url = new URL(window.location.href);
-    if (next === DEFAULT_VARIANT) url.searchParams.delete(VARIANT_PARAM);
-    else url.searchParams.set(VARIANT_PARAM, next);
+    if (next === line.opensAt) url.searchParams.delete(VARIANT_PARAM);
+    else url.searchParams.set(VARIANT_PARAM, LETTERS[next]);
     window.history.replaceState(null, "", url);
 
     // every version shares the hero's scroll-driven intro, so start the new one
@@ -176,11 +216,29 @@ export function ConductorApp() {
     <AgentsProvider empty={empty}>
       {screen === "landing" && (
         <>
-          {/* C, D and E are rendered apart from A and B because they take props the
-              others don't: a "Starchild for" menu with a real page behind it, and
-              a Pricing item that goes somewhere. D and E differ from C in their
-              heroes, so they take exactly the same handlers. */}
-          {landingVariant === "c" || landingVariant === "d" || landingVariant === "e" ? (
+          {/* F is on its own because its header has no nav — no audiences menu,
+              no Pricing, no Marketplace — so handing it those four handlers would
+              be wiring up buttons that are not there. It does take onStartTask:
+              its hero has the intent chips now, and a chip that opens a task card
+              has to have somewhere to send it. */}
+          {landingVariant === "f" || landingVariant === "g" ? (
+            (() => {
+              const Landing = landingVariant === "g" ? LandingPageG : LandingPageF;
+              return (
+                <Landing
+                  key={landingVariant}
+                  onEnterGuest={enterGuest}
+                  onStartTask={startTask}
+                  onLogIn={goToAuth}
+                  onSignUp={goToAuth}
+                />
+              );
+            })()
+          ) : /* C, D and E are rendered apart from A and B because they take props
+                 the others don't: a "Starchild for" menu with a real page behind
+                 it, and a Pricing item that goes somewhere. D and E differ from C
+                 in their heroes, so they take exactly the same handlers. */
+          landingVariant === "c" || landingVariant === "d" || landingVariant === "e" ? (
             (() => {
               const Landing =
                 landingVariant === "e"
@@ -218,7 +276,12 @@ export function ConductorApp() {
               );
             })()
           )}
-          <VariantToggle variant={landingVariant} onChange={switchVariant} />
+          {/* A line with one version has nothing to switch between, and a switch
+              with a single position is chrome pretending to be a control. It
+              appears on its own the moment a second version is added. */}
+          {line.slots.length > 1 && (
+            <VariantToggle at={slot} count={line.slots.length} onChange={switchVariant} />
+          )}
         </>
       )}
 

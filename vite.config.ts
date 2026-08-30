@@ -11,6 +11,8 @@ export default defineConfig({
       input: {
         main: resolve(__dirname, "index.html"),
         app: resolve(__dirname, "app.html"),
+        // the page being taken forward — see src/landing-main.tsx
+        landing: resolve(__dirname, "landing.html"),
       },
     },
   },
