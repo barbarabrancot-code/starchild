@@ -105,7 +105,7 @@ export function ConductorSectionA() {
         .cda-heading { position: relative; z-index: 3; padding-top: 72px; text-align: center; }
         .cda-heading p { margin: 0 0 10px; color: #f84600; font-size: 15px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; }
         .cda-heading h2 { margin: 0; color: #fff; font-size: 42px; line-height: 50px; font-weight: 500; letter-spacing: 0; }
-        .cda-rake { position: absolute; z-index: 0; top: 128px; width: min(65vw, 1165px); height: auto; opacity: .86; filter: blur(4px); pointer-events: none; }
+        .cda-rake { position: absolute; z-index: 0; top: 128px; width: min(65vw, 1165px); height: auto; opacity: .9; filter: blur(4px); pointer-events: none; }
         .cda-rake--left { left: 0; }
         .cda-rake--right { right: 0; }
         .cda-context, .cda-models { position: absolute; z-index: 2; top: 260px; display: flex; align-items: center; gap: 10px; max-width: 240px; }
@@ -124,7 +124,7 @@ export function ConductorSectionA() {
         .cda-core { position: absolute; z-index: 3; top: 274px; left: calc(50% - 155px); width: 310px; height: 350px; text-align: center; }
         .cda-orb { position: relative; z-index: 2; width: 190px; height: 190px; margin: 0 auto; transform-origin: 50% 50%; animation: cda-breathe 5.6s ease-in-out infinite; will-change: transform; }
         .cda-orb > img { display: block; width: 100%; height: 100%; }
-        .cda-answer-beam { position: absolute; z-index: 1; top: 130px; left: 50%; width: 560px; max-width: none; height: 420px; object-fit: fill; opacity: .9; filter: blur(3px); transform: translateX(-50%); pointer-events: none; }
+        .cda-answer-beam { position: absolute; z-index: 1; top: 90px; left: 50%; width: 560px; max-width: none; height: 420px; object-fit: fill; opacity: .9; filter: blur(3px); transform: translateX(-50%); pointer-events: none; }
         .cda-core p { position: relative; z-index: 2; margin: 84px 0 0; color: #fff; font-size: 18px; line-height: 1.28; font-weight: 500; }
         @keyframes cda-breathe {
           0%, 100% { transform: scale(1); }
