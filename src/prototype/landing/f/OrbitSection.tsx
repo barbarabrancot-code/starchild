@@ -272,7 +272,7 @@ export function OrbitSection() {
         .orbf-panel {
           position: relative; display: grid; align-items: center;
           min-height: 100vh; padding-block: 96px;
-          background: #090c0e url(${connectorsBackground}) center / cover no-repeat;
+          background: url(${connectorsBackground}) center / 100% 100% no-repeat;
         }
 
         .orbf-grid {
