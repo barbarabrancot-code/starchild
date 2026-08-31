@@ -59,28 +59,28 @@ export function SiteHeaderF({
         .hf-login {
           padding: 8px 12px; border: 0; background: none; cursor: pointer;
           font-family: var(--font-google-sans); font-size: 14px; line-height: 1;
-          color: rgba(255,255,255,.62);
+          color: rgba(var(--lf-ink-rgb), calc(.62 + 0.38 * var(--lf-lift-t)));
           transition: color .18s ease;
         }
         .hf-pricing {
           padding: 8px 10px; border: 0; background: none; cursor: pointer;
           font-family: var(--font-google-sans); font-size: 14px; line-height: 1;
-          color: rgba(255,255,255,.62); transition: color .18s ease;
+          color: rgba(var(--lf-ink-rgb), calc(.62 + 0.38 * var(--lf-lift-t))); transition: color .18s ease;
         }
-        .hf-pricing:hover { color: #fff; }
-        .hf-pricing:focus-visible { outline: 2px solid rgba(255,255,255,.55); outline-offset: 2px; border-radius: 999px; }
-        .hf-login:hover { color: #fff; }
-        .hf-login:focus-visible { outline: 2px solid rgba(255,255,255,.55); outline-offset: 2px; border-radius: 999px; }
+        .hf-pricing:hover { color: var(--lf-ink); }
+        .hf-pricing:focus-visible { outline: 2px solid rgba(var(--lf-ink-rgb), calc(.55 + 0.45 * var(--lf-lift-e))); outline-offset: 2px; border-radius: 999px; }
+        .hf-login:hover { color: var(--lf-ink); }
+        .hf-login:focus-visible { outline: 2px solid rgba(var(--lf-ink-rgb), calc(.55 + 0.45 * var(--lf-lift-e))); outline-offset: 2px; border-radius: 999px; }
 
         .hf-signup {
-          padding: 9px 16px; border: 1px solid rgba(255,255,255,.09); border-radius: 999px; cursor: pointer;
-          background: rgba(255,255,255,.08);
+          padding: 9px 16px; border: 1px solid var(--lf-ctl-edge); border-radius: 999px; cursor: pointer;
+          background: rgba(var(--lf-ink-rgb), calc(.08 + 0.92 * var(--lf-lift-f)));
           font-family: var(--font-google-sans); font-size: 14px; font-weight: 500; line-height: 1;
-          color: #fff;
+          color: var(--lf-ink);
           transition: background-color .18s ease, border-color .18s ease;
         }
-        .hf-signup:hover { background: rgba(255,255,255,.13); border-color: rgba(255,255,255,.16); }
-        .hf-signup:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+        .hf-signup:hover { background: rgba(var(--lf-ink-rgb), calc(.13 + 0.87 * var(--lf-lift-f))); border-color: var(--lf-ctl-edge-on); }
+        .hf-signup:focus-visible { outline: 2px solid var(--lf-ink); outline-offset: 2px; }
       `}</style>
     </header>
   );

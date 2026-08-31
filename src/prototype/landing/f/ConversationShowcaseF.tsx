@@ -113,31 +113,33 @@ export function ConversationShowcaseF() {
         }
         .ctf-title {
           max-width: 28ch; margin: 0 auto 42px; text-align: center;
-          color: #fff; font-size: 42px; line-height: 50px;
+          color: var(--lf-ink); font-size: 42px; line-height: 50px;
           font-weight: 500; letter-spacing: 0; text-wrap: balance;
         }
         .ctf-window {
           position: relative; box-sizing: border-box; width: min(610px, calc(100% - 32px));
           height: 312px; margin: 0 auto; overflow: hidden; border-radius: 20px;
-          border: 1px solid rgba(255,255,255,.09); background: #1a1a1b;
-          box-shadow: 0 24px 70px rgba(0,0,0,.24);
+          border: 1px solid rgba(var(--lf-ink-rgb), calc(.09 + 0.91 * var(--lf-lift-e))); background: var(--lf-window);
+          box-shadow: var(--lf-shadow);
         }
         .ctf-window::before {
           content: ""; position: absolute; inset: -46% -26% -42% -42%; pointer-events: none;
-          background: radial-gradient(circle at 46% 58%, rgba(248,70,0,.18), rgba(77,27,12,.09) 34%, transparent 66%);
+          background: radial-gradient(circle at 46% 58%,
+            rgba(var(--lf-accent-rgb), calc(.18 * var(--lf-glow))),
+            rgba(var(--lf-accent-rgb), calc(.07 * var(--lf-glow))) 34%, transparent 66%);
         }
-        .ctf-bubble { position: relative; box-sizing: border-box; width: max-content; max-width: none; margin: 0; padding: 10px 14px; border-radius: 15px; background: rgba(248,70,0,.105); color: rgba(255,255,255,.9); font-size: 14px; line-height: 1.3; white-space: nowrap; }
-        .ctf-bubble--user { position: absolute; background: rgba(255,255,255,.055); color: rgba(255,255,255,.82); }
+        .ctf-bubble { position: relative; box-sizing: border-box; width: max-content; max-width: none; margin: 0; padding: 10px 14px; border-radius: 15px; background: rgba(var(--lf-accent-rgb), .105); color: rgba(var(--lf-ink-rgb), calc(.9 + 0.1 * var(--lf-lift-t))); font-size: 14px; line-height: 1.3; white-space: nowrap; }
+        .ctf-bubble--user { position: absolute; background: rgba(var(--lf-ink-rgb), calc(.055 + 0.945 * var(--lf-lift-f))); color: rgba(var(--lf-ink-rgb), calc(.82 + 0.18 * var(--lf-lift-t))); }
         .ctf-bubble--first { top: 38px; right: 32px; }
         .ctf-bubble--second { top: 183px; right: 32px; }
         .ctf-answer { position: absolute; display: flex; align-items: center; gap: 18px; }
-        .ctf-answer > i { width: 10px; height: 10px; border-radius: 999px; background: #f84600; box-shadow: 0 0 12px rgba(248,70,0,.85); }
+        .ctf-answer > i { width: 10px; height: 10px; border-radius: 999px; background: var(--lf-accent); box-shadow: 0 0 12px rgba(var(--lf-accent-rgb), .85); }
         .ctf-answer--first { top: 85px; left: 31px; }
         .ctf-answer--second { top: 233px; left: 31px; }
-        .ctf-plan { position: absolute; top: 133px; left: 57px; display: flex; align-items: center; gap: 10px; width: 222px; box-sizing: border-box; padding: 10px 13px; border: 1px solid rgba(248,70,0,.18); border-radius: 12px; background: rgba(70,28,20,.32); color: rgba(255,255,255,.88); font-size: 14px; }
-        .ctf-plan svg { width: 15px; height: 15px; fill: none; stroke: rgba(255,255,255,.7); stroke-width: 1.2; }
-        .ctf-plan b { margin-left: auto; color: rgba(255,255,255,.38); font-size: 17px; font-weight: 400; line-height: .7; }
-        .ctf-reaction { position: absolute; right: 8px; bottom: -15px; display: grid; place-items: center; width: 19px; height: 19px; border-radius: 999px; background: #0f1011; font-size: 12px; }
+        .ctf-plan { position: absolute; top: 133px; left: 57px; display: flex; align-items: center; gap: 10px; width: 222px; box-sizing: border-box; padding: 10px 13px; border: 1px solid rgba(var(--lf-accent-rgb), .18); border-radius: 12px; background: rgba(var(--lf-accent-rgb), .12); color: rgba(var(--lf-ink-rgb), calc(.88 + 0.12 * var(--lf-lift-t))); font-size: 14px; }
+        .ctf-plan svg { width: 15px; height: 15px; fill: none; stroke: rgba(var(--lf-ink-rgb), calc(.7 + 0.3 * var(--lf-lift-t))); stroke-width: 1.2; }
+        .ctf-plan b { margin-left: auto; color: rgba(var(--lf-ink-rgb), calc(.38 + 0.62 * var(--lf-lift-t))); font-size: 17px; font-weight: 400; line-height: .7; }
+        .ctf-reaction { position: absolute; right: 8px; bottom: -15px; display: grid; place-items: center; width: 19px; height: 19px; border-radius: 999px; background: var(--lf-window); font-size: 12px; }
         @media (max-width: 640px) {
           .ctf-section { padding: 92px 0 100px; }
           .ctf-title { margin-bottom: 34px; font-size: 38px; line-height: 48px; }

@@ -14,6 +14,9 @@ import { ChatScreen } from "./ChatScreen";
 import { ConductorModePage } from "./product/ConductorModePage";
 import { AgentsWorkspace } from "./agents/AgentsWorkspace";
 import { ConnectorsPage } from "./agents/ConnectorsPage";
+// The public catalogue, not the one inside the product. Aliased because both are
+// honestly called the connectors page and only one of them can have the name.
+import { ConnectorsCatalogPage } from "./landing/f/ConnectorsCatalogPage";
 import { AgentsProvider } from "./agents/store";
 import type { SavedChat } from "./savedChats";
 import { ProductSidebar } from "./ProductSidebar";
@@ -25,6 +28,7 @@ import { MARKETPLACE_SEED, type MarketplaceSkill, type TaskCard } from "./data";
 type Screen =
   | "landing"
   | "for-traders"
+  | "connectors"
   | "pricing"
   | "conductor-mode"
   | "signup"
@@ -187,6 +191,13 @@ export function ConductorApp({ line = BUILT_LINE }: { line?: LandingLine } = {})
     setScreen("landing");
   }
 
+  // The catalogue is a page rather than a section of the homepage — thirty-six
+  // rows is a screen of its own. Opens at its own top like the others.
+  function goToConnectors() {
+    setScreen("connectors");
+    window.scrollTo({ top: 0 });
+  }
+
   // the audience page is a separate page, so it opens at its own top
   function goToTraders() {
     setScreen("for-traders");
@@ -229,6 +240,7 @@ export function ConductorApp({ line = BUILT_LINE }: { line?: LandingLine } = {})
                   key={landingVariant}
                   onEnterGuest={enterGuest}
                   onStartTask={startTask}
+                  onNavigateConnectors={goToConnectors}
                   onNavigatePricing={goToPricing}
                   onLogIn={goToAuth}
                   onSignUp={goToAuth}
@@ -291,6 +303,14 @@ export function ConductorApp({ line = BUILT_LINE }: { line?: LandingLine } = {})
           onNavigateHome={goHome}
           onNavigatePricing={goToPricing}
           onEnterGuest={enterGuest}
+          onLogIn={goToAuth}
+          onSignUp={goToAuth}
+        />
+      )}
+
+      {screen === "connectors" && (
+        <ConnectorsCatalogPage
+          onNavigateHome={goHome}
           onLogIn={goToAuth}
           onSignUp={goToAuth}
         />

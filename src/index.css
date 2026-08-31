@@ -62,6 +62,39 @@
      to feel different, change weight, size, tracking, or case, not the family. */
   --font-google-sans: "Google Sans", ui-sans-serif, system-ui, sans-serif;
 
+  /* ---------- the landing's ground tokens, at their dark values ----------
+
+     These are overridden — the whole set of them — by .lf and .lf[data-lf=light]
+     in landing/LandingPageF, which is where the light mode lives. They are
+     declared here as well because pieces of that page are shared with screens
+     outside it: SiteHeaderF is on the landing, on the connectors catalogue and
+     on pricing, and a component reading rgba(var(--lf-ink-rgb), .62) where that
+     token does not exist gets an invalid declaration, not a fallback — the
+     colour is simply dropped and the text inherits whatever was above it.
+
+     So dark lives here as the baseline, and the landing turns it over locally. */
+  --lf-page: #050506;
+  --lf-ink: #ffffff;
+  --lf-ink-rgb: 255, 255, 255;
+  --lf-surface: #0a0a0b;
+  --lf-surface-2: #0d0d0f;
+  --lf-accent: #f84600;
+  --lf-accent-rgb: 248, 70, 0;
+  --lf-accent-ink: #f84600;
+  --lf-lift-t: 0;
+  --lf-lift-e: 0;
+  --lf-lift-f: 0;
+  --lf-ctl-edge: rgba(var(--lf-ink-rgb), 0.1);
+  --lf-ctl-edge-on: rgba(var(--lf-ink-rgb), 0.24);
+  --lf-field: rgba(var(--lf-ink-rgb), 0.045);
+  --lf-field-on: rgba(var(--lf-ink-rgb), 0.06);
+  --lf-window: #1a1a1b;
+  --lf-well: #08080a;
+  --lf-glow: 1;
+  --lf-shadow: 0 24px 70px rgba(0, 0, 0, 0.24);
+  --lf-shadow-deep: 0 40px 90px rgba(0, 0, 0, 0.6);
+  --lf-veil: rgba(3, 3, 4, 0.72);
+
   /* Starchild brand color system — https://live.standards.site/starchild-brandguidelines
      Logo may only render in black, white, or Starchild Orange (--color-orange-400). */
   --color-orange-50: #fff0db;

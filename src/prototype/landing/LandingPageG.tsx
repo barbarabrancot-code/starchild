@@ -45,12 +45,15 @@ function askedForFaces() {
 export function LandingPageG({
   onEnterGuest,
   onStartTask,
+  onNavigateConnectors,
   onNavigatePricing,
   onLogIn,
   onSignUp,
 }: {
   onEnterGuest: (prompt?: string) => void;
   onStartTask: (task: TaskCard) => void;
+  /** where the orbit's "Explore all 30+ connectors" goes */
+  onNavigateConnectors: () => void;
   onNavigatePricing: () => void;
   onLogIn: () => void;
   onSignUp: () => void;
@@ -68,7 +71,7 @@ export function LandingPageG({
         onSignUp={onSignUp}
       />
       <SurfacesSection />
-      <OrbitSection />
+      <OrbitSection onSeeAll={onNavigateConnectors} />
       <ConductorSection />
       <FinalCtaSection
         headline="Whatever comes next, Starchild is already with you."

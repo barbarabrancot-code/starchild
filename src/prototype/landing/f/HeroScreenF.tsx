@@ -22,6 +22,18 @@ import heroGradientAsset from "../../../../assets/gradiente hero.svg";
  */
 const EYES = false;
 
+const COMPOSER_PROMPTS = [
+  "What do you want to get done?",
+  "Help me figure this out.",
+  "Turn this idea into a plan.",
+  "Research this for me.",
+  "Organize what’s on my plate.",
+  "Write a first draft.",
+  "Keep this moving for me.",
+];
+
+const nextPromptDelay = () => 2500 + Math.random() * 1500;
+
 /**
  * F's hero. One column, three things: the orb, one line, one box.
  *
@@ -80,7 +92,20 @@ export function HeroScreenF({
   onSignUp: () => void;
 }) {
   const [prompt, setPrompt] = useState("");
+  const [composerPromptIndex, setComposerPromptIndex] = useState(0);
   const typed = prompt.trim().length > 0;
+
+  // Keep the empty composer lively without making its cadence feel mechanical.
+  // Each switch is scheduled independently so the delay stays within 2.5–4s.
+  useEffect(() => {
+    let timer = 0;
+    const rotatePrompt = () => {
+      setComposerPromptIndex((current) => (current + 1) % COMPOSER_PROMPTS.length);
+      timer = window.setTimeout(rotatePrompt, nextPromptDelay());
+    };
+    timer = window.setTimeout(rotatePrompt, nextPromptDelay());
+    return () => window.clearTimeout(timer);
+  }, []);
 
   /*
     Two layers, because moods are two different kinds of thing.
@@ -267,7 +292,7 @@ export function HeroScreenF({
                   }
                 }}
                 rows={2}
-                placeholder="What do you want to get done?"
+                placeholder={COMPOSER_PROMPTS[composerPromptIndex]}
                 className="hf-input"
                 aria-label="What do you want to get done?"
               />
@@ -318,7 +343,7 @@ export function HeroScreenF({
           margin: 60px 0 0;
           font-family: var(--font-google-sans);
           font-size: 24px; line-height: 1.3; font-weight: 500;
-          color: #fff; text-wrap: balance;
+          color: var(--lf-ink); text-wrap: balance;
         }
 
         /* Taller than one line needs, deliberately — see the note above. */
@@ -326,19 +351,24 @@ export function HeroScreenF({
           position: relative; width: 100%; margin-top: 38px;
           padding: 18px 18px 14px;
           border-radius: 24px;
-          border: 1px solid rgba(255,255,255,.08);
-          background: rgba(255,255,255,.045);
+          border: 1px solid var(--lf-ctl-edge);
+          background: var(--lf-field);
           backdrop-filter: blur(10px);
           transition: border-color .2s ease, background-color .2s ease;
         }
-        .hf-box:focus-within { border-color: rgba(255,255,255,.22); background: rgba(255,255,255,.06); }
+        .hf-box:focus-within { border-color: var(--lf-ctl-edge-on); background: var(--lf-field-on); }
 
         .hf-input {
           width: 100%; resize: none; border: 0; background: none; outline: none;
           font-family: var(--font-google-sans); font-size: 16px; line-height: 1.55;
-          color: #fff; text-align: left;
+          color: var(--lf-ink); text-align: left;
         }
-        .hf-input::placeholder { color: rgba(255,255,255,.34); }
+        /* .44 rather than .34. On the new field it is the difference between
+           4.0:1 and 4.6:1, and on the dark page — where this had been sitting at
+           2.96:1 against #050506 the whole time — between failing and 4.3:1. It
+           is the one line in the composer somebody reads before they have typed
+           anything. */
+        .hf-input::placeholder { color: rgba(var(--lf-ink-rgb), calc(.44 + 0.56 * var(--lf-lift-t))); }
 
         /* Both controls to the right, and nothing on the left. The row is what
            you do with what you have written, so it belongs beside the send. */
@@ -351,22 +381,22 @@ export function HeroScreenF({
           display: inline-flex; align-items: center; gap: 4px;
           padding: 6px 8px; border: 0; border-radius: 999px; background: none; cursor: pointer;
           font-family: var(--font-google-sans); font-size: 13px; line-height: 1;
-          color: rgba(255,255,255,.55);
+          color: rgba(var(--lf-ink-rgb), calc(.55 + 0.45 * var(--lf-lift-t)));
           transition: color .18s ease, background-color .18s ease;
         }
-        .hf-mode:hover { color: rgba(255,255,255,.82); background: rgba(255,255,255,.05); }
-        .hf-mode:focus-visible { outline: 2px solid rgba(255,255,255,.5); outline-offset: 2px; }
-        .hf-chevron { color: rgba(255,255,255,.35); }
+        .hf-mode:hover { color: rgba(var(--lf-ink-rgb), calc(.82 + 0.18 * var(--lf-lift-t))); background: rgba(var(--lf-ink-rgb), calc(.05 + 0.95 * var(--lf-lift-f))); }
+        .hf-mode:focus-visible { outline: 2px solid rgba(var(--lf-ink-rgb), calc(.5 + 0.5 * var(--lf-lift-e))); outline-offset: 2px; }
+        .hf-chevron { color: rgba(var(--lf-ink-rgb), calc(.35 + 0.65 * var(--lf-lift-t))); }
 
         .hf-send {
           display: flex; align-items: center; justify-content: center;
           width: 36px; height: 36px; border: 0; border-radius: 999px; cursor: pointer;
-          background: #f84600; color: #fff;
+          background: var(--lf-accent); color: var(--lf-ink);
           transition: transform .18s ease, filter .18s ease;
         }
         .hf-send:hover { transform: scale(1.06); filter: brightness(1.06); }
         .hf-send:active { transform: scale(1); }
-        .hf-send:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+        .hf-send:focus-visible { outline: 2px solid var(--lf-ink); outline-offset: 3px; }
 
         /* Full width so the row centres in the column rather than in whatever
            the five chips happen to measure, and so the task cards that open under

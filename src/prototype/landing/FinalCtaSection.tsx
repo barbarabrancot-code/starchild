@@ -29,7 +29,7 @@ export function FinalCtaSection({
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.5 }}
               transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
-              className="max-w-[28ch] text-[38px] leading-[48px] font-medium tracking-normal text-balance text-white sm:text-[42px] sm:leading-[50px]"
+              className="max-w-[28ch] text-[38px] leading-[48px] font-medium tracking-normal text-balance text-[var(--lf-ink,#fff)] sm:text-[42px] sm:leading-[50px]"
               style={{ fontFamily: "var(--font-google-sans)" }}
             >
               {headline}
@@ -41,7 +41,7 @@ export function FinalCtaSection({
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.5 }}
               transition={{ duration: 0.55, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-              className="rounded-full bg-[#f84600] px-8 py-4 text-[15px] font-medium text-white transition-transform hover:scale-[1.03]"
+              className="rounded-full bg-[var(--lf-accent,#f84600)] px-8 py-4 text-[15px] font-medium text-white transition-transform hover:scale-[1.03]"
               style={{ fontFamily: "var(--font-google-sans)" }}
             >
               {ctaLabel}
@@ -55,11 +55,11 @@ export function FinalCtaSection({
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.5 }}
               transition={{ duration: 0.5, delay: 0.18, ease: [0.16, 1, 0.3, 1] }}
-              className="group -mt-3 flex items-center gap-2 text-[14px] text-[var(--color-text-body)] transition-colors hover:text-white disabled:cursor-default disabled:opacity-70"
+              className="group -mt-3 flex items-center gap-2 text-[14px] text-[rgba(var(--lf-ink-rgb,255,255,255),0.6)] transition-colors hover:text-[var(--lf-ink,#fff)] disabled:cursor-default disabled:opacity-70"
               style={{ fontFamily: "var(--font-google-sans)" }}
             >
               See pricing
-              <ArrowUpIcon className="size-3.5 rotate-45 text-white/30 transition-colors group-hover:text-[#f84600]" />
+              <ArrowUpIcon className="size-3.5 rotate-45 text-[rgba(var(--lf-ink-rgb,255,255,255),0.3)] transition-colors group-hover:text-[var(--lf-accent,#f84600)]" />
             </motion.button>
           </div>
         </div>
