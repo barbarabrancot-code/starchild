@@ -1,13 +1,14 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { PlusIcon, ArrowUpIcon, ChevronDownIcon, SettingsIcon } from "../icons";
 import { Reactable } from "../Reactable";
 import { AgentOrb } from "./AgentOrb";
 import { AgentOnboarding, type NewAgent } from "./AgentOnboarding";
 import { AgentPicker } from "./AgentPicker";
+import { NewAgentPanel, type NewDedicatedAgent } from "./NewAgentPanel";
 import { ACCENTS, FIRST_QUESTIONS, GREETING } from "./onboardingData";
 import { AppIcon } from "./AppIcon";
-import { HANDOFF, STATUS_LABEL, type Agent, type AgentTurn } from "./agentsData";
+import { STATUS_LABEL, type Agent, type AgentTurn } from "./agentsData";
 import { ConnectorPicker } from "./ConnectorPicker";
 import { BY_ID, type ConnectorId } from "./connectors";
 import { useAgents } from "./store";
@@ -34,22 +35,16 @@ import { useAgents } from "./store";
 const AgentRow = ({
   agent,
   active,
-  nudged,
   onSelect,
-  innerRef,
 }: {
   agent: Agent;
   active: boolean;
-  /** just been handed work by another agent */
-  nudged: boolean;
   onSelect: () => void;
-  innerRef: (el: HTMLButtonElement | null) => void;
 }) => (
   <button
-    ref={innerRef}
     type="button"
     onClick={onSelect}
-    className={`ag-row${active ? " ag-row--on" : ""}${nudged ? " ag-row--nudged" : ""}`}
+    className={`ag-row${active ? " ag-row--on" : ""}`}
   >
     <span className="ag-row-orb" style={agent.accent ? { ["--agent-accent"]: agent.accent } as React.CSSProperties : undefined}>
       <AgentOrb status={agent.status} size={8} accent={agent.accent} />
@@ -120,6 +115,19 @@ function SummaryBlock({ name, cadence, apps }: { name: string; cadence: string; 
   );
 }
 
+/**
+ * The channels an agent may shout on.
+ *
+ * A subset of the connector catalogue on purpose: these are the ones that can
+ * carry a message *to* a person. Notion can be read from and written to, and is
+ * useless as a way of getting someone's attention.
+ */
+const ALERT_CHANNELS: { id: ConnectorId; label: string }[] = [
+  { id: "telegram", label: "Telegram" },
+  { id: "slack", label: "Slack" },
+  { id: "gmail", label: "Email" },
+];
+
 function Turn({ turn, onReply }: { turn: AgentTurn; onReply: (quote: string) => void }) {
   if (turn.kind === "activity") return <ActivityBlock when={turn.when} lines={turn.lines} />;
   if (turn.kind === "approval") return <ApprovalBlock {...turn} />;
@@ -145,7 +153,7 @@ export function AgentsWorkspace({
    * this for a while — `?agents=empty` starts it bare so the first-run intro and
    * the empty state can be reviewed without deleting anything.
    */
-  const { roster, addAgent, updateAgent, setAgentTools } = useAgents();
+  const { roster, addAgent, updateAgent, setAgentTools, removeAgent, isConnected } = useAgents();
 
   /**
    * The onboarding runs once ever. After that, clicking Agents opens the workspace
@@ -166,6 +174,10 @@ export function AgentsWorkspace({
    * know which. See AgentPicker.
    */
   const [picking, setPicking] = useState(false);
+  /** the structured "+ New agent" form. Non-null means open; the string is what to
+   *  prefill the name with — empty when opened straight off the "+", the typed
+   *  query when the picker found nothing that already matched it. */
+  const [formName, setFormName] = useState<string | null>(null);
 
   const startPicking = () => setPicking(true);
   const [activeId, setActiveId] = useState<string>(focusId ?? "");
@@ -173,9 +185,12 @@ export function AgentsWorkspace({
   const [managing, setManaging] = useState(false);
   /** everything true about the agent that is not part of the conversation */
   const [drawer, setDrawer] = useState(false);
+  /** deletion needs an explicit second action; it is the only irreversible control here */
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [draft, setDraft] = useState("");
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const agent = roster.find((a) => a.id === activeId) ?? roster[0];
+  useEffect(() => { setConfirmingDelete(false); }, [agent?.id]);
   // Arriving from a chat that just made one: open on it. Being dropped on someone
   // else's thread straight after creating an agent reads as the creation failing.
   useEffect(() => { if (focusId) setActiveId(focusId); }, [focusId]);
@@ -185,6 +200,18 @@ export function AgentsWorkspace({
   const setup = making || (!onboarded && roster.length === 0);
   /** how far through the three opening questions the new agent has got */
   const [asked, setAsked] = useState(0);
+
+  const deleteAgent = () => {
+    if (!agent) return;
+    const next = roster.find((candidate) => candidate.id !== agent.id);
+    removeAgent(agent.id);
+    setActiveId(next?.id ?? "");
+    setDrawer(false);
+    setManaging(false);
+    setConfirmingDelete(false);
+    setReplyTo(null);
+    setDraft("");
+  };
 
   /**
    * Every agent starts the same way: named, empty-handed, and talking. A colour
@@ -218,6 +245,57 @@ export function AgentsWorkspace({
   const created = (made: NewAgent) => {
     birth(made.name, made.tools, ACCENTS[made.accent].hex);
     setMaking(false);
+  };
+
+  /**
+   * A dedicated agent, fully formed, from the fields someone actually filled in —
+   * as against `birth`, which starts one empty-handed and lets a scripted
+   * conversation fill it in over three questions. This is the other of the two
+   * ways an agent can start existing, and the only one this model still allows
+   * from outside a conversation with the agent itself: on purpose, with a
+   * mission, a watchlist, and a channel list already decided.
+   */
+  const createDedicatedAgent = (made: NewDedicatedAgent) => {
+    const agent: Agent = {
+      id: `a${Date.now()}`,
+      name: made.name,
+      role: made.mission,
+      instruction: made.mission,
+      status: "working",
+      mood: "No signal yet.",
+      resting: `${made.name} has nothing new to report.`,
+      preview: "No signal yet",
+      lastActive: "just now",
+      accent: ACCENTS.ember.hex,
+      watchlist: made.watchlist,
+      // The trigger becomes the first, specific rule; the other two are the
+      // standing policy every dedicated agent made from this form starts under
+      // — report with context, never move toward execution unasked. A mission
+      // says what the agent is for; these say what it will never do on its own,
+      // and that second thing does not vary by mission the way the first does.
+      rules: [
+        ...(made.trigger ? [`Alert ${made.trigger.replace(/^when\s+/i, "")}.`] : []),
+        "Include market context before alerting.",
+        "Do not suggest execution unless asked.",
+      ],
+      alerts: made.alerts,
+      cadence: made.trigger || undefined,
+      lastChecked: "Just created — first check due shortly",
+      tools: made.connectors,
+      thread: [
+        { kind: "you", text: made.mission },
+        {
+          kind: "agent",
+          text: made.watchlist.length
+            ? `Got it. I'll watch ${made.watchlist.join(", ")} and only interrupt you when it's genuinely worth it.`
+            : "Got it. I'll keep at this and only interrupt you when it's genuinely worth it.",
+        },
+      ],
+    };
+    addAgent(agent);
+    setActiveId(agent.id);
+    setFormName(null);
+    setPicking(false);
   };
 
   /**
@@ -270,34 +348,6 @@ export function AgentsWorkspace({
    * again: a loop would turn the one thing a roster can show — that they talk to
    * each other — into wallpaper.
    */
-  const rowsRef = useRef<HTMLDivElement>(null);
-  const rowEls = useRef<Record<string, HTMLButtonElement | null>>({});
-  const [signal, setSignal] = useState<{ from: number; to: number } | null>(null);
-  const [nudged, setNudged] = useState<string | null>(null);
-  const [handedOff, setHandedOff] = useState(false);
-
-  useEffect(() => {
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduced || setup || roster.length < 2) return;
-
-    const start = window.setTimeout(() => {
-      const host = rowsRef.current;
-      const a = rowEls.current[HANDOFF.from];
-      const b = rowEls.current[HANDOFF.to];
-      if (!host || !a || !b) return;
-
-      const top = host.getBoundingClientRect().top;
-      const centre = (el: HTMLElement) => {
-        const r = el.getBoundingClientRect();
-        return r.top - top + 17; // where the orb sits inside a row
-      };
-      setSignal({ from: centre(a), to: centre(b) });
-      setHandedOff(true);
-    }, 4200);
-
-    return () => window.clearTimeout(start);
-  }, [setup, roster.length]);
-
   return (
     <div className="ag-workspace">
       {/* the roster — who is working for you, and which of them needs something */}
@@ -309,26 +359,8 @@ export function AgentsWorkspace({
           </button>
         </div>
 
-        <div className="ag-rows" ref={rowsRef}>
+        <div className="ag-rows">
           {/* the signal itself — one dot, in the gutter the orbs already occupy */}
-          <AnimatePresence>
-            {signal && (
-              <motion.span
-                key="signal"
-                className="ag-signal"
-                aria-hidden="true"
-                initial={{ top: signal.from, opacity: 0, scale: 0.5 }}
-                animate={{ top: signal.to, opacity: [0, 1, 1, 0], scale: 1 }}
-                transition={{ duration: 1.15, ease: [0.4, 0, 0.2, 1], times: [0, 0.15, 0.75, 1] }}
-                onAnimationComplete={() => {
-                  setSignal(null);
-                  setNudged(HANDOFF.to);
-                  window.setTimeout(() => setNudged(null), 900);
-                }}
-              />
-            )}
-          </AnimatePresence>
-
           {roster.length === 0 && (
             <div className="ag-empty">
               <p className="ag-empty-title">No agents yet.</p>
@@ -341,40 +373,47 @@ export function AgentsWorkspace({
               key={a.id}
               agent={a}
               active={a.id === agent.id}
-              nudged={nudged === a.id}
-              innerRef={(el) => { rowEls.current[a.id] = el; }}
               onSelect={() => setActiveId(a.id)}
             />
           ))}
-        </div>
 
-        {/* said once, quietly, and only after it has happened */}
-        <AnimatePresence>
-          {handedOff && (
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.6, delay: 1.2 }}
-              className="ag-handoff-note"
-            >
-              {HANDOFF.says}
-            </motion.p>
+          {/* Sits in whatever room the roster hasn't filled, pushed to the
+              bottom by the column's own flex rather than pinned there — a
+              short roster gets a caption under it with breathing room; a long
+              one just scrolls past this before it ever comes into view. Said
+              once, and only here, because this is the one screen where
+              "dedicated" actually means something: it is not true of a Job,
+              and saying so next to the roster that is the reason it is true
+              is the cheapest place to make the distinction land. */}
+          {roster.length > 0 && (
+            <div className="ag-list-note">
+              <p className="ag-list-note-title">Dedicated agents live here.</p>
+              <p className="ag-list-note-body">Use them when a task needs its own rules, tools, and history.</p>
+            </div>
           )}
-        </AnimatePresence>
+        </div>
       </aside>
 
       {/* Same slot as the thread, for the same reason setup uses it: the roster
           stays put, so whichever way this ends — an existing agent or a new one —
           the answer lands where the person was already looking. */}
-      {picking && !setup && (
+      {picking && formName === null && !setup && (
         <AgentPicker
           roster={roster}
           onPick={(id) => { setActiveId(id); setPicking(false); }}
-          // Straight into the thread. The full setup screen exists for someone who
-          // has never had an agent and needs the concept; for the second one, the
-          // name is the only thing they have decided, and the agent asks the rest.
-          onCreate={(name) => { setPicking(false); birth(name?.trim() || "New agent"); }}
+          // Into the structured form, not straight into a scripted conversation:
+          // a dedicated agent is created on purpose, with a mission and a
+          // watchlist decided up front, not discovered three questions in.
+          onCreate={(name) => setFormName(name?.trim() ?? "")}
           onClose={() => setPicking(false)}
+        />
+      )}
+
+      {picking && formName !== null && !setup && (
+        <NewAgentPanel
+          initialName={formName}
+          onCancel={() => setFormName(null)}
+          onCreate={createDedicatedAgent}
         />
       )}
 
@@ -423,6 +462,50 @@ export function AgentsWorkspace({
           {agent.thread.map((turn, i) => (
             <Turn key={i} turn={turn} onReply={setReplyTo} />
           ))}
+
+          {/* An agent that has come back with something has asked a question, and
+              a question with no answers under it is a dead end. These are the same
+              three the chat offers on the same moment — deliberately, because a
+              person who paused it from the conversation yesterday should not have
+              to learn a second set of words for it here.
+
+              Only while it is waiting. A permanent row of controls under every
+              thread would be a toolbar, and a toolbar is what this page is trying
+              not to be. */}
+          {agent.status === "waiting" && (
+            <motion.div
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.2 }}
+              className="ag-answers"
+            >
+              <button
+                type="button"
+                className="ag-answer"
+                onClick={() =>
+                  updateAgent(agent.id, (a) => ({ ...a, status: "working", mood: "Still watching." }))
+                }
+              >
+                Keep watching
+              </button>
+              <button
+                type="button"
+                className="ag-answer"
+                onClick={() => setDrawer(true)}
+              >
+                Change threshold
+              </button>
+              <button
+                type="button"
+                className="ag-answer ag-answer--quiet"
+                onClick={() =>
+                  updateAgent(agent.id, (a) => ({ ...a, status: "paused", mood: "Paused by you." }))
+                }
+              >
+                Pause
+              </button>
+            </motion.div>
+          )}
 
           {/* The bottom of a thread is where an agent is most obviously not a chat:
               there is nothing to reply to, and something is still going on. */}
@@ -496,7 +579,7 @@ export function AgentsWorkspace({
             <div className="ag-drawer-in">
               <div className="ag-drawer-top">
                 <p className="ag-drawer-kicker">Agent</p>
-                <button type="button" className="ag-drawer-x" onClick={() => setDrawer(false)} aria-label="Close">
+                <button type="button" className="ag-drawer-x" onClick={() => { setDrawer(false); setConfirmingDelete(false); }} aria-label="Close">
                   ✕
                 </button>
               </div>
@@ -518,11 +601,128 @@ export function AgentsWorkspace({
                 <span className="ag-field-label">What it does</span>
                 <textarea
                   className="ag-field-in"
-                  rows={3}
+                  rows={2}
                   value={agent.role}
                   onChange={(e) => updateAgent(agent.id, (a) => ({ ...a, role: e.target.value }))}
                 />
               </label>
+
+              {/* The rule it is actually running under, as against the line above,
+                  which is how it is described in a roster. They are separate fields
+                  because they drift apart the moment anyone amends the job from a
+                  chat: the description stays "keeps an eye on flights" while the
+                  instruction picks up dates, a price and three airports. Editing
+                  here and saying it in the chat are the same act on the same field. */}
+              <label className="ag-field">
+                <span className="ag-field-label">Current instructions</span>
+                <textarea
+                  className="ag-field-in"
+                  rows={3}
+                  value={agent.instruction ?? agent.role}
+                  onChange={(e) => updateAgent(agent.id, (a) => ({ ...a, instruction: e.target.value }))}
+                />
+              </label>
+
+              {/* The markets it is responsible for. A trader's first question about
+                  a watcher is "is it on the thing I think it's on", and that has to
+                  be answerable at a glance rather than by parsing the instruction
+                  above — which is prose, and prose is the wrong shape for a list
+                  someone reads by scanning. Editing this is a chat act ("add BTC",
+                  "remove SOL"), the same as the instruction itself; the × here is
+                  the one exception, because dropping a market you are trading is
+                  common enough to deserve a control that isn't also a sentence. */}
+              {(agent.watchlist?.length ?? 0) > 0 && (
+                <div className="ag-field">
+                  <span className="ag-field-label">Watchlist</span>
+                  <div className="ag-marks">
+                    {agent.watchlist!.map((t) => (
+                      <button
+                        key={t}
+                        type="button"
+                        className="ag-mark"
+                        title={`Remove ${t}`}
+                        onClick={() =>
+                          updateAgent(agent.id, (a) => ({
+                            ...a,
+                            watchlist: (a.watchlist ?? []).filter((x) => x !== t),
+                          }))
+                        }
+                      >
+                        {t}
+                        <span aria-hidden="true">×</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* What has to hold before it interrupts you. Read-only here on
+                  purpose — a condition is a clause in a running sentence ("breakout,
+                  and volume confirms, and funding is acceptable"), and editing one
+                  clause out of a sentence in a text box is worse than just saying
+                  the change: "only alert me if funding is acceptable too" is
+                  already the whole interface for this. */}
+              {(agent.conditions?.length ?? 0) > 0 && (
+                <div className="ag-field">
+                  <span className="ag-field-label">Alerts when</span>
+                  <p className="ag-conditions">{agent.conditions!.join(", and ")}</p>
+                </div>
+              )}
+
+              {/* The standing policy, distinct from the instruction above it. The
+                  instruction is what it is for; this is the behaviour it is bound
+                  to no matter what it is for — "do not suggest execution unless
+                  asked" is not part of the mission, it is a constraint on how the
+                  mission gets carried out. Set once at creation and shown plainly:
+                  a dedicated agent that could quietly outgrow its own rules from a
+                  chat sentence would not be a rule, it would be a suggestion. */}
+              {(agent.rules?.length ?? 0) > 0 && (
+                <div className="ag-field">
+                  <span className="ag-field-label">Rules</span>
+                  <ul className="ag-rules">
+                    {agent.rules!.map((rule) => (
+                      <li key={rule}>{rule}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Where it may reach you. Starchild is not on the list and cannot be
+                  turned off — it is not a channel, it is where the agent lives, and
+                  offering it as a toggle would suggest there is a state in which an
+                  agent works and you cannot see it. Anything greyed out is a
+                  connector the account has not authenticated; an alert channel that
+                  is not connected is a promise the product cannot keep. */}
+              <div className="ag-field">
+                <span className="ag-field-label">Also notify you on</span>
+                <div className="ag-alerts">
+                  {ALERT_CHANNELS.map(({ id, label }) => {
+                    const on = (agent.alerts ?? []).includes(id);
+                    const available = isConnected(id);
+                    return (
+                      <button
+                        key={id}
+                        type="button"
+                        disabled={!available}
+                        aria-pressed={on}
+                        title={available ? undefined : `Connect ${label} first`}
+                        className={`ag-alert${on ? " ag-alert--on" : ""}`}
+                        onClick={() =>
+                          updateAgent(agent.id, (a) => ({
+                            ...a,
+                            alerts: on
+                              ? (a.alerts ?? []).filter((x) => x !== id)
+                              : [...(a.alerts ?? []), id],
+                          }))
+                        }
+                      >
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="ag-alerts-note">Agents report wherever you want. Starchild keeps the full context.</p>
+              </div>
 
               <div className="ag-field">
                 <span className="ag-field-label">Colour</span>
@@ -546,6 +746,19 @@ export function AgentsWorkspace({
 
               <div className="ag-field">
                 <span className="ag-field-label">Right now</span>
+                <button
+                  type="button"
+                  className="ag-pause"
+                  onClick={() =>
+                    updateAgent(agent.id, (a) =>
+                      a.status === "paused"
+                        ? { ...a, status: "working", mood: "Back on it." }
+                        : { ...a, status: "paused", mood: "Paused by you." },
+                    )
+                  }
+                >
+                  {agent.status === "paused" ? "Resume agent" : "Pause agent"}
+                </button>
                 {/* Not a pill. Everything else pill-shaped in this column is
                     something you press, and a status is the one thing here that is
                     only ever read — so it is a dot and a word, the same two parts
@@ -566,7 +779,7 @@ export function AgentsWorkspace({
 
               <div className="ag-field">
                 <span className="ag-field-head">
-                  Connected tools
+                  Connectors
                   {/* On the label rather than under the chips: a pill button sitting
                       with the chips reads as a seventh connector nobody enabled. */}
                   <button
@@ -590,6 +803,22 @@ export function AgentsWorkspace({
                   ))}
                   {agent.tools.length === 0 && <span className="ag-chip ag-chip--none">Nothing yet</span>}
                 </div>
+              </div>
+
+              <div className="ag-danger-zone">
+                {confirmingDelete ? (
+                  <>
+                    <p>Delete {agent.name}? This cannot be undone.</p>
+                    <div>
+                      <button type="button" onClick={() => setConfirmingDelete(false)}>Cancel</button>
+                      <button type="button" className="ag-delete-confirm" onClick={deleteAgent}>Delete agent</button>
+                    </div>
+                  </>
+                ) : (
+                  <button type="button" className="ag-delete" onClick={() => setConfirmingDelete(true)}>
+                    Delete agent
+                  </button>
+                )}
               </div>
             </div>
           </motion.aside>
@@ -648,31 +877,22 @@ export function AgentsWorkspace({
         .ag-empty-title { margin: 0; font-size: 14px; font-weight: 500; color: rgba(255,255,255,.6); }
         .ag-empty-body { margin: 0; font-size: 12.5px; line-height: 1.5; color: rgba(255,255,255,.32); }
 
+        /* Same shape as .ag-empty — a title line over a quieter body line —
+           but this one shows alongside a roster that already has agents in
+           it, so it reads as a footnote about the screen rather than a state
+           the screen is in. Pushed to the bottom of whatever room .ag-rows
+           has not used by its own flex, not by a fixed position. */
+        .ag-list-note { margin-top: auto; padding: 18px 10px 14px; display: flex; flex-direction: column; gap: 6px; }
+        .ag-list-note-title { margin: 0; font-size: 13px; font-weight: 500; color: #fff; }
+        .ag-list-note-body { margin: 0; font-size: 12px; line-height: 1.5; color: rgba(255,255,255,.24); }
+
         /* ---------- roster motion ---------- */
 
-        .ag-rows { position: relative; }
         .ag-row-orb { flex: none; margin-top: 5px; }
 
         /* the signal travelling between two agents, in the gutter the orbs sit in */
-        .ag-signal {
-          position: absolute; left: 18px; z-index: 2; pointer-events: none;
-          width: 6px; height: 6px; margin-top: -3px; border-radius: 999px;
-          background: var(--color-primary);
-          box-shadow: 0 0 10px rgba(248,70,0,.9), 0 0 22px rgba(248,70,0,.35);
-        }
-
         /* the receiving agent takes a beat. One shot, a few percent — any more and
            it reads as an error rather than as being handed something. */
-        .ag-row--nudged { animation: ag-nudge .9s cubic-bezier(.16,1,.3,1); }
-        @keyframes ag-nudge {
-          0% { background: rgba(248,70,0,.14); }
-          100% { background: rgba(255,255,255,0); }
-        }
-
-        .ag-handoff-note {
-          margin: 4px 16px 0; font-size: 11.5px; line-height: 1.5;
-          color: rgba(255,255,255,.3);
-        }
 
         /* ---------- thread ---------- */
 
@@ -706,6 +926,52 @@ export function AgentsWorkspace({
         .ag-head-name { font-size: 16px; font-weight: 600; color: #fff; }
 
         /* ---------- drawer ---------- */
+
+        /* Tickers as marks, same treatment as the chat card — no fill, no border —
+           but clickable here, since removing one from the page is a control this
+           screen owns. */
+        .ag-marks { display: flex; flex-wrap: wrap; gap: 6px 12px; }
+        .ag-mark {
+          display: inline-flex; align-items: center; gap: 5px;
+          font-size: 12.5px; font-weight: 600; letter-spacing: .04em;
+          color: rgba(255,255,255,.72); transition: color .2s;
+        }
+        .ag-mark span { font-size: 11px; color: rgba(255,255,255,.3); }
+        .ag-mark:hover { color: #fff; }
+        .ag-mark:hover span { color: rgba(255,255,255,.6); }
+
+        .ag-conditions { margin: 0; font-size: 13px; line-height: 1.55; color: rgba(255,255,255,.65); }
+
+        .ag-rules { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; }
+        .ag-rules li {
+          position: relative; padding-left: 13px; font-size: 13px; line-height: 1.5;
+          color: rgba(255,255,255,.65);
+        }
+        .ag-rules li::before {
+          content: ""; position: absolute; left: 0; top: 7px;
+          width: 4px; height: 4px; border-radius: 999px; background: rgba(255,255,255,.28);
+        }
+
+        .ag-alerts { display: flex; flex-wrap: wrap; gap: 6px; }
+        .ag-alert {
+          border-radius: 999px; padding: 5px 11px; font-size: 12.5px;
+          background: rgba(255,255,255,.06); color: rgba(255,255,255,.6);
+          transition: background .2s, color .2s;
+        }
+        .ag-alert:hover:not(:disabled) { background: rgba(255,255,255,.11); color: #fff; }
+        .ag-alert--on { background: rgba(248,70,0,.16); color: #ff7a45; }
+        .ag-alert:disabled { opacity: .35; cursor: not-allowed; }
+        .ag-alerts-note { margin: 8px 0 0; font-size: 11.5px; line-height: 1.5; color: rgba(255,255,255,.3); }
+
+        /* A control, so it looks like one — but the quietest kind, because pausing
+           is reversible and sits three lines above a delete that is not. */
+        .ag-pause {
+          align-self: flex-start; margin-bottom: 10px;
+          border-radius: 999px; padding: 6px 13px; font-size: 12.5px;
+          background: rgba(255,255,255,.06); color: rgba(255,255,255,.7);
+          transition: background .2s, color .2s;
+        }
+        .ag-pause:hover { background: rgba(255,255,255,.12); color: #fff; }
 
         .ag-drawer {
           flex: none; overflow: hidden;
@@ -779,6 +1045,20 @@ export function AgentsWorkspace({
           color: rgba(255,255,255,.3);
         }
 
+        .ag-danger-zone {
+          margin-top: auto; padding-top: 18px; border-top: 1px solid rgba(255,255,255,.08);
+        }
+        .ag-danger-zone > p { margin: 0 0 10px; font-size: 12.5px; line-height: 1.45; color: rgba(255,255,255,.48); }
+        .ag-danger-zone > div { display: flex; gap: 8px; }
+        .ag-danger-zone button {
+          border: 1px solid rgba(255,255,255,.14); border-radius: 999px; background: none; cursor: pointer;
+          padding: 7px 11px; font-family: inherit; font-size: 12.5px; color: rgba(255,255,255,.68);
+        }
+        .ag-delete { border-color: rgba(255,111,94,.38) !important; color: #ff9a8c !important; }
+        .ag-delete:hover { border-color: rgba(255,111,94,.75) !important; background: rgba(255,81,59,.1) !important; color: #ffd1ca !important; }
+        .ag-delete-confirm { border-color: #e24c3a !important; background: #e24c3a !important; color: #fff !important; }
+        .ag-delete-confirm:hover { background: #f35a47 !important; }
+
         .ag-state {
           margin: 0; display: flex; align-items: center; gap: 8px;
           font-size: 13.5px; color: rgba(255,255,255,.6);
@@ -812,6 +1092,18 @@ export function AgentsWorkspace({
         }
 
         /* what is going on when there is nothing to answer */
+        /* Aligned with the agent's own words above them, not centred and not
+           right-aligned: they are answers to the thing it just said. */
+        .ag-answers { display: flex; flex-wrap: wrap; gap: 7px; padding: 2px 0 4px; }
+        .ag-answer {
+          border-radius: 999px; padding: 6px 13px; font-size: 12.5px;
+          background: rgba(255,255,255,.07); color: rgba(255,255,255,.78);
+          transition: background .2s, color .2s;
+        }
+        .ag-answer:hover { background: rgba(255,255,255,.13); color: #fff; }
+        .ag-answer--quiet { background: none; color: rgba(255,255,255,.42); }
+        .ag-answer--quiet:hover { background: rgba(255,255,255,.07); color: rgba(255,255,255,.8); }
+
         .ag-resting {
           display: flex; align-items: center; gap: 9px; margin: 6px 0 0;
           font-size: 13px; color: rgba(255,255,255,.3);
@@ -845,7 +1137,7 @@ export function AgentsWorkspace({
         .ag-msg { font-size: 14.5px; line-height: 1.55; color: rgba(255,255,255,.9); }
         .ag-msg--mine {
           border-radius: 16px 16px 4px 16px;
-          background: rgba(248,70,0,.14); border: 1px solid rgba(248,70,0,.22);
+          background: rgba(248,70,0,.14);
         }
 
         /* Work, not talk — said by the kicker and the list, not by the container. */
@@ -945,7 +1237,6 @@ export function AgentsWorkspace({
 
         @media (prefers-reduced-motion: reduce) {
           .ag-tick i { animation: none; }
-          .ag-row--nudged { animation: none; }
           .ag-send:hover { transform: none; }
         }
 

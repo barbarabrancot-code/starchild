@@ -30,10 +30,10 @@ export const LEAN_EASE = 0.045;
  * so the orb barely moves for any pointer that is not on top of it, which is
  * every pointer.
  */
-export function leanTarget(dx: number, dy: number): { x: number; y: number } {
+export function leanTarget(dx: number, dy: number, max = LEAN_MAX): { x: number; y: number } {
   const away = Math.hypot(dx, dy);
   if (away <= 1 || away >= LEAN_REACH) return { x: 0, y: 0 };
-  const strength = Math.sqrt(1 - away / LEAN_REACH) * LEAN_MAX;
+  const strength = Math.sqrt(1 - away / LEAN_REACH) * max;
   return { x: (dx / away) * strength, y: (dy / away) * strength };
 }
 
@@ -49,8 +49,14 @@ export function leanTarget(dx: number, dy: number): { x: number; y: number } {
  * The loop parks as soon as the body has arrived where the pointer wants it, and
  * wakes on anything that could move either of them — the pointer, or the page
  * scrolling the orb to a new place under it.
+ *
+ * `max` overrides how far it will go. LEAN_MAX is nine pixels, which is right
+ * for a body that is also breathing, beating and drifting on its own — the lean
+ * is one signal among several and does not have to carry the reading by itself.
+ * Where the lean is the *only* thing moving, nine pixels on a large orb is a
+ * body that does not appear to react at all, so the hero scales it to the orb.
  */
-export function usePointerLean<T extends HTMLElement>() {
+export function usePointerLean<T extends HTMLElement>(max: number = LEAN_MAX) {
   const ref = useRef<T>(null);
   const reduced = usePrefersReducedMotion();
 
@@ -67,7 +73,7 @@ export function usePointerLean<T extends HTMLElement>() {
       const box = el.getBoundingClientRect();
       const at = pointer.at;
       const want = at
-        ? leanTarget(at.x - (box.left + box.width / 2), at.y - (box.top + box.height / 2))
+        ? leanTarget(at.x - (box.left + box.width / 2), at.y - (box.top + box.height / 2), max)
         : { x: 0, y: 0 };
 
       lean.x += (want.x - lean.x) * LEAN_EASE;
@@ -108,7 +114,7 @@ export function usePointerLean<T extends HTMLElement>() {
       window.removeEventListener("scroll", wake);
       cancelAnimationFrame(frame);
     };
-  }, [reduced]);
+  }, [reduced, max]);
 
   return ref;
 }

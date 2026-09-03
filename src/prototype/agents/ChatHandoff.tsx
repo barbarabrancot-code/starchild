@@ -94,49 +94,56 @@ export function ConnectFirst({
 export function AgentSuggestion({
   request,
   because,
+  proposal,
   onCreate,
   onDismiss,
 }: {
   request?: Request;
   /** written reason, for a conversation being read back out of history */
   because?: string;
+  /** what it would be called and what it would do, shown before it exists */
+  proposal?: { name: string; role: string };
   onCreate: () => void;
   onDismiss: () => void;
 }) {
+  const marketWatcher = proposal?.name === "Market Watcher";
   const reason =
     because ??
-    (request && request.repeats >= 2
+    (marketWatcher
+      ? "You've asked me to check this watchlist a few times. Want me to create a Market Watcher that keeps tracking HYPE, SOL, and ETH for meaningful changes?"
+      : request && request.repeats >= 2
       ? `That's the ${ordinal(request.repeats)} time you've asked me for this. An Agent would do it without being asked, and report back in its own thread.`
       : `It would keep doing this for you${request?.cadence ? ` ${request.cadence}` : ""} and report back in its own thread.`);
 
+  /*
+    Two things, not one card.
+
+    The reason is Starchild talking — it is checkable ("you have asked for this
+    three times" is something the person remembers doing), and it reads as the
+    product noticing rather than guessing. Held inside the card it was a wall of
+    explanation wrapped around a button, which is the shape of a cookie banner.
+
+    Out here it is a message like any other message, and what stays in the card is
+    only the thing being offered: a name and a job. That is also what makes "Not
+    now" a real answer rather than a guess — it is the first point at which there
+    is something specific to decline.
+  */
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.45, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
-      className="hoff hoff--offer"
+      transition={{ duration: 0.45, delay: 0.35, ease: [0.16, 1, 0.3, 1] }}
+      className={`hoff hoff--decision${marketWatcher ? " hoff--market" : ""}`}
     >
-      <p className="hoff-title">Create an Agent for this?</p>
-      {/* Names what it makes, in the word used on the sidebar. Softer phrasing
-          reads better and is worse: someone who cannot tell what the button
-          created is exactly the person this whole distinction is protecting.
-
-          And it says which of the two things prompted it. "You have asked for this
-          three times" is checkable — the person remembers doing it — where an
-          unexplained suggestion just reads as the product guessing. */}
-      <p className="hoff-sub">
-        {reason} This conversation stays as it is either way.
-      </p>
-
+      <p className="hoff-decision-copy">{reason}</p>
       <div className="hoff-actions">
-        <button type="button" className="hoff-btn" onClick={onCreate}>
-          Create Agent
+        <button type="button" className="hoff-btn hoff-btn--go" onClick={onCreate}>
+          Handle it for me
         </button>
-        <button type="button" className="hoff-btn hoff-btn--quiet" onClick={onDismiss}>
+        <button type="button" className="hoff-btn hoff-btn--decision-quiet" onClick={onDismiss}>
           Not now
         </button>
       </div>
-
       <Style />
     </motion.div>
   );
@@ -217,11 +224,28 @@ function Style() {
          a warmer edge and nothing more. A success state that celebrates is a
          success state someone has to dismiss. */
       .hoff--offer { border-style: dashed; border-color: rgba(255,255,255,.16); background: none; }
+      .hoff--decision { gap: 30px; padding: 48px 54px 58px; border: 0; border-radius: 24px; background: #151515; }
+      .hoff-decision-copy { max-width: 940px; margin: 0; font-size: 29px; line-height: 1.34; letter-spacing: -.03em; color: #fff; }
+      /* An outline where a created agent has a lit orb. It does not exist yet, and
+         a filled mark for something that has not been made is the card quietly
+         answering its own question. */
+      .hoff-propose {
+        display: block; width: 13px; height: 13px; border-radius: 999px;
+        border: 1px dashed rgba(255,255,255,.35);
+      }
       .hoff--made {
         gap: 12px; padding: 15px 18px 16px;
         border-color: rgba(248,70,0,.3); background: rgba(248,70,0,.05);
       }
 
+      /* Outside the card and shaped like every other thing Starchild says, because
+         that is what it is. */
+      .hoff-msg {
+        max-width: 520px; margin: 0;
+        font-family: var(--font-google-sans);
+        font-size: 15px; line-height: 1.6; color: rgba(255,255,255,.88) !important;
+      }
+      .hoff-note { margin: -4px 0 0; font-size: 12px; color: rgba(255,255,255,.3); }
       .hoff-say { margin: 0; font-size: 15px; line-height: 1.6; color: rgba(255,255,255,.8); }
       .hoff-title { margin: 0; font-size: 15px; font-weight: 600; }
       .hoff-sub { margin: -4px 0 0; font-size: 13.5px; line-height: 1.6; color: rgba(255,255,255,.5); }
@@ -263,6 +287,13 @@ function Style() {
         border-color: transparent; background: var(--color-primary); color: #fff; font-weight: 500;
       }
       .hoff-btn--go:hover { background: #ff5a1f; border-color: transparent; }
+      .hoff-btn--decision-quiet { padding: 8px 14px; color: var(--color-primary); font-size: 18px; font-weight: 500; }
+      .hoff-btn--decision-quiet:hover { color: #ff5a1f; background: transparent; }
+
+      @media (max-width: 640px) {
+        .hoff--decision { gap: 22px; padding: 28px; border-radius: 18px; }
+        .hoff-decision-copy { font-size: 20px; }
+      }
 
       .hoff-stay { font-size: 12.5px; color: rgba(255,255,255,.35); }
     `}</style>

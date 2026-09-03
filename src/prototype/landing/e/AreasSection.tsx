@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { Container } from "../../Container";
-import { PlusIcon, PanelIcon, BriefcaseIcon, PuzzleIcon, SearchIcon, ArrowUpIcon } from "../../icons";
+import { PlusIcon, ChatBubbleIcon, GroupsIcon, PuzzleIcon, SearchIcon, ArrowUpIcon } from "../../icons";
 import { AgentOrb } from "../../agents/AgentOrb";
 import { AGENTS } from "../../agents/agentsData";
 import { AppIcon } from "../../agents/AppIcon";
@@ -245,11 +245,11 @@ export function AreasSection() {
 
                   <div className="ar-navs">
                     <span className={`ar-nav${open.id === "chat" ? " ar-nav--on" : ""}`}>
-                      <PanelIcon className="size-[13px]" />
+                      <ChatBubbleIcon className="size-[13px]" />
                       Chat
                     </span>
                     <span className={`ar-nav${open.id === "agents" ? " ar-nav--on" : ""}`}>
-                      <BriefcaseIcon className="size-[13px]" />
+                      <GroupsIcon className="size-[13px]" />
                       Agents
                     </span>
                     <span className={`ar-nav${open.id === "connectors" ? " ar-nav--on" : ""}`}>

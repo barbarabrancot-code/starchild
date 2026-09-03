@@ -89,6 +89,28 @@ const REACHES: Record<string, ConnectorId> = {
   zoom: "zoom",
 };
 
+/**
+ * Tickers.
+ *
+ * A known list first, then any short all-caps run that is not an English word
+ * people shout. The known list is not there to be exhaustive — it is there so
+ * "sol" and "eth" in an ordinary lowercase sentence are still found, which no
+ * casing rule can do.
+ */
+const KNOWN_TICKERS = ["HYPE", "SOL", "ETH", "BTC", "PURR", "ARB", "OP", "DOGE", "AVAX", "LINK", "SUI"];
+const NOT_TICKERS = new Set(["I", "A", "OK", "TP", "SL", "OI", "AND", "OR", "IF", "THE", "USD", "PNL", "API", "ATH"]);
+
+export function tickersIn(text: string): string[] {
+  const found = new Set<string>();
+  for (const t of KNOWN_TICKERS) {
+    if (new RegExp(`\\b${t}\\b`, "i").test(text)) found.add(t);
+  }
+  for (const m of text.matchAll(/\b[A-Z]{2,6}\b/g)) {
+    if (!NOT_TICKERS.has(m[0])) found.add(m[0]);
+  }
+  return [...found];
+}
+
 const BY_NAME = new Map(CATALOG.map((c) => [c.name.toLowerCase(), c.id]));
 
 function connectorsIn(text: string): ConnectorId[] {
@@ -112,21 +134,43 @@ function core(text: string, cadence?: string) {
 }
 
 /**
- * Names are proposed, never imposed — the field is editable in the confirmation
- * card and again in the agent's drawer. These are just better opening guesses than
- * "New agent", built from the two things that actually distinguish one standing
- * job from another: what it touches and what it does with it.
+ * Titles are proposed, never imposed — the person can always say "rename it" or
+ * just type over what shows in the suggestion card. What this proposes is a
+ * title for an *active task*, and the register matters: "Watching HYPE" reads as
+ * something the main agent is holding onto, where "HYPE Watcher" reads as a
+ * colleague with a business card. The second register is reserved for a
+ * dedicated agent, and a dedicated agent is never named by this function any
+ * more — it is named by hand, in the Agents-area form, because standing an agent
+ * up is the one act in this model that is never guessed at.
  */
 function propose(text: string, needs: ConnectorId[]): string {
+  // Markets first, and named after the thing itself: "Watching HYPE" tells a
+  // trader what it is at a glance, where a generic "Watching this" would need
+  // opening to mean anything.
+  const tickers = tickersIn(text);
+  // A condition specific enough to name gets named — "Watching HYPE breakout"
+  // says what the job is holding for, which a bare "Watching HYPE" does not.
+  // Anything vaguer than that ("tell me if anything meaningful changed") stays
+  // bare, because there is nothing truer yet to call it.
+  if (tickers.length === 1 && /\b(breakout|resistance|support|breaks? (above|below)|breaking out)\b/i.test(text)) {
+    return `Watching ${tickers[0]} breakout`;
+  }
+  if (tickers.length === 1) return `Watching ${tickers[0]}`;
+  if (tickers.length > 1) return `Watching ${tickers.slice(0, 3).join(", ")}`;
+
   const t = text.toLowerCase();
-  if (/\bfollow(ing)?[- ]up\b|\buntil (they|he|she|it)\b/.test(t)) return "Follow-up Agent";
-  if (/\bprice|fare|flight|market|stock|ticker\b/.test(t)) return "Price Watcher";
-  if (/\breport\b/.test(t)) return "Report Agent";
-  if (needs.includes("gmail")) return "Inbox Watcher";
-  if (needs.includes("gcal")) return "Calendar Watcher";
-  if (needs.includes("slack")) return "Slack Watcher";
-  if (needs.includes("github")) return "Repo Watcher";
-  return "Watcher";
+  if (/\bfollow(ing)?[- ]up\b|\buntil (they|he|she|it)\b/.test(t)) return "Following up";
+  if (/\bfunding\b/.test(t)) return "Watching funding";
+  if (/\b(open interest|liquidation|orderbook|order book)\b/.test(t)) return "Watching order flow";
+  if (/\bwallet|address|whale\b/.test(t)) return "Watching that wallet";
+  if (/\b(flights?|fares?|airlines?|trips?)\b/.test(t)) return "Watching flights";
+  if (/\b(prices?|markets?|stocks?|tickers?)\b/.test(t)) return "Watching prices";
+  if (/\breport\b/.test(t)) return "Keeping that report going";
+  if (needs.includes("gmail")) return "Watching your inbox";
+  if (needs.includes("gcal")) return "Watching your calendar";
+  if (needs.includes("slack")) return "Watching Slack";
+  if (needs.includes("github")) return "Watching the repo";
+  return "Keeping an eye on this";
 }
 
 /**
@@ -157,7 +201,7 @@ function stem(w: string): string {
   return w;
 }
 
-function meat(text: string): Set<string> {
+export function meat(text: string): Set<string> {
   return new Set(
     text
       .toLowerCase()

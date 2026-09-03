@@ -40,14 +40,30 @@ export const APPS: Record<string, App> = {
  * "waiting" wants anything from you; the rest are things going fine without you,
  * and a roster where everything glows teaches people to ignore the glow.
  */
-export type AgentStatus = "working" | "waiting" | "scheduled" | "settled" | "paused";
+export type AgentStatus =
+  | "working"
+  | "waiting"
+  | "scheduled"
+  | "settled"
+  | "paused"
+  /**
+   * It has something it will not do without you.
+   *
+   * Separate from "waiting", and the separation is the point rather than a
+   * nicety. "Needs you" is an agent that would like an answer; this is an agent
+   * holding a prepared order. Collapsing the two would make the roster say the
+   * same word for "shall I keep watching?" and "shall I place this?", and the
+   * second is the only one where not looking has a price.
+   */
+  | "approval";
 
 export const STATUS_LABEL: Record<AgentStatus, string> = {
-  working: "Working now",
+  working: "Watching",
   waiting: "Needs you",
   scheduled: "Scheduled",
-  settled: "Done for now",
+  settled: "No signal yet",
   paused: "Paused",
+  approval: "Needs approval",
 };
 
 /** A turn in an agent's thread. Activity and approval are not messages — they are
@@ -85,6 +101,86 @@ export type Agent = {
   onboarding?: boolean;
   /** what it runs on, if anything */
   cadence?: string;
+  /**
+   * The standing instruction, in the words it was given in.
+   *
+   * Distinct from `role`, and the distinction is load-bearing. `role` is how the
+   * agent is described to a person reading a roster; this is the rule it is
+   * actually operating under, and it is the thing the main chat edits when
+   * somebody says "only the ones that need a reply". Paraphrasing it on the way
+   * in is how an agent ends up doing a slightly different job than was asked for,
+   * so it is stored verbatim and only ever appended to.
+   */
+  instruction?: string;
+  /**
+   * Where it may reach the person, as against `tools`, which is what it may reach
+   * *into*. Starchild itself is not in here: it is not a channel you can turn off,
+   * it is where the agent lives. Everything in this list is an outpost.
+   */
+  alerts?: ConnectorId[];
+  /**
+   * The tickers it is responsible for.
+   *
+   * A list rather than prose inside the instruction, because this is the one part
+   * of a market agent's job that gets edited by single items — "add PURR",
+   * "remove SOL" — and a sentence cannot have one item taken out of it without
+   * being rewritten. It is also what lets a second request about a token find the
+   * agent that already covers that market instead of starting a rival one.
+   */
+  watchlist?: string[];
+  /**
+   * What has to be true before it interrupts you, one clause per entry.
+   *
+   * A list because these accumulate and are read back as a set: "price breaks
+   * resistance, volume confirms, funding is acceptable, and open interest is
+   * rising" is four decisions made on four different days. Held as one string
+   * they could only be appended to, so the fourth amendment would produce a
+   * sentence with three "and"s and no way to remove the second condition without
+   * retyping the other three.
+   */
+  conditions?: string[];
+  /**
+   * Whether it must ask before it acts.
+   *
+   * Defaults to true wherever an agent is created, and nothing in this prototype
+   * offers a way to set it false. An execution gate that can be turned off by the
+   * same conversation that turns it on is not a gate; if this ever becomes
+   * settable, it belongs behind an explicit, separate act of configuration and
+   * not behind a sentence typed into a chat.
+   */
+  approval?: boolean;
+  /**
+   * Whether it has been asked to prepare orders at all.
+   *
+   * Distinct from `approval`, and conflating the two was a real mistake worth
+   * naming: `approval` is the gate, and it is up on every agent from birth.
+   * Gating the strategy card on it therefore meant *every* watcher eventually
+   * offered a trade — the product proposing positions to someone who had only
+   * ever asked to be told when a price moved.
+   *
+   * This is the other half: the person asked for a strategy. Both must be true
+   * before anything resembling an order is drawn, and only one of them is ever
+   * set by a sentence.
+   */
+  execution?: boolean;
+  /**
+   * The policy it operates under — set once, at creation, and read-only after
+   * that everywhere except the drawer.
+   *
+   * Distinct from `conditions`, which is a single alert trigger built out of
+   * clauses joined by "and". A rule is not a trigger: "Do not suggest execution
+   * unless asked" is never going to be one term in an "alert when" sentence, it
+   * is a standing constraint on how the agent behaves. Dedicated agents made
+   * through the Agents-area form get their rules from the form, written once and
+   * shown as a short list on the page — the operational half of "mission, rules,
+   * activity, controls" that separates a dedicated worker from a task the main
+   * chat is just holding onto.
+   */
+  rules?: string[];
+  /** what it did last and when, for the one-line status the chat shows */
+  lastChecked?: string;
+  /** when it next runs, for the same line. Only set on a scheduled agent. */
+  nextRun?: string;
   /** Which connectors this agent may use. Ids, not copies: the connection lives
    *  once on the account, and this is only the permission to reach it. */
   tools: ConnectorId[];
@@ -104,54 +200,105 @@ export const HANDOFF = {
   says: "Research Agent passed the pricing write-up to Project Assistant.",
 };
 
+/**
+ * The roster a signed-in account opens with.
+ *
+ * Inbox Manager and Travel Watcher used to be seeded here and are deliberately
+ * not, because both are agents the product is supposed to be able to *make* —
+ * one from a repeated request, one from a sentence that says outright it wants
+ * something watched. Shipping them pre-made meant every path that created one
+ * hit the rule that says do not create a second agent for a job an agent already
+ * has, and widened the seeded one instead. The rule was right; the fixture was
+ * wrong.
+ *
+ * HYPE Watcher used to be seeded here too, and was taken back out for a reason
+ * worth recording rather than quietly reverting: it was standing in for the
+ * wrong tier. Under the model this account now follows, "keep watching HYPE" is
+ * simple ongoing work — an active task the main agent holds, with no page of its
+ * own — and a saved conversation elsewhere narrates exactly that, live-reading
+ * `activeTasks` rather than the roster. Giving it a dedicated agent's page was
+ * the earlier, coarser version of the product; this file no longer makes that
+ * claim about it.
+ *
+ * Hyperliquid Funding Watcher is what a dedicated agent actually looks like
+ * under the current model: stood up on purpose, from the Agents area's own
+ * creation form, for a job specific enough to want a mission, a watchlist, a set
+ * of standing rules, and a page to hold all of it. It is seeded as history for
+ * the same reason Research Agent and the others are — work already running
+ * before today — while the *creation* of one like it is a thing you can still do
+ * live, right now, with "+ New agent."
+ */
 export const AGENTS: Agent[] = [
   {
-    id: "inbox",
-    name: "Inbox Manager",
-    role: "Keeps your inbox down to what actually needs you",
-    status: "waiting",
-    mood: "Four replies, ready when you are.",
-    resting: "Inbox Manager has done what it can without you.",
-    preview: "4 replies drafted — waiting for you",
-    lastActive: "12m ago",
-    cadence: "Every morning at 8:00",
-    tools: ["gmail", "slack", "gcal"],
+    id: "funding-watcher",
+    name: "Hyperliquid Funding Watcher",
+    role: "Tracks funding rates across the user's Hyperliquid watchlist.",
+    status: "working",
+    mood: "No unusual funding changes yet.",
+    resting: "Hyperliquid Funding Watcher has nothing new to report.",
+    preview: "No unusual funding changes yet",
+    lastActive: "2h ago",
+    // PURR joined this list at 13:42 via the main chat — see the activity entry
+    // below. The watchlist reflects that now; scenario 6's four-ticker list was
+    // the state at creation, before the delegation this seed also demonstrates.
+    watchlist: ["HYPE", "SOL", "ETH", "BTC", "PURR"],
+    rules: [
+      "Alert when funding becomes unusually positive or negative.",
+      "Include market context before alerting.",
+      "Do not suggest execution unless asked.",
+    ],
+    // The account already has Telegram connected — see INITIAL_CONNECTIONS — and
+    // this was picked as a channel on purpose in the creation form, per
+    // scenario 6, rather than defaulted the way a task's alerts are not.
+    alerts: ["telegram"],
+    instruction: "Track funding rates across my watchlist and alert me when conditions become unusual.",
+    lastChecked: "last checked funding rates 2 hours ago",
+    tools: [],
     thread: [
-      { kind: "you", text: "Keep on top of my inbox. Draft replies for anything routine, but don't send anything without me." },
-      { kind: "agent", text: "Got it. I'll go through it every morning and leave the drafts for you to look over." },
+      { kind: "you", text: "Track funding rates across my watchlist and alert me when conditions become unusual." },
       {
-        kind: "activity",
-        when: "This morning, 8:00",
-        lines: ["Checked Gmail", "Reviewed 12 emails", "Drafted 4 replies", "Left 2 for you — they looked personal"],
+        kind: "agent",
+        text: "Got it. I'll watch HYPE, SOL, ETH and BTC and only interrupt you when funding actually moves out of the ordinary.",
       },
       {
-        kind: "approval",
-        text: "4 replies ready to send",
-        detail: "Two scheduling confirmations, an invoice acknowledgement and a polite no. Nothing that commits you to anything.",
-        confirm: "Review and send",
+        kind: "activity",
+        when: "13:42",
+        lines: ["PURR added to watchlist from main chat."],
+      },
+      {
+        kind: "activity",
+        when: "13:55",
+        lines: [
+          "Unusual funding detected on HYPE.",
+          "Funding moved unusually positive.",
+          "Market context added.",
+          "Alert sent to Starchild and Telegram.",
+        ],
       },
     ],
   },
   {
-    id: "travel",
-    name: "Travel Watcher",
-    role: "Watches fares on the trips you're thinking about",
+    id: "wallet-tracker",
+    name: "Wallet Tracker",
+    role: "Watches a wallet's on-chain activity and flags transfers worth knowing about.",
     status: "working",
-    mood: "Waiting for the price to move.",
-    resting: "Travel Watcher is keeping an eye on prices.",
-    preview: "Tokyo — $684, down from $828",
-    lastActive: "just now",
-    cadence: "Checks every hour",
-    tools: ["telegram"],
+    mood: "Nothing unusual since yesterday.",
+    resting: "Wallet Tracker is still watching.",
+    preview: "Nothing unusual since yesterday",
+    lastActive: "40m ago",
+    watchlist: ["HYPE"],
+    rules: [
+      "Alert on transfers over $10,000.",
+      "Flag new counterparties the wallet has not interacted with before.",
+      "Do not suggest execution unless asked.",
+    ],
+    alerts: ["telegram"],
+    instruction: "Watch this wallet's on-chain activity and flag anything worth knowing about.",
+    lastChecked: "last checked 40 minutes ago",
+    tools: ["hyperliquid"],
     thread: [
-      { kind: "you", text: "Let me know when flights to Tokyo drop below $700." },
-      { kind: "agent", text: "I'll keep an eye on it and message you the moment it does." },
-      {
-        kind: "activity",
-        when: "Today",
-        lines: ["Checked 6 airlines, hourly", "Cheapest went $842 → $828 → $684", "Dropped below your $700", "Alert sent to Telegram"],
-      },
-      { kind: "agent", text: "Tokyo in October is $684 return — direct both ways, and it lands inside the dates you gave me. Want me to keep watching in case it falls further?" },
+      { kind: "you", text: "Keep an eye on this wallet and let me know if anything unusual moves through it." },
+      { kind: "agent", text: "Got it. I'll watch it and only flag transfers that are actually worth your attention." },
     ],
   },
   {

@@ -6,6 +6,7 @@ import { LandingPageD } from "./landing/LandingPageD";
 import { LandingPageE } from "./landing/LandingPageE";
 import { LandingPageF } from "./landing/LandingPageF";
 import { LandingPageG } from "./landing/LandingPageG";
+import { LandingPageH } from "./landing/LandingPageH";
 import { TradersPage } from "./landing/c/TradersPage";
 import { PricingPageF } from "./landing/PricingPageF";
 import { HERO_INTENTS_C } from "./landing/c/heroIntents";
@@ -13,7 +14,9 @@ import { VariantToggle } from "./landing/VariantToggle";
 import { ChatScreen } from "./ChatScreen";
 import { ConductorModePage } from "./product/ConductorModePage";
 import { AgentsWorkspace } from "./agents/AgentsWorkspace";
+import { JobsArea } from "./agents/JobsArea";
 import { ConnectorsPage } from "./agents/ConnectorsPage";
+import { SAVED } from "./savedChats";
 // The public catalogue, not the one inside the product. Aliased because both are
 // honestly called the connectors page and only one of them can have the name.
 import { ConnectorsCatalogPage } from "./landing/f/ConnectorsCatalogPage";
@@ -44,7 +47,7 @@ type Screen =
 // opens C, the version being worked on, so anyone opening it sees the same thing.
 // The floating switch rewrites the query (?v=a) instead, which means a reload
 // keeps the one you're reviewing and the address bar is shareable as it stands.
-export type LandingVariant = "a" | "b" | "c" | "d" | "e" | "f" | "g";
+export type LandingVariant = "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h";
 
 const VARIANT_PARAM = "v";
 
@@ -82,7 +85,7 @@ export type LandingLine = {
 export const BUILT_LINE: LandingLine = { slots: ["a", "b", "c", "d", "e", "f"], opensAt: 2 };
 
 /** landing.html — the page being taken forward. F is its A. */
-export const NEXT_LINE: LandingLine = { slots: ["f", "g"], opensAt: 0 };
+export const NEXT_LINE: LandingLine = { slots: ["f", "g", "h"], opensAt: 0 };
 
 /** "a" → 0, "b" → 1 … the switch's letters are positions, and so is the URL's */
 const LETTERS = "abcdefghijklmnopqrstuvwxyz";
@@ -109,11 +112,18 @@ function startsSignedIn(): boolean {
   return new URLSearchParams(window.location.search).get("signedin") === "1";
 }
 
-export function ConductorApp({ line = BUILT_LINE }: { line?: LandingLine } = {}) {
+export function ConductorApp({
+  line = BUILT_LINE,
+  startInOnboarding = false,
+}: {
+  line?: LandingLine;
+  /** The dedicated post-sign-up URL enters the signed-in first meeting directly. */
+  startInOnboarding?: boolean;
+} = {}) {
   const [slot, setSlot] = useState(() => readSlotFromUrl(line));
   const landingVariant = line.slots[slot];
   const [signedInFromUrl] = useState(startsSignedIn);
-  const [screen, setScreen] = useState<Screen>(signedInFromUrl ? "chat" : "landing");
+  const [screen, setScreen] = useState<Screen>(signedInFromUrl || startInOnboarding ? "chat" : "landing");
   const [initialPrompt, setInitialPrompt] = useState<string | undefined>();
   const [openingMessage, setOpeningMessage] = useState<string | undefined>();
   const [task, setTask] = useState<TaskCard | undefined>();
@@ -130,9 +140,17 @@ export function ConductorApp({ line = BUILT_LINE }: { line?: LandingLine } = {})
   /** Which product area the chat screen sits in once signed in. Set when a task is
    *  picked, so someone who asked for something to be run lands among the agents
    *  rather than in a conversation about them. */
-  const [area, setArea] = useState<"chat" | "agents" | "connectors">("chat");
+  const [area, setArea] = useState<"chat" | "agents" | "connectors" | "jobs">("chat");
   /** an agent made from a conversation — Agents opens on it, not on the top of the roster */
   const [focusAgent, setFocusAgent] = useState<string | undefined>();
+  /** the same idea for Jobs — set by "View job" from a chat card */
+  const [focusJob, setFocusJob] = useState<string | undefined>();
+  /** "Back to chat" from Jobs hands over which one, so the chat it returns to
+   *  can focus the composer on that job rather than landing on nothing */
+  const [focusTaskInChat, setFocusTaskInChat] = useState<string | undefined>();
+  /** a saved conversation opened from the sidebar while Chat was hidden behind
+   *  Jobs, Agents or Connectors */
+  const [focusChatInChat, setFocusChatInChat] = useState<string | undefined>();
   /**
    * The nav rail, down to icons. Driven by the area rather than remembered,
    * because it is a fact about the screen you are on and not a preference: Agents
@@ -188,6 +206,10 @@ export function ConductorApp({ line = BUILT_LINE }: { line?: LandingLine } = {})
   }
 
   function goHome() {
+    if (startInOnboarding) {
+      window.location.assign(new URL("./landing.html", window.location.href).href);
+      return;
+    }
     setScreen("landing");
   }
 
@@ -232,9 +254,15 @@ export function ConductorApp({ line = BUILT_LINE }: { line?: LandingLine } = {})
               be wiring up buttons that are not there. It does take onStartTask:
               its hero has the intent chips now, and a chip that opens a task card
               has to have somewhere to send it. */}
-          {landingVariant === "f" || landingVariant === "g" ? (
+          {landingVariant === "f" || landingVariant === "g" || landingVariant === "h" ? (
             (() => {
-              const Landing = landingVariant === "g" ? LandingPageG : LandingPageF;
+              /* H is F with one section swapped, so it takes the same handlers —
+                 anything else differing in its signature would be a difference
+                 nobody asked for. */
+              const Landing =
+                landingVariant === "h" ? LandingPageH :
+                landingVariant === "g" ? LandingPageG :
+                LandingPageF;
               return (
                 <Landing
                   key={landingVariant}
@@ -351,10 +379,7 @@ export function ConductorApp({ line = BUILT_LINE }: { line?: LandingLine } = {})
                 // introduces itself there, in the chat, and what it learns it
                 // learns from that conversation. A task carried over from Guest
                 // Mode survives, so nobody starts from zero after signing up.
-                setIsGuest(false);
-                setInitialPrompt(undefined);
-                setOpeningMessage(undefined);
-                setScreen("chat");
+                window.location.assign(new URL("./onboarding.html", window.location.href).href);
               }}
             />
           </div>
@@ -373,9 +398,27 @@ export function ConductorApp({ line = BUILT_LINE }: { line?: LandingLine } = {})
             onToggleCollapsed={() => setRailed((v) => !v)}
             // leaving for a new conversation is leaving the area
             onNewChat={() => setArea("chat")}
-            onOpenMarketplace={() => setMarketplaceOpen(true)}
+            // The Chat list this sidebar shows itself, rather than only ever
+            // going quiet the moment you leave Chat — a person on Jobs or
+            // Agents can still see and reopen a conversation without a detour
+            // back through the area they just left.
+            conversations={SAVED}
+            onOpenConversation={(chat) => { setFocusChatInChat(chat.id); setArea("chat"); }}
           />
-          {area === "agents" ? <AgentsWorkspace focusId={focusAgent} /> : <ConnectorsPage />}
+          {area === "agents" ? (
+            <AgentsWorkspace focusId={focusAgent} />
+          ) : area === "jobs" ? (
+            <JobsArea
+              focusId={focusJob}
+              onCreateWithChat={() => setArea("chat")}
+              onBackToChat={(task) => {
+                setFocusTaskInChat(task.id);
+                setArea("chat");
+              }}
+            />
+          ) : (
+            <ConnectorsPage />
+          )}
         </div>
       )}
 
@@ -401,7 +444,6 @@ export function ConductorApp({ line = BUILT_LINE }: { line?: LandingLine } = {})
               ? HERO_INTENTS_C
               : undefined
           }
-          onOpenMarketplace={() => setMarketplaceOpen(true)}
           onRequestSignup={goToAuthFromChat}
           onLogIn={goToAuthFromChat}
           initialMessage={initialPrompt}
@@ -414,6 +456,11 @@ export function ConductorApp({ line = BUILT_LINE }: { line?: LandingLine } = {})
           // Going to see it is a move between areas, not a move of the conversation:
           // the chat is still there, exactly as it was, when they come back.
           onOpenAgent={(id) => { setFocusAgent(id); setArea("agents"); }}
+          onOpenJob={(id) => { setFocusJob(id); setArea("jobs"); }}
+          focusTaskId={focusTaskInChat}
+          onFocusedTask={() => setFocusTaskInChat(undefined)}
+          focusChatId={focusChatInChat}
+          onFocusedChat={() => setFocusChatInChat(undefined)}
           onGuestWork={(chat) => setGuestChats((prev) => [chat, ...prev])}
           extraConversations={guestChats}
           railed={railed}

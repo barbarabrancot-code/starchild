@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
 import { AGENTS, type Agent } from "./agentsData";
 import { INITIAL_CONNECTIONS, type Connection, type ConnectorId } from "./connectors";
+import { ACTIVE_TASKS, type ActiveTask } from "./activeTasks";
 
 /**
  * One place for both halves of the domain, because they only mean anything
@@ -12,6 +13,8 @@ import { INITIAL_CONNECTIONS, type Connection, type ConnectorId } from "./connec
 type Store = {
   roster: Agent[];
   connections: Connection[];
+  /** the main agent's lightweight, chat-owned ongoing work — see activeTasks.ts */
+  activeTasks: ActiveTask[];
 
   isConnected: (id: ConnectorId) => boolean;
   connectionFor: (id: ConnectorId) => Connection | undefined;
@@ -28,6 +31,11 @@ type Store = {
 
   addAgent: (agent: Agent) => void;
   updateAgent: (id: string, change: (a: Agent) => Agent) => void;
+  removeAgent: (id: string) => void;
+
+  addTask: (task: ActiveTask) => void;
+  updateTask: (id: string, change: (t: ActiveTask) => ActiveTask) => void;
+  removeTask: (id: string) => void;
 };
 
 const Ctx = createContext<Store | null>(null);
@@ -42,6 +50,7 @@ export function AgentsProvider({
 }) {
   const [roster, setRoster] = useState<Agent[]>(empty ? [] : AGENTS);
   const [connections, setConnections] = useState<Connection[]>(empty ? [] : INITIAL_CONNECTIONS);
+  const [activeTasks, setActiveTasks] = useState<ActiveTask[]>(empty ? [] : ACTIVE_TASKS);
 
   const isConnected = useCallback(
     (id: ConnectorId) => connections.some((c) => c.id === id),
@@ -86,12 +95,33 @@ export function AgentsProvider({
     [],
   );
 
+  const removeAgent = useCallback((id: string) => {
+    setRoster((prev) => prev.filter((agent) => agent.id !== id));
+  }, []);
+
+  const addTask = useCallback((task: ActiveTask) => setActiveTasks((prev) => [task, ...prev]), []);
+
+  const updateTask = useCallback(
+    (id: string, change: (t: ActiveTask) => ActiveTask) =>
+      setActiveTasks((prev) => prev.map((t) => (t.id === id ? change(t) : t))),
+    [],
+  );
+
+  const removeTask = useCallback((id: string) => {
+    setActiveTasks((prev) => prev.filter((t) => t.id !== id));
+  }, []);
+
   const value = useMemo(
     () => ({
-      roster, connections, isConnected, connectionFor, usedBy,
-      connect, disconnect, setAgentTools, addAgent, updateAgent,
+      roster, connections, activeTasks, isConnected, connectionFor, usedBy,
+      connect, disconnect, setAgentTools, addAgent, updateAgent, removeAgent,
+      addTask, updateTask, removeTask,
     }),
-    [roster, connections, isConnected, connectionFor, usedBy, connect, disconnect, setAgentTools, addAgent, updateAgent],
+    [
+      roster, connections, activeTasks, isConnected, connectionFor, usedBy,
+      connect, disconnect, setAgentTools, addAgent, updateAgent, removeAgent,
+      addTask, updateTask, removeTask,
+    ],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

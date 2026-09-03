@@ -51,7 +51,21 @@ export function IntroPopover({
       if (e.key === "Escape") onClose();
     };
     const onDown = (e: MouseEvent) => {
-      if (!cardRef.current?.contains(e.target as Node)) onClose();
+      const card = cardRef.current;
+      /*
+        A card with no box is not on screen, and a note that is not on screen has
+        no business dismissing anything.
+
+        The same note gets mounted twice — once on its sidebar anchor and once on
+        the composer, because the sidebar does not exist on a narrow screen — and
+        CSS hides whichever one does not apply. Both were still listening here,
+        so the hidden twin saw every click as a click outside itself and closed
+        the run. Including the click on the visible twin's own button: the close
+        lands on mousedown, the card unmounts, and the mouseup arrives at nothing.
+        The button appeared dead when in fact it was never pressed.
+      */
+      if (!card || (card.offsetWidth === 0 && card.offsetHeight === 0)) return;
+      if (!card.contains(e.target as Node)) onClose();
     };
     window.addEventListener("keydown", onKey);
     // the click that opened nothing shouldn't close it on the same tick

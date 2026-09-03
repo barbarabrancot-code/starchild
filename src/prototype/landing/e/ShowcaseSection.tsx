@@ -3,8 +3,8 @@ import { AnimatePresence, motion } from "motion/react";
 import { Container } from "../../Container";
 import {
   PlusIcon,
-  PanelIcon,
-  BriefcaseIcon,
+  ChatBubbleIcon,
+  GroupsIcon,
   PuzzleIcon,
   GridIcon,
   StoreIcon,
@@ -205,11 +205,11 @@ function Window({ tab }: { tab: Tab }) {
 
         <div className="sc-navs">
           <span className={`sc-nav${tab.area === "chat" ? " sc-nav--on" : ""}`}>
-            <PanelIcon className="size-[14px]" />
+            <ChatBubbleIcon className="size-[14px]" />
             Chat
           </span>
           <span className={`sc-nav${tab.area === "agents" ? " sc-nav--on" : ""}`}>
-            <BriefcaseIcon className="size-[14px]" />
+            <GroupsIcon className="size-[14px]" />
             Agents
           </span>
           <span className="sc-nav">

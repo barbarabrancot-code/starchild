@@ -1,5 +1,5 @@
 import { motion } from "motion/react";
-import { IntroPopover } from "./IntroPopover";
+import { IntroPopover, type IntroPlacement } from "./IntroPopover";
 
 // The last of the first-run notes, hanging off the Agents item in the sidebar.
 // Same treatment as the other two on purpose: three quiet notes in the same voice,
@@ -65,13 +65,16 @@ function AgentsVisual() {
 export function AgentsIntroPopover({
   onOpen,
   onClose,
+  placement = "right",
 }: {
   onOpen: () => void;
   onClose: () => void;
+  /** On narrow screens the sidebar is absent, so the card uses the composer as its anchor. */
+  placement?: IntroPlacement;
 }) {
   return (
     <IntroPopover
-      placement="right"
+      placement={placement}
       visual={<AgentsVisual />}
       title="Meet your Agents"
       body="Hand something over and it keeps going on its own — checking, running, and coming back when it matters."

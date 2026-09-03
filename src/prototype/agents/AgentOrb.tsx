@@ -24,6 +24,9 @@ const TEMPERAMENT: Record<AgentStatus, Temperament> = {
   scheduled: "composed",
   settled: "composed",
   paused: "composed",
+  // Held, not restless. Something waiting on a decision should read as steady —
+  // an agent that fidgets while holding an order is arguing for the click.
+  approval: "attentive",
 };
 
 /** how alive each one is at rest — paused has no breath at all */
@@ -33,6 +36,7 @@ const BREATH: Record<AgentStatus, number> = {
   scheduled: 0.022,
   settled: 0.014,
   paused: 0,
+  approval: 0.036,
 };
 
 /** the one-shot a state change fires. None of them repeat. */
@@ -42,6 +46,7 @@ const BEAT: Record<AgentStatus, string | null> = {
   scheduled: null,
   settled: "ao-settle .66s cubic-bezier(.16,1,.3,1)",
   paused: "ao-dim .5s ease",
+  approval: "ao-signal .7s cubic-bezier(.34,.8,.3,1)",
 };
 
 export function AgentOrb({
