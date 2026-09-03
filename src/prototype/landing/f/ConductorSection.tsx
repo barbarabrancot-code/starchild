@@ -212,15 +212,19 @@ export function ConductorSection() {
           where they land. */}
 
       <Container>
-        <motion.h2
+        <motion.div
           initial={{ opacity: 0, y: 14 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.6 }}
           transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-          className="cd-title"
+          className="cd-heading"
         >
-          It knows you. It knows AI.
-        </motion.h2>
+          <h2 className="cd-title">It knows you. It knows AI.</h2>
+          <p className="cd-subtitle">
+            Starchild learns how you work and<br />
+            chooses the right AI for each task.
+          </p>
+        </motion.div>
 
         <motion.div
           ref={stageRef}
@@ -294,12 +298,6 @@ export function ConductorSection() {
               </span>
             </span>
 
-            <span className="cd-beam" aria-hidden="true" />
-            <p className="cd-answer">
-              An answer that understands
-              <br />
-              the task — and you.
-            </p>
           </div>
 
           {/* The wire out. Same 120 track as the wire in, because the mark only
@@ -329,8 +327,8 @@ export function ConductorSection() {
               between them for each task.
             </p>
 
-            {/* Two identical halves. The track travels exactly one half and
-                restarts, so the seam lands where the first slide already was. */}
+            {/* Two equal marquees make the choice of models feel active without
+                turning the model rail into the dominant part of the diagram. */}
             <div className="cd-marquee" aria-hidden="true">
               <ul className="cd-track">
                 {[...MODELS, ...MODELS].map((m, i) => (
@@ -338,6 +336,18 @@ export function ConductorSection() {
                 ))}
               </ul>
             </div>
+            <div className="cd-marquee cd-marquee--reverse" aria-hidden="true">
+              <ul className="cd-track">
+                {[...MODELS, ...MODELS].map((m, i) => (
+                  <Model key={`${m.logo}-${i}`} name={m.name} logo={m.logo} />
+                ))}
+              </ul>
+            </div>
+          </div>
+
+          <div className="cd-result">
+            <span>Result</span>
+            <p>One answer, routed to the right model.</p>
           </div>
         </motion.div>
       </Container>
@@ -350,7 +360,7 @@ export function ConductorSection() {
              negative inside of */
           isolation: isolate;
           padding: 100px 0;
-          background: #050506;
+          background: transparent;
           font-family: var(--font-google-sans);
         }
 
@@ -380,11 +390,17 @@ export function ConductorSection() {
         .cd-rake--l { left: -150px; }
         .cd-rake--r { right: -150px; transform: scaleX(-1); }
 
+        .cd-heading { margin: 0 0 80px; text-align: center; }
         .cd-title {
-          margin: 0 0 80px;
+          margin: 0;
           text-align: center;
-          font-size: 44px; line-height: 1.1; font-weight: 600;
-          letter-spacing: -.02em; color: #fff; text-wrap: balance;
+          font-size: 42px; line-height: 50px; font-weight: 500;
+          letter-spacing: 0; color: #fff; text-wrap: balance;
+        }
+        .cd-subtitle {
+          margin: 16px auto 0;
+          color: rgba(255,255,255,.72);
+          font-size: 16px; line-height: 1.55; font-weight: 400;
         }
 
         /* Five tracks in one row — see the note above for why the outer two are
@@ -396,7 +412,7 @@ export function ConductorSection() {
           grid-template-columns: minmax(min-content, 1fr) 120px auto 120px minmax(0, 1fr);
           align-items: center;
           max-width: 1030px; margin-inline: auto;
-          padding-bottom: 120px;
+          padding-bottom: 0;
         }
 
         /* ---------- what it knows ---------- */
@@ -479,38 +495,39 @@ export function ConductorSection() {
            rather than gradient-edged: a cone with a hard clipped edge reads as a
            shape lying on the page, not as light coming off something. */
 
-        .cd-beam {
-          position: absolute; top: 62%; left: 50%;
-          width: 380px; height: 260px;
-          transform: translateX(-50%) scaleY(.14); transform-origin: 50% 0; pointer-events: none;
-          clip-path: polygon(41% 0, 59% 0, 100% 100%, 0 100%);
-          background: linear-gradient(to bottom,
-            rgba(248,70,0,.42) 0%,
-            rgba(248,70,0,.20) 38%,
-            rgba(248,70,0,.07) 68%,
-            transparent 96%);
-          filter: blur(12px);
-          opacity: 0;
+        .cd-result {
+          position: relative; grid-column: 1 / -1;
+          display: grid; place-items: center;
+          width: 100%; min-height: 106px; margin-top: 48px; padding: 22px;
+          border: 1px solid rgba(248,70,0,.42); border-radius: 12px;
+          background: rgba(248,70,0,.085); text-align: center;
+          opacity: 0; transform: translateY(8px);
         }
-        .cd-stage--active .cd-beam { animation: cd-beam-in .9s cubic-bezier(.16, 1, .3, 1) 1.14s forwards; }
-        @keyframes cd-beam-in { to { opacity: 1; transform: translateX(-50%) scaleY(1); } }
-
-        .cd-answer {
-          position: absolute; top: calc(62% + 130px); left: 50%;
-          width: 300px; margin: 0;
-          transform: translateX(-50%);
-          text-align: center; letter-spacing: 0;
-          font-size: 16px; font-weight: 500; color: #fff;
-          opacity: 0;
+        .cd-result::before {
+          content: ""; position: absolute; left: 50%; bottom: 100%;
+          width: 1px; height: 100px;
+          background: rgba(248,70,0,.52);
+          transform: scaleY(0); transform-origin: 50% 0;
         }
-        .cd-stage--active .cd-answer { animation: cd-answer-in .5s ease-out 1.52s forwards; }
-        @keyframes cd-answer-in { to { opacity: 1; } }
+        .cd-result span {
+          color: #f84600; font-size: 11px; line-height: 1;
+          font-weight: 600; letter-spacing: .14em; text-transform: uppercase;
+        }
+        .cd-result p {
+          margin: 12px 0 0; color: rgba(255,255,255,.58);
+          font-size: 16px; line-height: 1.4; font-weight: 500;
+        }
+        .cd-stage--active .cd-result { animation: cd-result-in .5s ease-out 1.52s forwards; }
+        .cd-stage--active .cd-result::before { animation: cd-result-line .72s cubic-bezier(.16, 1, .3, 1) 1.12s forwards; }
+        @keyframes cd-result-in { to { opacity: 1; transform: translateY(0); } }
+        @keyframes cd-result-line { to { transform: scaleY(1); } }
 
         /* ---------- what it can reach ---------- */
 
         .cd-models {
           position: relative;
-          padding-block: 24px;
+          display: grid; gap: 16px;
+          padding-block: 18px;
           border: 1px solid rgba(248,70,0,.32);
           border-radius: 12px;
           overflow: hidden;
@@ -530,14 +547,20 @@ export function ConductorSection() {
           animation: cd-marquee 34s linear infinite;
         }
 
+        .cd-marquee--reverse .cd-track { animation-name: cd-marquee-reverse; }
+
         /* Travels exactly one half of the doubled list, so the restart lands
            where the first slide already was and the seam is not visible. */
         @keyframes cd-marquee {
           from { transform: translateX(0); }
           to   { transform: translateX(-50%); }
         }
+        @keyframes cd-marquee-reverse {
+          from { transform: translateX(-50%); }
+          to   { transform: translateX(0); }
+        }
 
-        .cd-marquee:hover .cd-track { animation-play-state: paused; }
+        .cd-models:hover .cd-track { animation-play-state: paused; }
 
         .cd-model {
           flex: none; white-space: nowrap;
@@ -548,9 +571,10 @@ export function ConductorSection() {
         @media (prefers-reduced-motion: reduce) {
           .cd-track { animation: none; }
           .cd-draw { stroke-dashoffset: 0; opacity: 1; }
-          .cd-trace circle, .cd-orb-entry, .cd-beam, .cd-answer { opacity: 1; animation: none; }
+          .cd-trace circle, .cd-orb-entry, .cd-result { opacity: 1; animation: none; }
           .cd-orb-entry { transform: scale(1); }
-          .cd-beam { transform: translateX(-50%) scaleY(1); }
+          .cd-result { transform: none; }
+          .cd-result::before { transform: scaleY(1); }
         }
 
         /* Below this the five-track row cannot hold: the traces are drawn at a
@@ -566,16 +590,19 @@ export function ConductorSection() {
           .cd-rake { width: 460px; height: 437px; top: -40px; }
           .cd-rake--l { left: -110px; }
           .cd-rake--r { right: -110px; }
-          .cd-title { font-size: 34px; margin-bottom: 56px; }
+          .cd-heading { margin-bottom: 56px; }
+          .cd-title { font-size: 38px; line-height: 48px; }
           .cd-stage {
             grid-template-columns: minmax(0, 1fr);
             justify-items: center; gap: 40px;
-            padding-bottom: 80px;
+            padding-bottom: 0;
           }
           .cd-side { display: block; transform: none; }
           .cd-trace { display: none; }
           .cd-known { padding-right: 0; min-width: 200px; }
           .cd-models { width: 100%; }
+          .cd-result { margin-top: 0; }
+          .cd-result::before { display: none; }
         }
       `}</style>
     </section>

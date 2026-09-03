@@ -29,7 +29,8 @@ export type ConnectorId =
   | "hubspot"
   | "linkedin"
   | "zoom"
-  | "ms365";
+  | "ms365"
+  | "hyperliquid";
 
 export type Connector = {
   id: ConnectorId;
@@ -61,6 +62,7 @@ export const CATALOG: Connector[] = [
   { id: "linkedin", name: "LinkedIn", kind: "web", what: "Your network", grants: ["Read your feed and messages", "Never post as you"] },
   { id: "zoom", name: "Zoom", kind: "calendar", what: "Meetings", grants: ["See your meetings", "Read recordings you share"] },
   { id: "ms365", name: "Microsoft 365", kind: "mail", what: "Mail and files", grants: ["Read your mail and files", "Draft, never send"] },
+  { id: "hyperliquid", name: "Hyperliquid", kind: "flights", what: "Market data and positions", grants: ["Read prices, funding and open interest", "Read your positions", "Never place an order"] },
 ];
 
 export const BY_ID: Record<ConnectorId, Connector> = Object.fromEntries(
@@ -81,4 +83,5 @@ export const INITIAL_CONNECTIONS: Connection[] = [
   { id: "notion", account: "Starchild workspace", since: "connected in April" },
   { id: "slack", account: "Starchild · #general", since: "connected in April" },
   { id: "telegram", account: "@barbara", since: "connected last week" },
+  { id: "hyperliquid", account: "0x4a91…e02c", since: "connected last week" },
 ];

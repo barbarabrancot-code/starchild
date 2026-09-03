@@ -1,8 +1,8 @@
 import {
   MenuIcon,
   PlusIcon,
-  PanelIcon,
-  BriefcaseIcon,
+  ChatBubbleIcon,
+  GroupsIcon,
   PuzzleIcon,
   GridIcon,
   StoreIcon,
@@ -30,7 +30,7 @@ type Locked = { label: string; Icon: (props: { className?: string }) => JSX.Elem
 
 /** the two other product areas, both behind an account */
 const AREAS: Locked[] = [
-  { label: "Agents", Icon: BriefcaseIcon },
+  { label: "Agents", Icon: GroupsIcon },
   { label: "Connectors", Icon: PuzzleIcon },
 ];
 
@@ -90,7 +90,7 @@ export function GuestSidebar({ onLockedFeature }: { onLockedFeature: () => void 
           style={{ fontFamily: "var(--font-google-sans)" }}
         >
           <span className="shrink-0 text-[#f84600]">
-            <PanelIcon className="size-[18px]" />
+            <ChatBubbleIcon className="size-[18px]" />
           </span>
           Chat
         </div>

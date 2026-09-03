@@ -43,7 +43,7 @@ import { Container } from "../../Container";
  *   The detail is there to be looked at; read out row by row it is noise.
  */
 
-type SurfaceId = "chat" | "agents" | "connectors" | "conductor";
+type SurfaceId = "chat" | "agents";
 
 type Surface = {
   id: SurfaceId;
@@ -87,8 +87,6 @@ function Rail({ on }: { on: SurfaceId }) {
       <span className="sf-new">+ New chat</span>
       <span className={on === "chat" ? "sf-nav sf-nav--on" : "sf-nav"}>Chat</span>
       <span className={on === "agents" ? "sf-nav sf-nav--on" : "sf-nav"}>Agents</span>
-      <span className={on === "connectors" ? "sf-nav sf-nav--on" : "sf-nav"}>Connectors</span>
-      <span className={on === "conductor" ? "sf-nav sf-nav--on" : "sf-nav"}>Conductor Mode</span>
 
       {on === "chat" && (
         <>
@@ -212,15 +210,6 @@ function Agents() {
 }
 
 /** The same six marks the orbit runs, out of the same folder. */
-const CONNECTED = [
-  { id: "gmail", name: "Gmail" },
-  { id: "telegram", name: "Telegram" },
-  { id: "notion", name: "Notion" },
-  { id: "slack", name: "Slack" },
-  { id: "canva", name: "Canva" },
-  { id: "hyper-evm", name: "HyperEVM" },
-];
-
 /**
  * Six rows, each one an account already connected.
  *
@@ -230,50 +219,6 @@ const CONNECTED = [
  * thread beside it, and they carry the word the section is actually selling —
  * connected, once, and then done.
  */
-function Connectors() {
-  return (
-    <div className="sf-pane">
-      <div className="sf-head">
-        <span className="sf-pane-title">Connectors</span>
-        <span className="sf-count">{CONNECTED.length} connected</span>
-      </div>
-
-      <div className="sf-tools">
-        {CONNECTED.map((c) => (
-          <span key={c.id} className="sf-tool">
-            <span className="sf-tool-mark">
-              <img src={`${import.meta.env.BASE_URL}connectors/${c.id}.svg`} alt="" />
-            </span>
-            {c.name}
-            <span className="sf-tool-on">Connected</span>
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function Conductor() {
-  const models = ["GPT", "Claude", "Gemini", "DeepSeek", "Kimi", "Qwen"];
-  return (
-    <div className="sf-pane">
-      <div className="sf-head">
-        <span className="sf-pane-title"><span className="sf-ring" />Conductor Mode</span>
-        <span className="sf-count">Model routing</span>
-      </div>
-
-      <div className="sf-conductor">
-        <p className="sf-conductor-kicker">Task received</p>
-        <p className="sf-conductor-copy">Looking for the right intelligence for this work.</p>
-        <div className="sf-models">
-          {models.map((model) => <span key={model}>{model}</span>)}
-        </div>
-        <p className="sf-conductor-note">Models are selected for their strengths, not a fixed default.</p>
-      </div>
-    </div>
-  );
-}
-
 const SURFACES: Surface[] = [
   {
     id: "chat",
@@ -293,6 +238,7 @@ const SURFACES: Surface[] = [
       "The Starchild app on the Agents screen, with an agent called Inbox Manager open: the instruction it was given, what it did this morning, and four drafted replies it is holding until you approve them.",
     render: Agents,
   },
+  /*
   {
     id: "connectors",
     name: "Connectors",
@@ -301,15 +247,7 @@ const SURFACES: Surface[] = [
     described:
       "The Starchild app on the Connectors screen: Gmail, Telegram, Notion, Slack, Canva and HyperEVM, each connected once and listed as connected.",
     render: Connectors,
-  },
-  {
-    id: "conductor",
-    name: "Conductor Mode",
-    lede: "For using the right AI without having to choose it.",
-    copy: "Starchild compares leading models for the work in front of you, then routes each task to the one best suited to help. You focus on the work, not the model names.",
-    described: "The Starchild app in Conductor Mode, comparing GPT, Claude, Gemini, DeepSeek, Kimi and Qwen before selecting the best model for a task.",
-    render: Conductor,
-  },
+  }, */
 ];
 
 /* ──────────────────────────────────────────────────────────────────────────── */
@@ -407,7 +345,7 @@ export function SurfacesSection() {
       <style>{`
         .sf-section {
           padding: 100px 0;
-          background: #050506;
+          background: transparent;
           font-family: var(--font-google-sans);
         }
 
@@ -672,20 +610,6 @@ export function SurfacesSection() {
           margin-left: auto; flex: none;
           font-size: 11px; color: rgba(255,255,255,.38);
         }
-
-        /* ---------- conductor mode ---------- */
-        .sf-conductor { display: flex; flex-direction: column; align-items: flex-start; flex: 1; padding: 28px 4px 4px; }
-        .sf-conductor-kicker {
-          margin: 0; color: #f84600; font-size: 10px; font-weight: 600;
-          letter-spacing: .12em; text-transform: uppercase;
-        }
-        .sf-conductor-copy { max-width: 28ch; margin: 12px 0 0; color: rgba(255,255,255,.82); font-size: 17px; line-height: 1.35; }
-        .sf-models { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 26px; }
-        .sf-models span {
-          padding: 9px 12px; border: 1px solid rgba(248,70,0,.25); border-radius: 8px;
-          background: rgba(248,70,0,.07); color: rgba(255,255,255,.82); font-size: 12px; font-weight: 500;
-        }
-        .sf-conductor-note { margin: auto 0 0; color: rgba(255,255,255,.4); font-size: 12px; line-height: 1.5; }
 
         @media (max-width: 900px) {
           .sf-section { padding: 60px 0; }

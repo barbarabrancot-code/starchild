@@ -1,9 +1,9 @@
 import type { TaskCard } from "../data";
 import { HeroScreenF } from "./f/HeroScreenF";
-import { SurfacesCardsSection } from "./f/SurfacesCardsSection";
+import { SurfacesSection } from "./f/SurfacesSection";
 import { OrbitSection } from "./f/OrbitSection";
 import { ConductorSection } from "./f/ConductorSection";
-import { PricingSection } from "./f/PricingSection";
+import { FinalCtaSection } from "./FinalCtaSection";
 import { FACES, OrbFace, type Mood } from "./f/OrbFace";
 
 /** Landing B begins as an independent copy of the current landing A. */
@@ -45,11 +45,16 @@ function askedForFaces() {
 export function LandingPageG({
   onEnterGuest,
   onStartTask,
+  onNavigateConnectors,
+  onNavigatePricing,
   onLogIn,
   onSignUp,
 }: {
   onEnterGuest: (prompt?: string) => void;
   onStartTask: (task: TaskCard) => void;
+  /** where the orbit's "Explore all 30+ connectors" goes */
+  onNavigateConnectors: () => void;
+  onNavigatePricing: () => void;
   onLogIn: () => void;
   onSignUp: () => void;
 }) {
@@ -61,13 +66,18 @@ export function LandingPageG({
         onEnterGuest={onEnterGuest}
         onStartTask={onStartTask}
         onNavigateHome={() => window.scrollTo({ top: 0 })}
+        onNavigatePricing={onNavigatePricing}
         onLogIn={onLogIn}
         onSignUp={onSignUp}
       />
-      <SurfacesCardsSection />
-      <OrbitSection />
+      <SurfacesSection />
+      <OrbitSection onSeeAll={onNavigateConnectors} />
       <ConductorSection />
-      <PricingSection onChoosePlan={onSignUp} />
+      <FinalCtaSection
+        headline="Whatever comes next, Starchild is already with you."
+        onStartFree={() => onEnterGuest()}
+        onNavigatePricing={onNavigatePricing}
+      />
     </div>
   );
 }

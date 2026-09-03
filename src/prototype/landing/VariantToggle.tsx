@@ -1,18 +1,28 @@
-import type { LandingVariant } from "../ConductorApp";
+/** "a" → 0, "b" → 1 … the switch shows a position on the line, not a component name */
+const LETTERS = "abcdefghijklmnopqrstuvwxyz";
 
-const VARIANTS: LandingVariant[] = ["a", "b", "c", "d", "e"];
+/** one cell, and the distance the knob travels per step */
+const CELL = 32;
 
-// A/B/C/D/E switch for the landing page. Deliberately a small floating control rather
-// than part of the page — it is a review tool, not product chrome, so it should
-// never read as something a visitor is meant to use.
+// The switch between landing versions. Deliberately a small floating control
+// rather than part of the page — it is a review tool, not product chrome, so it
+// should never read as something a visitor is meant to use.
+//
+// It is told how many positions there are rather than knowing the versions, so
+// the two pages can run lines of different lengths off one control. Adding a
+// version is one entry in that page's line and nothing here.
 export function VariantToggle({
-  variant,
+  at,
+  count,
   onChange,
 }: {
-  variant: LandingVariant;
-  onChange: (next: LandingVariant) => void;
+  /** which position is showing */
+  at: number;
+  /** how many positions the line has */
+  count: number;
+  onChange: (next: number) => void;
 }) {
-  const index = Math.max(0, VARIANTS.indexOf(variant));
+  const letter = (i: number) => LETTERS[i].toUpperCase();
 
   return (
     <div className="vt-wrap">
@@ -20,27 +30,29 @@ export function VariantToggle({
       <div
         className="vt-track"
         role="radiogroup"
-        aria-label={`Landing version ${variant.toUpperCase()}`}
+        aria-label={`Landing version ${letter(at)}`}
+        // The track is a whole number of cells, or the last stop overhangs it.
+        style={{ width: count * CELL, gridTemplateColumns: `repeat(${count}, 1fr)` }}
       >
         {/* the knob carries the active letter, so the state is readable without color alone */}
         <span
           className="vt-knob"
           aria-hidden="true"
-          style={{ transform: `translateX(${index * 32}px)` }}
+          style={{ transform: `translateX(${at * CELL}px)` }}
         >
-          {variant.toUpperCase()}
+          {letter(at)}
         </span>
-        {VARIANTS.map((v) => (
+        {Array.from({ length: count }, (_, i) => (
           <button
-            key={v}
+            key={i}
             type="button"
             role="radio"
-            aria-checked={v === variant}
-            aria-label={`Landing version ${v.toUpperCase()}`}
-            onClick={() => onChange(v)}
-            className={`vt-side${v === variant ? " vt-side--on" : ""}`}
+            aria-checked={i === at}
+            aria-label={`Landing version ${letter(i)}`}
+            onClick={() => onChange(i)}
+            className={`vt-side${i === at ? " vt-side--on" : ""}`}
           >
-            {v.toUpperCase()}
+            {letter(i)}
           </button>
         ))}
       </div>
@@ -58,12 +70,10 @@ export function VariantToggle({
           text-transform: uppercase; color: rgba(255,255,255,.4);
         }
 
+        /* width and columns come from the line's length — see the style above */
         .vt-track {
-          position: relative; display: grid; grid-template-columns: repeat(5, 1fr);
-          align-items: center;
-          /* one 32px cell per version — the knob travels in 32px steps, so the
-             track width has to stay a multiple of it or the last stop overhangs */
-          width: 160px; height: 30px; border-radius: 999px;
+          position: relative; display: grid; align-items: center;
+          height: 30px; border-radius: 999px;
           border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.05);
         }
         .vt-side {

@@ -4,29 +4,15 @@ import {
   MenuIcon,
   PlusIcon,
   PuzzleIcon,
-  GridIcon,
-  StoreIcon,
-  TrophyIcon,
-  BriefcaseIcon,
-  EllipsisIcon,
-  SearchIcon,
-  PanelIcon,
+  GroupsIcon,
+  ApprovalDelegationIcon,
 } from "./icons";
 
 // The signed-in navigation. A fresh account has no history yet, so there are no
 // pinned or recent conversations under it — the list appears once there's
 // something to list, and until then the rail is just the places you can go.
-type NavItem = {
-  label: string;
-  Icon: (props: { className?: string }) => JSX.Element;
-  /** unread-style marker, the way Missions carries new ones */
-  badge?: boolean;
-  onClick?: () => void;
-};
-
 export function ProductSidebar({
   onNewChat,
-  onOpenMarketplace,
   area = "chat",
   onSwitchArea,
   intro,
@@ -38,16 +24,15 @@ export function ProductSidebar({
   onToggleCollapsed,
 }: {
   onNewChat: () => void;
-  onOpenMarketplace: () => void;
-  /** the first-run note, anchored to the Marketplace item it describes */
-  /** First-run note, keyed by the sidebar label it hangs off. Was a single
-   *  Marketplace-shaped prop; a third note made that a naming problem rather than a
-   *  structural one, so the slot is now generic and the item lights itself. */
+  /** First-run note, keyed by the sidebar label it hangs off. The key is a label
+   *  rather than an id because the note used to hang off the Marketplace item in
+   *  the nav block below the areas; that block is gone, so today the only label
+   *  that matches anything is "Agents". */
   /** Which of the two product areas is open. Chat is a conversation you are
    *  having; Agents is a roster of colleagues who were working while you weren't
    *  here — different enough that it is a place, not a mode. */
-  area?: "chat" | "agents" | "connectors";
-  onSwitchArea?: (next: "chat" | "agents" | "connectors") => void;
+  area?: "chat" | "agents" | "connectors" | "jobs";
+  onSwitchArea?: (next: "chat" | "agents" | "connectors" | "jobs") => void;
   intro?: { label: string; node: ReactNode };
   accountName?: string;
   /** what this account has already talked about — absent on a fresh one */
@@ -59,20 +44,19 @@ export function ProductSidebar({
   collapsed?: boolean;
   onToggleCollapsed?: () => void;
 }) {
-  const items: NavItem[] = [
-    { label: "Skills", Icon: PuzzleIcon },
-    { label: "Projects", Icon: GridIcon },
-    { label: "Marketplace", Icon: StoreIcon, onClick: onOpenMarketplace },
-    { label: "Missions", Icon: TrophyIcon, badge: true },
-    { label: "More", Icon: EllipsisIcon },
-    { label: "Search conversations", Icon: SearchIcon },
-  ];
-
-  const areas = (["chat", "agents", "connectors"] as const).map((id) => ({
+  // Jobs sits in the same array as Agents/Connectors on purpose: it is a
+  // place with the same standing as the rest, reached the same way, not a
+  // button that happens to look like its neighbours while doing something else.
+  const areas = (["jobs", "agents", "connectors"] as const).map((id) => ({
     id,
-    label: id === "chat" ? "Chat" : id === "agents" ? "Agents" : "Connectors",
-    Icon: id === "chat" ? PanelIcon : id === "agents" ? BriefcaseIcon : PuzzleIcon,
+    label: id === "jobs" ? "Handled" : id === "agents" ? "Agents" : "Connectors",
+    Icon: id === "jobs" ? ApprovalDelegationIcon : id === "agents" ? GroupsIcon : PuzzleIcon,
   }));
+  const orderedConversations = [...conversations].sort((a, b) => {
+    if (a.id === "hype-analysis") return -1;
+    if (b.id === "hype-analysis") return 1;
+    return 0;
+  });
 
   /*
     Collapsed, this is a rail of icons and nothing else.
@@ -128,27 +112,6 @@ export function ProductSidebar({
           })}
         </div>
 
-        <div className="my-3 h-px w-7 bg-white/[0.08]" aria-hidden="true" />
-
-        <nav className="flex flex-col gap-0.5">
-          {items.map(({ label, Icon, badge, onClick }) => (
-            <button
-              key={label}
-              type="button"
-              onClick={onClick}
-              aria-label={label}
-              title={label}
-              className="flex size-10 items-center justify-center rounded-lg text-white/50 transition-colors hover:bg-white/[0.06] hover:text-white"
-            >
-              <span className="relative">
-                <Icon className="size-[18px]" />
-                {badge && (
-                  <span className="absolute -top-0.5 -right-0.5 size-[5px] rounded-full bg-[#f84600]" aria-hidden="true" />
-                )}
-              </span>
-            </button>
-          ))}
-        </nav>
 
         <span
           className="mt-auto size-7 shrink-0 rounded-full"
@@ -217,52 +180,21 @@ export function ProductSidebar({
         })}
       </div>
 
-      <div className="mx-2.5 mt-4 mb-1 h-px bg-white/[0.08]" aria-hidden="true" />
-
-      <nav className="flex flex-col">
-        {items.map(({ label, Icon, badge, onClick }) => {
-          const lit = intro?.label === label;
-          return (
-            <div key={label} className="relative">
-              <button
-                type="button"
-                onClick={onClick}
-                className={`flex w-full items-center gap-3 rounded-lg px-2.5 py-2.5 text-left text-[14px] transition-colors duration-300 ${
-                  lit
-                    ? "bg-[#f84600]/10 text-[#f84600] ring-1 ring-[#f84600]/40"
-                    : "text-white/70 hover:bg-white/[0.06] hover:text-white"
-                }`}
-                style={{ fontFamily: "var(--font-google-sans)" }}
-              >
-                <span className={`relative shrink-0 ${lit ? "text-[#f84600]" : "text-white/55"}`}>
-                  <Icon className="size-[18px]" />
-                  {badge && (
-                    <span className="absolute -top-0.5 -right-0.5 size-[5px] rounded-full bg-[#f84600]" aria-hidden="true" />
-                  )}
-                </span>
-                {label}
-              </button>
-
-              {intro?.label === label && intro.node}
-            </div>
-          );
-        })}
-      </nav>
 
       {/* Under Search, because that is what you are searching. It only exists once
           there is something in it — the comment at the top of this file used to say
           a fresh account has no history, and that is still true; what changed is
           that an account which has been used for a while now shows it. */}
-      {conversations.length > 0 && (
+      {orderedConversations.length > 0 && (
         <div className="mt-4 flex min-h-0 flex-col">
           <p
             className="px-2.5 pb-1 text-[11px] font-semibold tracking-[0.14em] text-white/25 uppercase"
             style={{ fontFamily: "var(--font-google-sans)" }}
           >
-            Recent
+            Recents
           </p>
           <div className="flex flex-col overflow-y-auto">
-            {conversations.map((c) => {
+            {orderedConversations.map((c) => {
               const on = openConversation === c.id;
               return (
                 <button

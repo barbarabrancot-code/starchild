@@ -13,6 +13,7 @@ export default defineConfig({
         app: resolve(__dirname, "app.html"),
         // the page being taken forward — see src/landing-main.tsx
         landing: resolve(__dirname, "landing.html"),
+        onboarding: resolve(__dirname, "onboarding.html"),
       },
     },
   },

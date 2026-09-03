@@ -3,6 +3,9 @@ import { AppIcon } from "./agents/AppIcon";
 import { BY_ID } from "./agents/connectors";
 import { Reactable } from "./Reactable";
 import type { SavedChat } from "./savedChats";
+import { useAgents } from "./agents/store";
+import { AgentLive, AgentUpdate, ExternalAlert } from "./agents/AgentChatCards";
+import { ActiveTaskCard } from "./agents/ActiveTaskCard";
 
 /**
  * A conversation being read back.
@@ -13,10 +16,146 @@ import type { SavedChat } from "./savedChats";
  * — including the moment a tool got connected, because that was part of the task
  * and deleting it would make the second half unexplainable.
  */
-export function SavedThread({ chat, onReply }: { chat: SavedChat; onReply: (quote: string) => void }) {
+export function SavedThread({
+  chat,
+  onReply,
+  onOpenAgent,
+  onEditAgent,
+  onEditTask,
+}: {
+  chat: SavedChat;
+  onReply: (quote: string) => void;
+  onOpenAgent: (id: string) => void;
+  /** "Edit here" on a card inside history: focuses the live composer on this agent */
+  onEditAgent: (id: string) => void;
+  /** the same idea, for an active task — there is no page to open, only the composer */
+  onEditTask: (id: string) => void;
+}) {
+  const { roster, updateAgent, activeTasks, updateTask } = useAgents();
+  const pause = (id: string) =>
+    updateAgent(id, (a) =>
+      a.status === "paused"
+        ? { ...a, status: "working", mood: "Back on it." }
+        : { ...a, status: "paused", mood: "Paused by you." },
+    );
+  const resume = (id: string, mood: string) => updateAgent(id, (a) => ({ ...a, status: "working", mood }));
+  const pauseTask = (id: string) =>
+    updateTask(id, (t) => (t.status === "paused" ? { ...t, status: "active" } : { ...t, status: "paused" }));
+  const resumeTask = (id: string) => updateTask(id, (t) => ({ ...t, status: "active" }));
+
   return (
     <div className="sv-thread">
       {chat.turns.map((turn, i) => {
+        if (turn.who === "made") {
+          const agent = roster.find((a) => a.id === turn.agentId);
+          if (!agent) return null;
+          return (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <AgentLive
+                agent={agent}
+                onOpen={() => onOpenAgent(agent.id)}
+                onEditHere={() => onEditAgent(agent.id)}
+                onPause={() => pause(agent.id)}
+              />
+            </motion.div>
+          );
+        }
+
+        if (turn.who === "signal") {
+          const agent = roster.find((a) => a.id === turn.agentId);
+          if (!agent) return null;
+          return (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <AgentUpdate
+                agent={agent}
+                found={turn.found}
+                detailsLabel={turn.detailsLabel}
+                {...(turn.tightenLabel
+                  ? { thresholdLabel: turn.tightenLabel, onThreshold: () => onEditAgent(agent.id) }
+                  : {})}
+                onDetails={() => onOpenAgent(agent.id)}
+                onKeep={() => resume(agent.id, "Still watching.")}
+                onPause={() => pause(agent.id)}
+              />
+            </motion.div>
+          );
+        }
+
+        if (turn.who === "taskCard") {
+          const task = activeTasks.find((t) => t.id === turn.taskId);
+          if (!task) return null;
+          return (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <ActiveTaskCard
+                task={task}
+                onEdit={() => onEditTask(task.id)}
+                onPause={() => pauseTask(task.id)}
+                onKeepWatching={task.status === "possible-setup" ? () => resumeTask(task.id) : undefined}
+              />
+            </motion.div>
+          );
+        }
+
+        if (turn.who === "taskUpdate") {
+          const task = activeTasks.find((t) => t.id === turn.taskId);
+          if (!task) return null;
+          return (
+            <div key={i} className="flex flex-col gap-3">
+              <motion.p
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                className="sv-said"
+              >
+                {turn.found}
+              </motion.p>
+              <ActiveTaskCard
+                task={task}
+                onEdit={() => onEditTask(task.id)}
+                onPause={() => pauseTask(task.id)}
+                onKeepWatching={() => resumeTask(task.id)}
+              />
+            </div>
+          );
+        }
+
+        if (turn.who === "external") {
+          const agent = roster.find((a) => a.id === turn.agentId);
+          if (!agent) return null;
+          return (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <ExternalAlert
+                agent={agent}
+                headline={turn.headline}
+                detail={turn.detail}
+                onOpen={() => onOpenAgent(agent.id)}
+                onKeep={() => resume(agent.id, "Still watching.")}
+                onPause={() => pause(agent.id)}
+              />
+            </motion.div>
+          );
+        }
+
         if (turn.who === "gap") {
           // The gap is the argument. Two asks in one sitting is a conversation;
           // two asks a couple of days apart is a habit, and only the second one is
@@ -61,15 +200,20 @@ export function SavedThread({ chat, onReply }: { chat: SavedChat; onReply: (quot
         }
         .sv-left { display: flex; justify-content: flex-start; }
         .sv-right { display: flex; justify-content: flex-end; }
+        .sv-right + .sv-left { margin-top: 50px; }
 
         .sv-msg {
-          max-width: 520px; padding: 11px 16px; border-radius: 16px 16px 16px 4px;
-          background: rgba(255,255,255,.05);
+          max-width: 520px; padding: 0;
           font-size: 14.5px; line-height: 1.6; color: rgba(255,255,255,.85);
         }
         .sv-msg--mine {
-          border-radius: 16px 16px 4px 16px;
+          padding: 11px 16px; border-radius: 16px 16px 4px 16px;
           background: rgba(255,255,255,.08); color: rgba(255,255,255,.92);
+        }
+
+        .sv-said {
+          max-width: 520px; margin: 0;
+          font-size: 15px; line-height: 1.6; color: rgba(255,255,255,.78);
         }
 
         /* Neither side said this, so it is neither bubble: it is the record of
