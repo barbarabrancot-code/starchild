@@ -129,9 +129,7 @@ export function AgentUpdate({
   agent,
   found,
   onDetails,
-  onKeep,
   onThreshold,
-  onPause,
   /**
    * What the third button asks for.
    *
@@ -152,10 +150,8 @@ export function AgentUpdate({
   agent: Agent;
   found: string;
   onDetails: () => void;
-  onKeep: () => void;
   /** omit for a dedicated agent's update — see scenario 8: three actions, not four */
   onThreshold?: () => void;
-  onPause: () => void;
   thresholdLabel?: string;
   detailsLabel?: string;
 }) {
@@ -167,7 +163,6 @@ export function AgentUpdate({
       className="acard acard--found"
     >
       <div className="acard-head">
-        <AgentOrb status="waiting" size={12} halo accent={agent.accent} />
         <p className="acard-name">{agent.name}</p>
         {/* The same word the roster and the drawer would use for this agent right
             now, not a label invented for this card. "Found something" read well
@@ -184,22 +179,12 @@ export function AgentUpdate({
         <button type="button" className="acard-btn acard-btn--go" onClick={onDetails}>
           {detailsLabel}
         </button>
-        <button type="button" className="acard-btn" onClick={onKeep}>
-          Keep watching
-        </button>
         {onThreshold && (
           <button type="button" className="acard-btn" onClick={onThreshold}>
             {thresholdLabel}
           </button>
         )}
-        <button type="button" className="acard-btn acard-btn--quiet" onClick={onPause}>
-          Pause
-        </button>
       </div>
-
-      {/* Not a badge. The one thing that makes an alert trustworthy is being able
-          to see the work behind it without asking. */}
-      <p className="acard-foot">{agent.lastChecked ?? "Checked just now"}</p>
 
       <CardStyle />
     </motion.div>
