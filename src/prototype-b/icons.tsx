@@ -360,3 +360,29 @@ export function ChevronRightIcon({ className }: IconProps) {
     </svg>
   );
 }
+
+export function TrashIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 -960 960 960" fill="currentColor" className={className ?? "size-3.5"}>
+      <path d="M261-120q-24.75 0-42.37-17.63Q201-155.25 201-180v-570h-41v-60h188v-30h264v30h188v60h-41v570q0 24-18 42t-42 18H261Zm438-630H261v570h438v-570ZM367-266h60v-399h-60v399Zm166 0h60v-399h-60v399ZM261-750v570-570Z" />
+    </svg>
+  );
+}
+
+export function DuplicateIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 -960 960 960" fill="currentColor" className={className ?? "size-3.5"}>
+      <path d="M300-200q-24 0-42-18t-18-42v-560q0-24 18-42t42-18h440q24 0 42 18t18 42v560q0 24-18 42t-42 18H300Zm0-60h440v-560H300v560ZM180-80q-24 0-42-18t-18-42v-620h60v620h500v60H180Zm120-180v-560 560Z" />
+    </svg>
+  );
+}
+
+// "keep" — the thumbtack glyph, not "pin" (Material's own "pin" is a PIN-code
+// keypad icon, wrong metaphor entirely for pinning a row to the top of a list).
+export function PinIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 -960 960 960" fill="currentColor" className={className ?? "size-3.5"}>
+      <path d="m634-448 86 77v60H510v241l-30 30-30-30v-241H240v-60l80-77v-332h-50v-60h414v60h-50v332Zm-313 77h312l-59-55v-354H380v354l-59 55Zm156 0Z" />
+    </svg>
+  );
+}
