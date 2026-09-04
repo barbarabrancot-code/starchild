@@ -11,6 +11,8 @@ export default defineConfig({
       input: {
         main: resolve(__dirname, "index.html"),
         app: resolve(__dirname, "app.html"),
+        // variant B of today's delivery — see README-AB.md
+        appB: resolve(__dirname, "app-b.html"),
         // the page being taken forward — see src/landing-main.tsx
         landing: resolve(__dirname, "landing.html"),
         onboarding: resolve(__dirname, "onboarding.html"),
