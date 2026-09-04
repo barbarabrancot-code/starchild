@@ -126,6 +126,9 @@ export function ConductorApp({
   const [screen, setScreen] = useState<Screen>(signedInFromUrl || startInOnboarding ? "chat" : "landing");
   const [initialPrompt, setInitialPrompt] = useState<string | undefined>();
   const [openingMessage, setOpeningMessage] = useState<string | undefined>();
+  /** "Create with chat" in Jobs — a starting message sitting in the composer,
+   *  unsent, rather than an empty box. Consumed the moment it lands there. */
+  const [draftMessage, setDraftMessage] = useState<string | undefined>();
   const [task, setTask] = useState<TaskCard | undefined>();
   const [isGuest, setIsGuest] = useState(false);
   /*
@@ -410,9 +413,10 @@ export function ConductorApp({
           ) : area === "jobs" ? (
             <JobsArea
               focusId={focusJob}
-              onCreateWithChat={() => setArea("chat")}
-              onBackToChat={(task) => {
-                setFocusTaskInChat(task.id);
+              onCreateWithChat={() => {
+                setDraftMessage(
+                  "Let's set up a new automation together. First, explain briefly how automations work here. Then interview me to figure out what I want automated and when it should run.",
+                );
                 setArea("chat");
               }}
             />
@@ -448,6 +452,8 @@ export function ConductorApp({
           onLogIn={goToAuthFromChat}
           initialMessage={initialPrompt}
           openingMessage={openingMessage}
+          draftMessage={draftMessage}
+          onDraftConsumed={() => setDraftMessage(undefined)}
           task={task}
           isGuest={isGuest}
           // straight to the working product: the meeting is part of signing up,

@@ -4,9 +4,13 @@ import {
   MenuIcon,
   PlusIcon,
   PuzzleIcon,
-  GroupsIcon,
-  ApprovalDelegationIcon,
+  BriefcaseIcon,
+  AutomationIcon,
+  type IconComponent,
 } from "./icons";
+
+type AreaId = "jobs" | "agents" | "connectors";
+type Area = { id: AreaId; label: string; Icon: IconComponent };
 
 // The signed-in navigation. A fresh account has no history yet, so there are no
 // pinned or recent conversations under it — the list appears once there's
@@ -49,8 +53,8 @@ export function ProductSidebar({
   // button that happens to look like its neighbours while doing something else.
   const areas = (["jobs", "agents", "connectors"] as const).map((id) => ({
     id,
-    label: id === "jobs" ? "Handled" : id === "agents" ? "Agents" : "Connectors",
-    Icon: id === "jobs" ? ApprovalDelegationIcon : id === "agents" ? GroupsIcon : PuzzleIcon,
+    label: id === "jobs" ? "Automations" : id === "agents" ? "Agents" : "Connectors",
+    Icon: id === "jobs" ? AutomationIcon : id === "agents" ? BriefcaseIcon : PuzzleIcon,
   }));
   const orderedConversations = [...conversations].sort((a, b) => {
     if (a.id === "hype-analysis") return -1;
@@ -70,61 +74,132 @@ export function ProductSidebar({
   */
   if (collapsed) {
     return (
-      <div className="hidden w-[64px] shrink-0 flex-col items-center border-r border-white/[0.08] bg-[#0c0c0d] px-2 pt-5 pb-4 lg:flex">
-        <button
-          type="button"
-          onClick={onToggleCollapsed}
-          className="flex size-9 items-center justify-center rounded-lg text-white/55 transition-colors hover:bg-white/[0.07] hover:text-white"
-          aria-label="Expand sidebar"
-          title="Expand sidebar"
-        >
-          <MenuIcon className="size-[18px]" />
-        </button>
+      // Hovering grows the rail's real width back to 268px — the same layout
+      // change the toggle makes, not a panel floating on top of it — and
+      // everything beside it slides over to make room, the same as a click
+      // would. It settles back the instant the pointer leaves.
+      <div className="group/rail hidden w-[64px] shrink-0 overflow-hidden border-r border-white/[0.08] bg-[#0c0c0d] transition-[width] duration-150 ease-out hover:w-[268px] lg:block">
+        <div className="relative h-full w-[268px]">
+          {/* The rail: icons only, fading out as the hover grows the width in. */}
+          <div className="absolute inset-0 flex w-[64px] flex-col items-center px-2 pt-5 pb-4 opacity-100 transition-opacity duration-150 group-hover/rail:opacity-0">
+            <button
+              type="button"
+              onClick={onToggleCollapsed}
+              className="flex size-9 items-center justify-center rounded-lg text-white/55 transition-colors hover:bg-white/[0.07] hover:text-white"
+              aria-label="Expand sidebar"
+              title="Expand sidebar"
+            >
+              <MenuIcon className="size-[18px]" />
+            </button>
 
-        <button
-          type="button"
-          onClick={onNewChat}
-          className="mt-5 flex size-11 items-center justify-center rounded-full bg-[#f84600] text-white transition-transform hover:scale-[1.03]"
-          aria-label="New chat"
-          title="New chat"
-        >
-          <PlusIcon className="size-5" />
-        </button>
+            <button
+              type="button"
+              onClick={onNewChat}
+              className="mt-5 flex size-11 items-center justify-center rounded-full bg-[#f84600] text-white transition-transform hover:scale-[1.03]"
+              aria-label="New chat"
+              title="New chat"
+            >
+              <PlusIcon className="size-5" />
+            </button>
 
-        <div className="mt-4 flex flex-col gap-0.5">
-          {areas.map(({ id, label, Icon }) => {
-            const on = area === id;
-            return (
-              <button
-                key={id}
-                type="button"
-                onClick={() => onSwitchArea?.(id)}
-                aria-current={on ? "page" : undefined}
-                aria-label={label}
-                title={label}
-                className={`flex size-10 items-center justify-center rounded-lg transition-colors ${
-                  on ? "bg-white/[0.09] text-[#f84600]" : "text-white/45 hover:bg-white/[0.05] hover:text-white"
-                }`}
-              >
-                <Icon className="size-[18px]" />
-              </button>
-            );
-          })}
+            <div className="mt-4 flex flex-col gap-0.5">
+              {areas.map(({ id, label, Icon }) => {
+                const on = area === id;
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => onSwitchArea?.(id)}
+                    aria-current={on ? "page" : undefined}
+                    aria-label={label}
+                    title={label}
+                    className={`flex size-10 items-center justify-center rounded-lg transition-colors ${
+                      on ? "bg-white/[0.09] text-[#f84600]" : "text-white/45 hover:bg-white/[0.05] hover:text-white"
+                    }`}
+                  >
+                    <Icon className="size-[18px]" />
+                  </button>
+                );
+              })}
+            </div>
+
+            <span
+              className="mt-auto size-7 shrink-0 rounded-full"
+              style={{ background: "linear-gradient(140deg,#f84600,#7a4bd6 70%)" }}
+              title={accountName}
+              aria-label={accountName}
+            />
+          </div>
+
+          {/* The full sidebar, fading in over the same width the rail just
+              gave up — not stacked on top of it, its replacement. */}
+          <div className="absolute inset-0 w-[268px] opacity-0 transition-opacity duration-150 group-hover/rail:opacity-100">
+            <SidebarBody
+              areas={areas}
+              area={area}
+              onSwitchArea={onSwitchArea}
+              intro={intro}
+              accountName={accountName}
+              orderedConversations={orderedConversations}
+              onOpenConversation={onOpenConversation}
+              openConversation={openConversation}
+              onNewChat={onNewChat}
+              onToggleCollapsed={onToggleCollapsed}
+            />
+          </div>
         </div>
-
-
-        <span
-          className="mt-auto size-7 shrink-0 rounded-full"
-          style={{ background: "linear-gradient(140deg,#f84600,#7a4bd6 70%)" }}
-          title={accountName}
-          aria-label={accountName}
-        />
       </div>
     );
   }
 
   return (
-    <div className="hidden w-[268px] shrink-0 flex-col border-r border-white/[0.08] bg-[#0c0c0d] px-4 pt-5 pb-4 lg:flex">
+    <div className="hidden w-[268px] shrink-0 border-r border-white/[0.08] bg-[#0c0c0d] lg:block">
+      <SidebarBody
+        areas={areas}
+        area={area}
+        onSwitchArea={onSwitchArea}
+        intro={intro}
+        accountName={accountName}
+        orderedConversations={orderedConversations}
+        onOpenConversation={onOpenConversation}
+        openConversation={openConversation}
+        onNewChat={onNewChat}
+        onToggleCollapsed={onToggleCollapsed}
+      />
+    </div>
+  );
+}
+
+/**
+ * The expanded sidebar's actual content, apart from the frame around it —
+ * shared by the normal, in-flow render and the collapsed rail's hover flyout,
+ * so the two can never say something different about where you are.
+ */
+function SidebarBody({
+  areas,
+  area,
+  onSwitchArea,
+  intro,
+  accountName,
+  orderedConversations,
+  onOpenConversation,
+  openConversation,
+  onNewChat,
+  onToggleCollapsed,
+}: {
+  areas: Area[];
+  area: "chat" | "agents" | "connectors" | "jobs";
+  onSwitchArea?: (next: "chat" | "agents" | "connectors" | "jobs") => void;
+  intro?: { label: string; node: ReactNode };
+  accountName: string;
+  orderedConversations: SavedChat[];
+  onOpenConversation?: (chat: SavedChat) => void;
+  openConversation?: string;
+  onNewChat: () => void;
+  onToggleCollapsed?: () => void;
+}) {
+  return (
+    <div className="flex h-full w-full flex-col px-4 pt-5 pb-4">
       <button
         type="button"
         onClick={onToggleCollapsed}

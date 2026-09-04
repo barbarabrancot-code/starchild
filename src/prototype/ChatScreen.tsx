@@ -102,6 +102,38 @@ function PlaceholderAnswer() {
 }
 
 /**
+ * The scripted reply to the one message "Create with chat" in Automations
+ * hands the composer. Real copy, not a placeholder — this is what someone
+ * arriving from that button is actually asking, so it gets a real answer.
+ */
+function AutomationsIntroAnswer() {
+  return (
+    <div className="ca-answer">
+      <p>Automations are the things I keep handling in the background.</p>
+
+      <p>
+        You ask once, and I keep checking, reminding, summarizing, or watching for the
+        right moment. They stay visible in Automations, so you can edit, pause, or cancel
+        them anytime.
+      </p>
+
+      <p>Let&rsquo;s make one.</p>
+
+      <p>What should I keep handling for you?</p>
+
+      <style>{`
+        .ca-answer {
+          display: flex; flex-direction: column; gap: 16px;
+          font-family: var(--font-google-sans);
+          font-size: 15px; line-height: 1.65; color: rgba(255,255,255,.78);
+        }
+        .ca-answer p { margin: 0; }
+      `}</style>
+    </div>
+  );
+}
+
+/**
  * One entry in the conversation an agent's existence starts.
  *
  * "said" is Starchild confirming a change; "card" is the agent as it now stands.
@@ -190,6 +222,8 @@ export function ChatScreen({
   skipMeeting = false,
   onGuestWork,
   extraConversations = [],
+  draftMessage,
+  onDraftConsumed,
 }: {
   /** a guest asked for something — the app keeps it so the account can have it */
   onGuestWork?: (chat: SavedChat) => void;
@@ -197,6 +231,14 @@ export function ChatScreen({
   extraConversations?: SavedChat[];
   /** opened at the signed-in app rather than walked to — see ConductorApp */
   skipMeeting?: boolean;
+  /** Text to drop into the composer, unsent — a starting point someone can edit or
+   *  just hit send on, rather than an empty box. Set by "Create with chat" in the
+   *  Jobs area; this screen never unmounts, so it arrives as a prop to consume
+   *  rather than an initial value. */
+  draftMessage?: string;
+  /** called once `draftMessage` has been placed in the composer, so switching
+   *  areas and back does not keep overwriting whatever was typed since */
+  onDraftConsumed?: () => void;
   /** an agent was made from this conversation and the person wants to go and see it */
   onOpenAgent?: (id: string) => void;
   /** the same idea for a Job — "View job" sends the person to the Jobs area now,
@@ -238,9 +280,33 @@ export function ChatScreen({
   const [message, setMessage] = useState<string | null>(initialMessage ?? null);
   const [scenario, setScenario] = useState<Scenario | null>(initialMessage ? pickScenario(initialMessage) : null);
   const [delivered, setDelivered] = useState(false);
+  /** The one message with a scripted answer instead of the placeholder scenario
+   *  theatre — "Create with chat" in Automations hands the composer this exact
+   *  ask, so the reply it gets is the real one, not three generic bullets about
+   *  a task that was never actually run. */
+  const [automationIntro, setAutomationIntro] = useState(false);
   const [value, setValue] = useState("");
   /** the message a reply is being written against — a quote, not a thread */
   const [replyTo, setReplyTo] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (draftMessage === undefined) return;
+    setValue(draftMessage);
+    onDraftConsumed?.();
+    setTimeout(() => inputRef.current?.focus(), 0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draftMessage]);
+
+  // Grows with what's typed rather than scrolling sideways — set on every
+  // change, not just the ones that come through onChange, so a draft dropped
+  // in from outside (a reply quote, "Create with chat") arrives already
+  // sized to fit it.
+  useEffect(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
+  }, [value]);
   const guest = isGuest;
   const [tasksRemaining, setTasksRemaining] = useState(initialMessage ? 1 : 2);
   const [gate, setGate] = useState<{ heading: string; sub: string } | null>(null);
@@ -255,7 +321,7 @@ export function ChatScreen({
   // Marketplace is reached from the landing pages instead.
   const [intro, setIntro] = useState<"conductor" | "agents" | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   // A task can also be picked here, not only on the landing page — the empty state
   // carries the same chips. Either way it lands in the same place: Starchild asks
@@ -451,7 +517,7 @@ export function ChatScreen({
           "No confirmed breakout yet",
         ],
       };
-      updateTask(task.id, (t) => ({ ...t, status: "possible-setup", lastChecked: "3 minutes ago", activity }));
+      updateTask(task.id, (t) => ({ ...t, lastChecked: "3 minutes ago", activity }));
 
       pushTail({
         kind: "taskUpdate",
@@ -706,6 +772,18 @@ export function ChatScreen({
 
     if (tryTaskFirst ? tryTask() || tryAgent() : tryAgent() || tryTask()) return;
 
+    // The one scripted reply in the file. Skips the scenario machinery
+    // entirely rather than picking GENERIC and hoping the placeholder essay
+    // reads as an answer to it — it wouldn't.
+    if (/set up a new automation together/i.test(trimmed)) {
+      setMessage(trimmed);
+      setReading(null);
+      setValue("");
+      setScenario(null);
+      setAutomationIntro(true);
+      return;
+    }
+
     setMessage(trimmed);
     setReading(null);
     // the composer outlives the send now, so it has to be emptied by hand
@@ -768,6 +846,7 @@ export function ChatScreen({
     setMessage(null);
     setScenario(null);
     setDelivered(false);
+    setAutomationIntro(false);
     setValue("");
     setOpening(undefined);
     setActiveTask(undefined);
@@ -861,12 +940,14 @@ export function ChatScreen({
         )}
       </AnimatePresence>
 
-      <input
+      <textarea
         ref={inputRef}
+        rows={1}
         value={value}
         onChange={(e) => setValue(e.target.value)}
         onKeyDown={(e) => {
-          if (e.key !== "Enter") return;
+          if (e.key !== "Enter" || e.shiftKey) return;
+          e.preventDefault();
           // while the meeting is open the composer answers Starchild
           // rather than starting a task — same box, same gesture
           if (meetingTakesText) {
@@ -897,7 +978,7 @@ export function ChatScreen({
                     "Ask, explore, or hand something over."
                   : "Ask anything, or pick one above"
         }
-        className="w-full bg-transparent text-[14.5px] text-white placeholder:text-white/35 focus:outline-none"
+        className="max-h-40 w-full resize-none overflow-y-auto bg-transparent text-[14.5px] text-white placeholder:text-white/35 focus:outline-none"
         style={{ fontFamily: "var(--font-google-sans)" }}
         autoFocus={Boolean(opening)}
       />
@@ -1288,9 +1369,26 @@ export function ChatScreen({
                 </div>
               )}
 
+              {/* The one message with a real answer instead of scenario theatre —
+                  no thinking steps to sit through for something that was never
+                  going to run a model. */}
+              {!reading && pending.length === 0 && automationIntro && (
+                <div className="ca-assistant-turn">
+                  <motion.div
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                  >
+                    <Reactable onReply={() => setReplyTo("Starchild's answer")}>
+                      <AutomationsIntroAnswer />
+                    </Reactable>
+                  </motion.div>
+                </div>
+              )}
+
               {/* The answer goes inside the flow rather than after it, so the run and
                   the answer it produced stay one block on the page. */}
-              {!reading && pending.length === 0 && (
+              {!reading && pending.length === 0 && !automationIntro && (
               <div className="ca-assistant-turn">
                 <StepFlow
                   scenario={scenario!}
@@ -1304,8 +1402,8 @@ export function ChatScreen({
                       transition={{ duration: 0.45, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
                       className="mt-7"
                     >
-                      {/* Starchild's turn is reactable too. Only reacting to your own
-                          messages would make the gesture a note-to-self. */}
+                      {/* No reaction seeded on the placeholder answer — Starchild does
+                          not react to its own words either. Reply still works. */}
                       <Reactable onReply={() => setReplyTo("Starchild's answer")}>
                         <PlaceholderAnswer />
                       </Reactable>
@@ -1412,7 +1510,7 @@ export function ChatScreen({
                   }
                   .ca-offer-copy {
                     margin: 0; color: #fff;
-                    font-size: 16px; line-height: 1.5; letter-spacing: -.01em;
+                    font-size: 14px; line-height: 1.5; letter-spacing: -.01em;
                   }
                   .ca-offer-actions { display: flex; align-items: center; gap: 22px; }
                   .ca-offer-go {
@@ -1440,7 +1538,7 @@ export function ChatScreen({
                   .ca-handled-quiet:hover { color: rgba(255,255,255,.7); }
                   @media (max-width: 640px) {
                     .ca-offer { gap: 20px; padding: 22px; }
-                    .ca-offer-copy { font-size: 16px; }
+                    .ca-offer-copy { font-size: 14px; }
                     .ca-offer-actions { gap: 22px; }
                     .ca-offer-go, .ca-offer-quiet { font-size: 14px; }
                     .ca-handled { gap: 20px; padding: 22px; }
