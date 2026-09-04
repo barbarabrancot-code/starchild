@@ -13,14 +13,18 @@ export type MeetingResult = {
 
 type Step = "guided" | "preference";
 type Question = { id: string; text: string; stage: number };
-type Topic = { echo?: string; said?: string };
+type Topic = { echo?: string; said?: string; opening?: string };
 
 const STAGES = 2;
-const ATTENTION: { label: string; echo: string }[] = [
+const ATTENTION: { label: string; echo: string; opening?: string }[] = [
   { label: "Work", echo: "work" },
   { label: "Something I'm building", echo: "something you're building" },
   { label: "A decision", echo: "a decision you're weighing" },
-  { label: "Too much on my plate", echo: "how much is on your plate" },
+  {
+    label: "Too much on my plate",
+    echo: "how much is on your plate",
+    opening: "Got it. Let's start there. What's on your plate this week that you want me to help handle?",
+  },
   { label: "Something personal", echo: "something personal" },
 ];
 const UNSURE = "I'm not sure yet";
@@ -30,6 +34,7 @@ const PREFERENCE_LINE =
 
 function openingFor(topic?: Topic) {
   if (!topic) return "So - what's the first thing you'd like to put in front of me?";
+  if (topic.opening) return topic.opening;
   return `Got it. Let's start there. What would have to happen this week for ${topic.echo ?? "that"} to feel handled?`;
 }
 
@@ -72,7 +77,8 @@ export function useFirstMeeting({ onDone }: { onDone: (result: MeetingResult) =>
 
   const choose = (label: string) => {
     if (step === "guided") {
-      const selected = label === UNSURE ? undefined : { echo: ATTENTION.find((option) => option.label === label)?.echo };
+      const match = ATTENTION.find((option) => option.label === label);
+      const selected = label === UNSURE ? undefined : { echo: match?.echo, opening: match?.opening };
       setTopic(selected);
       setThinking(true);
       consider(askPreference);

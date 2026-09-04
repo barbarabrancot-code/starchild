@@ -84,8 +84,6 @@ export function SavedThread({
                   ? { thresholdLabel: turn.tightenLabel, onThreshold: () => onEditAgent(agent.id) }
                   : {})}
                 onDetails={() => onOpenAgent(agent.id)}
-                onKeep={() => resume(agent.id, "Still watching.")}
-                onPause={() => pause(agent.id)}
               />
             </motion.div>
           );
