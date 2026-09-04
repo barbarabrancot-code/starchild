@@ -83,6 +83,8 @@ function PlaceholderAnswer() {
       <style>{`
         .ca-answer {
           display: flex; flex-direction: column; gap: 16px;
+          max-width: 640px; padding: 14px 18px; border-radius: 18px 18px 18px 4px;
+          background: rgba(255,255,255,.05);
           font-family: var(--font-google-sans);
           font-size: 15px; line-height: 1.65; color: rgba(255,255,255,.78);
         }

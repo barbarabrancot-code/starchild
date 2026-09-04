@@ -125,13 +125,16 @@ export function StepFlow({
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Said once, and it stays: this is Starchild's first line of the reply, not
-          a placeholder that the answer replaces. */}
+      {/* The lead-in, said while the work is still going — and gone once it's
+          done, the same way the stage line under it is. The real answer now
+          arrives as its own bubble, so this staying on afterward would just be
+          a second, unbubbled thing Starchild apparently said. */}
       <AnimatePresence>
-        {acked && (
+        {acked && !done && (
           <motion.p
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, transition: { duration: 0.25 } }}
             transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
             className="text-[15px] leading-[1.6] text-white/80"
             style={{ fontFamily: "var(--font-google-sans)" }}

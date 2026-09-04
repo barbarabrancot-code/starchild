@@ -225,13 +225,6 @@ export function AgentsWorkspace({
    * know which. See AgentPicker.
    */
   const [picking, setPicking] = useState(false);
-  /** A blank agent, not yet on the roster — held here rather than added straight
-   *  away, so the drawer on the right can be its whole creation form: a name, a
-   *  mission, a colour, and what it may reach, the same fields editing one uses,
-   *  just empty. Non-null means the drawer is showing this instead of a roster
-   *  agent. */
-  const [creating, setCreating] = useState<{ name: string; mission: string; accent: string; tools: ConnectorId[] } | null>(null);
-
   const startPicking = () => setPicking(true);
   const [activeId, setActiveId] = useState<string>(focusId ?? "");
   /** rows kept at the top of the roster, most recently pinned first — a display
@@ -326,48 +319,31 @@ export function AgentsWorkspace({
   };
 
   /**
-   * A dedicated agent, fully formed, from the drawer someone just filled in —
-   * as against `birth`, which starts one empty-handed and lets a scripted
-   * conversation fill it in over three questions. This is the other of the two
-   * ways an agent can start existing, and the only one this model still allows
-   * from outside a conversation with the agent itself: on purpose, with a name,
-   * a mission, a colour and a set of tools already decided, in the same panel
-   * that will keep editing it once it is real.
+   * The other way an agent starts existing, as against `birth`, which walks
+   * through a scripted three-question conversation. This one exists the
+   * moment it's visible: a blank thread and a name, added to the roster
+   * straight away rather than held as a draft — the drawer beside it is
+   * already the same form that edits any agent, so there is no separate
+   * "finish creating" step, only a blank agent you start filling in.
    */
-  const createFromDraft = () => {
-    if (!creating) return;
-    const name = creating.name.trim() || "New agent";
-    const mission = creating.mission.trim();
+  const startNewAgent = (name?: string) => {
+    const trimmed = name?.trim() || "New agent";
     const agent: Agent = {
       id: `a${Date.now()}`,
-      name,
-      role: mission || "Working out its job with you",
-      instruction: mission || undefined,
+      name: trimmed,
+      role: "",
       status: "working",
-      mood: mission ? "No signal yet." : "Just started. Getting its bearings.",
-      resting: `${name} has nothing new to report.`,
-      preview: "No signal yet",
+      mood: "Just created.",
+      resting: `${trimmed} is waiting on you.`,
+      preview: "Say what you want it on",
       lastActive: "just now",
-      accent: creating.accent,
-      // The standing policy every dedicated agent starts under — report with
-      // context, never move toward execution unasked — regardless of what the
-      // mission turns out to be.
-      rules: [
-        "Include market context before alerting.",
-        "Do not suggest execution unless asked.",
-      ],
-      lastChecked: "Just created — first check due shortly",
-      tools: creating.tools,
-      thread: mission
-        ? [
-            { kind: "you", text: mission },
-            { kind: "agent", text: "Got it. I'll keep at this and only interrupt you when it's genuinely worth it." },
-          ]
-        : GREETING("Bárbara").map((text) => ({ kind: "agent", text }) as const),
+      accent: ACCENTS.ember.hex,
+      tools: [],
+      thread: [],
     };
     addAgent(agent);
     setActiveId(agent.id);
-    setCreating(null);
+    setDrawer(false);
   };
 
   /**
@@ -479,7 +455,7 @@ export function AgentsWorkspace({
             x={rowMenu.x}
             y={rowMenu.y}
             pinned={pinnedIds.includes(row.id)}
-            onEdit={() => { setActiveId(row.id); setCreating(null); setDrawer(true); setRowMenu(null); }}
+            onEdit={() => { setActiveId(row.id); setDrawer(true); setRowMenu(null); }}
             onDuplicate={() => { duplicateAgent(row); setRowMenu(null); }}
             onDelete={() => {
               const next = roster.find((candidate) => candidate.id !== row.id);
@@ -497,17 +473,16 @@ export function AgentsWorkspace({
       {/* Same slot as the thread, for the same reason setup uses it: the roster
           stays put, so whichever way this ends — an existing agent or a new one —
           the answer lands where the person was already looking. */}
-      {picking && !creating && !setup && (
+      {picking && !setup && (
         <AgentPicker
           roster={roster}
           onPick={(id) => { setActiveId(id); setPicking(false); }}
-          // Straight into the drawer, blank, rather than a form of its own — the
-          // same panel that edits an agent is the one that makes it, so there is
-          // only ever one place these fields live.
+          // A real, blank agent, added to the roster immediately rather than
+          // held as a draft — filling in what it does happens the same way
+          // editing any agent does, from the door its name already is.
           onCreate={(name) => {
-            setCreating({ name: name?.trim() ?? "", mission: "", accent: ACCENTS.ember.hex, tools: [] });
+            startNewAgent(name);
             setPicking(false);
-            setDrawer(true);
           }}
           onClose={() => setPicking(false)}
         />
@@ -526,12 +501,8 @@ export function AgentsWorkspace({
         />
       )}
 
-      {/* Blank, on purpose — the actual form is the drawer on the right, and
-          that is where the whole act of creating one now happens. */}
-      {!setup && !picking && creating && <section className="ag-thread ag-thread--blank" />}
-
       {/* the agent itself: who it is, what it can touch, and everything it has done */}
-      {!setup && !picking && !creating && agent && (
+      {!setup && !picking && agent && (
       <section className="ag-thread">
         {/* The schedule, the state and the tools are facts about the agent, not
             about the conversation — sat up here permanently they were a panel you
@@ -638,7 +609,7 @@ export function AgentsWorkspace({
           thread — and enabling a tool from here should visibly change the chips,
           which it cannot do if the panel covering them has to be dismissed first. */}
       <AnimatePresence>
-        {!setup && !picking && (creating || agent) && drawer && (
+        {!setup && !picking && agent && drawer && (
           <motion.aside
             key="drawer"
             initial={{ width: 0, opacity: 0 }}
@@ -649,11 +620,11 @@ export function AgentsWorkspace({
           >
             <div className="ag-drawer-in">
               <div className="ag-drawer-top">
-                <p className="ag-drawer-kicker">{creating ? "New agent" : "Agent"}</p>
+                <p className="ag-drawer-kicker">Agent</p>
                 <button
                   type="button"
                   className="ag-drawer-x"
-                  onClick={() => { setDrawer(false); setConfirmingDelete(false); setCreating(null); }}
+                  onClick={() => { setDrawer(false); setConfirmingDelete(false); }}
                   aria-label="Close"
                 >
                   ✕
@@ -661,20 +632,15 @@ export function AgentsWorkspace({
               </div>
 
               <div className="ag-drawer-orb">
-                <AgentOrb status="working" size={34} halo accent={creating ? creating.accent : agent!.accent} still />
+                <AgentOrb status="working" size={34} halo accent={agent.accent} still />
               </div>
 
               <label className="ag-field">
                 <span className="ag-field-label">Name</span>
                 <input
                   className="ag-field-in"
-                  autoFocus={Boolean(creating)}
-                  value={creating ? creating.name : agent!.name}
-                  onChange={(e) =>
-                    creating
-                      ? setCreating({ ...creating, name: e.target.value })
-                      : updateAgent(agent!.id, (a) => ({ ...a, name: e.target.value }))
-                  }
+                  value={agent.name}
+                  onChange={(e) => updateAgent(agent.id, (a) => ({ ...a, name: e.target.value }))}
                 />
               </label>
 
@@ -690,12 +656,8 @@ export function AgentsWorkspace({
                 <textarea
                   className="ag-field-in"
                   rows={3}
-                  value={creating ? creating.mission : (agent!.instruction ?? agent!.role)}
-                  onChange={(e) =>
-                    creating
-                      ? setCreating({ ...creating, mission: e.target.value })
-                      : updateAgent(agent!.id, (a) => ({ ...a, instruction: e.target.value }))
-                  }
+                  value={agent.instruction ?? agent.role}
+                  onChange={(e) => updateAgent(agent.id, (a) => ({ ...a, instruction: e.target.value }))}
                 />
               </label>
 
@@ -705,10 +667,10 @@ export function AgentsWorkspace({
                   clause out of a sentence in a text box is worse than just saying
                   the change: "only alert me if funding is acceptable too" is
                   already the whole interface for this. */}
-              {!creating && (agent!.conditions?.length ?? 0) > 0 && (
+              {(agent.conditions?.length ?? 0) > 0 && (
                 <div className="ag-field">
                   <span className="ag-field-label">Alerts when</span>
-                  <p className="ag-conditions">{agent!.conditions!.join(", and ")}</p>
+                  <p className="ag-conditions">{agent.conditions!.join(", and ")}</p>
                 </div>
               )}
 
@@ -719,18 +681,14 @@ export function AgentsWorkspace({
                     agent that needs you is still a ring. */}
                 <div className="ag-swatches">
                   {Object.entries(ACCENTS).map(([id, c]) => {
-                    const on = (creating ? creating.accent : agent!.accent) === c.hex;
+                    const on = agent.accent === c.hex;
                     return (
                       <button
                         key={id}
                         type="button"
                         aria-label={c.name}
                         aria-pressed={on}
-                        onClick={() =>
-                          creating
-                            ? setCreating({ ...creating, accent: c.hex })
-                            : updateAgent(agent!.id, (x) => ({ ...x, accent: c.hex }))
-                        }
+                        onClick={() => updateAgent(agent.id, (x) => ({ ...x, accent: c.hex }))}
                         className={`ag-swatch${on ? " ag-swatch--on" : ""}`}
                         style={{ ["--pick" as string]: c.hex }}
                       />
@@ -739,46 +697,36 @@ export function AgentsWorkspace({
                 </div>
               </div>
 
-              {creating ? (
-                <div className="ag-danger-zone">
+              <div className="ag-danger-zone">
+                {confirmingDelete ? (
+                  <>
+                    <p>Delete {agent.name}? This cannot be undone.</p>
+                    <div>
+                      <button type="button" onClick={() => setConfirmingDelete(false)}>Cancel</button>
+                      <button type="button" className="ag-delete-confirm" onClick={deleteAgent}>Delete agent</button>
+                    </div>
+                  </>
+                ) : (
                   <div>
-                    <button type="button" className="ag-pause" onClick={createFromDraft}>
-                      Create agent
+                    <button
+                      type="button"
+                      className="ag-pause"
+                      onClick={() =>
+                        updateAgent(agent.id, (a) =>
+                          a.status === "paused"
+                            ? { ...a, status: "working", mood: "Back on it." }
+                            : { ...a, status: "paused", mood: "Paused by you." },
+                        )
+                      }
+                    >
+                      {agent.status === "paused" ? "Resume agent" : "Pause agent"}
+                    </button>
+                    <button type="button" className="ag-delete" onClick={() => setConfirmingDelete(true)}>
+                      Delete agent
                     </button>
                   </div>
-                </div>
-              ) : (
-                <div className="ag-danger-zone">
-                  {confirmingDelete ? (
-                    <>
-                      <p>Delete {agent!.name}? This cannot be undone.</p>
-                      <div>
-                        <button type="button" onClick={() => setConfirmingDelete(false)}>Cancel</button>
-                        <button type="button" className="ag-delete-confirm" onClick={deleteAgent}>Delete agent</button>
-                      </div>
-                    </>
-                  ) : (
-                    <div>
-                      <button
-                        type="button"
-                        className="ag-pause"
-                        onClick={() =>
-                          updateAgent(agent!.id, (a) =>
-                            a.status === "paused"
-                              ? { ...a, status: "working", mood: "Back on it." }
-                              : { ...a, status: "paused", mood: "Paused by you." },
-                          )
-                        }
-                      >
-                        {agent!.status === "paused" ? "Resume agent" : "Pause agent"}
-                      </button>
-                      <button type="button" className="ag-delete" onClick={() => setConfirmingDelete(true)}>
-                        Delete agent
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </motion.aside>
         )}
@@ -1001,7 +949,7 @@ export function AgentsWorkspace({
         .ag-swatch--on { border-color: #fff; }
 
         .ag-danger-zone {
-          margin-top: auto; padding-top: 18px; border-top: 1px solid rgba(255,255,255,.08);
+          padding-top: 18px; border-top: 1px solid rgba(255,255,255,.08);
         }
         .ag-danger-zone > p { margin: 0 0 10px; font-size: 12.5px; line-height: 1.45; color: rgba(255,255,255,.48); }
         .ag-danger-zone > div { display: flex; gap: 8px; }

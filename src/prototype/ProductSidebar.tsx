@@ -8,6 +8,7 @@ import {
   AutomationIcon,
   EllipsisIcon,
   SearchIcon,
+  TrophyIcon,
   type IconComponent,
 } from "./icons";
 
@@ -111,7 +112,9 @@ export function ProductSidebar({
                   <button
                     key={id}
                     type="button"
-                    onClick={() => onSwitchArea?.(id)}
+                    // Connectors stays in the rail, but the screen behind it is
+                    // switched off for now — this is a placeholder, not a door.
+                    onClick={() => { if (id !== "connectors") onSwitchArea?.(id); }}
                     aria-current={on ? "page" : undefined}
                     aria-label={label}
                     title={label}
@@ -123,6 +126,16 @@ export function ProductSidebar({
                   </button>
                 );
               })}
+
+              <button
+                type="button"
+                className="relative flex size-10 items-center justify-center rounded-lg text-white/45 transition-colors hover:bg-white/[0.05] hover:text-white"
+                aria-label="Quests"
+                title="Quests"
+              >
+                <TrophyIcon className="size-[18px]" />
+                <span className="absolute top-2 right-2 size-1.5 rounded-full bg-red-500" />
+              </button>
 
               <button
                 type="button"
@@ -252,7 +265,9 @@ function SidebarBody({
             <div key={id} className="relative">
               <button
                 type="button"
-                onClick={() => onSwitchArea?.(id)}
+                // Connectors stays in the rail, but the screen behind it is
+                // switched off for now — this is a placeholder, not a door.
+                onClick={() => { if (id !== "connectors") onSwitchArea?.(id); }}
                 aria-current={on ? "page" : undefined}
                 className={`flex w-full items-center gap-3 rounded-lg px-2.5 py-2.5 text-left text-[14px] transition-colors duration-200 ${
                   lit
@@ -273,6 +288,18 @@ function SidebarBody({
             </div>
           );
         })}
+
+        <button
+          type="button"
+          className="flex w-full items-center gap-3 rounded-lg px-2.5 py-2.5 text-left text-[14px] text-white/50 transition-colors duration-200 hover:bg-white/[0.05] hover:text-white"
+          style={{ fontFamily: "var(--font-google-sans)" }}
+        >
+          <span className="relative shrink-0 text-white/40">
+            <TrophyIcon className="size-[18px]" />
+            <span className="absolute -top-0.5 -right-0.5 size-1.5 rounded-full bg-red-500" />
+          </span>
+          Quests
+        </button>
 
         <button
           type="button"
