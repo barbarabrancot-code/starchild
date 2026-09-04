@@ -70,9 +70,12 @@ export const STATUS_LABEL: Record<AgentStatus, string> = {
  *  the agent's work surfacing in the conversation, and they look different. */
 export type AgentTurn =
   /** `reaction`, when set, is what Starchild left on this one — not a control,
-   *  just what happened. Most turns get none; it is not a running tally. */
-  | { kind: "you"; text: string; reaction?: string }
-  | { kind: "agent"; text: string }
+   *  just what happened. Most turns get none; it is not a running tally.
+   *  `at`, when set, is the send time shown under the bubble; omitted on a
+   *  handful of turns is fine, the same way a messenger drops it on messages
+   *  sent seconds apart. */
+  | { kind: "you"; text: string; reaction?: string; at?: string }
+  | { kind: "agent"; text: string; at?: string }
   /** what it did, in the words someone would use about their own inbox */
   | { kind: "activity"; when: string; lines: string[] }
   /** the one thing that stops and asks */
@@ -277,9 +280,10 @@ export const AGENTS: Agent[] = [
       {
         kind: "agent",
         text: "I'm watching HYPE, SOL, ETH and BTC for funding moves — I'll only interrupt you when something actually moves out of the ordinary.",
+        at: "11:20",
       },
       { kind: "you", text: "Only alert me if it's a real move, not just noise.", reaction: "👍" },
-      { kind: "agent", text: "Understood — I'll only flag it when funding is meaningfully outside the usual range, with the market context alongside it." },
+      { kind: "agent", text: "Understood — I'll only flag it when funding is meaningfully outside the usual range, with the market context alongside it.", at: "11:21" },
       {
         kind: "activity",
         when: "13:42",
@@ -298,32 +302,6 @@ export const AGENTS: Agent[] = [
     ],
   },
   {
-    id: "wallet-tracker",
-    name: "Wallet Tracker",
-    role: "Watches a wallet's on-chain activity and flags transfers worth knowing about.",
-    status: "working",
-    mood: "Nothing unusual since yesterday.",
-    resting: "Wallet Tracker is still watching.",
-    preview: "Nothing unusual since yesterday",
-    lastActive: "15:15",
-    accent: "#4a7fa5", // "Tide"
-    watchlist: ["HYPE"],
-    rules: [
-      "Alert on transfers over $10,000.",
-      "Flag new counterparties the wallet has not interacted with before.",
-      "Do not suggest execution unless asked.",
-    ],
-    alerts: ["telegram"],
-    instruction: "Watch this wallet's on-chain activity and flag anything worth knowing about.",
-    lastChecked: "last checked 40 minutes ago",
-    tools: ["hyperliquid"],
-    thread: [
-      { kind: "agent", text: "I'm watching this wallet's on-chain activity — I'll only flag transfers that are actually worth your attention." },
-      { kind: "you", text: "Flag anything over $10k even from wallets we've seen before." },
-      { kind: "agent", text: "Got it — I'll flag transfers over $10,000 regardless of whether the counterparty is new." },
-    ],
-  },
-  {
     id: "research",
     name: "Research Agent",
     role: "Digs into things properly and comes back with the shape of it",
@@ -335,9 +313,9 @@ export const AGENTS: Agent[] = [
     accent: "#8a5f95", // "Plum"
     tools: ["notion", "gdrive"],
     thread: [
-      { kind: "agent", text: "I'm digging into how the AI tools people actually pay for are priced — I'll come back with the pattern, not a table of everyone." },
+      { kind: "agent", text: "I'm digging into how the AI tools people actually pay for are priced — I'll come back with the pattern, not a table of everyone.", at: "15:10" },
       { kind: "you", text: "Make sure you cover what Anthropic and OpenAI do specifically." },
-      { kind: "agent", text: "Will do — I'll call those two out on their own rather than folding them into the average." },
+      { kind: "agent", text: "Will do — I'll call those two out on their own rather than folding them into the average.", at: "15:11" },
       {
         kind: "activity",
         when: "Now",
@@ -358,37 +336,63 @@ export const AGENTS: Agent[] = [
     cadence: "Every Monday at 9:00",
     tools: ["gmail", "gcal", "notion"],
     thread: [
-      { kind: "agent", text: "Every Monday I'll go through the calendar and the docs and give you the honest version of where the project actually is." },
-      { kind: "you", text: "Post it to Slack too, not just here." },
-      { kind: "agent", text: "Will do — I'll post the Monday summary to Slack from now on." },
+      { kind: "agent", text: "Every Monday I'll go through the calendar and the docs and give you the honest version of where the project actually is.", at: "09:00" },
+      { kind: "you", text: "Post it to Slack too, not just here.", reaction: "✅" },
+      { kind: "agent", text: "Will do — I'll post the Monday summary to Slack from now on.", at: "09:01" },
       {
         kind: "activity",
         when: "Monday, 9:00",
         lines: ["Read the calendar and Notion", "3 tasks moved for the second week running", "Posted the summary to Slack"],
       },
-      { kind: "agent", text: "One thing worth saying out loud: the design review has moved twice. It's the only thing blocking two other tasks." },
+      { kind: "agent", text: "One thing worth saying out loud: the design review has moved twice. It's the only thing blocking two other tasks.", at: "09:06" },
     ],
   },
   {
-    id: "trading",
-    name: "Trading Agent",
-    role: "Watches your positions and steps in only where you allowed it",
-    status: "paused",
-    mood: "Watching, not acting.",
-    resting: "Trading Agent is paused. Nothing will be placed.",
-    preview: "Paused — you turned execution off",
-    lastActive: "Monday",
-    accent: "#5b8c62", // "Moss"
-    tools: ["telegram"],
+    id: "travel",
+    name: "Travel Watcher",
+    role: "Watches fares for the trips you're tracking and tells you when one's worth booking.",
+    status: "working",
+    mood: "No drop yet.",
+    resting: "Travel Watcher has nothing new to report.",
+    preview: "No drop yet",
+    lastActive: "14:33",
+    accent: "#4a7fa5", // "Tide"
+    // Brazil joined this list via the main chat, thirteen minutes after this
+    // agent was made — see the "Travel watchlist" saved conversation, which
+    // reads this live rather than replaying a copy. Said in its own thread as
+    // a line from the agent, not a log entry, for the same reason funding's
+    // watchlist change is: the thread is the only place this account reads it.
+    watchlist: ["Tokyo", "Brazil"],
+    alerts: ["telegram"],
+    instruction: "Watch fares for my trips and let me know when one's worth booking.",
+    lastChecked: "last checked 7 minutes ago",
+    tools: [],
     thread: [
-      { kind: "agent", text: "Watching your positions, not acting — you've kept execution off, so I'll monitor and tell you what I see without placing anything." },
-      { kind: "you", text: "Good. Tell me the moment something needs a decision from me.", reaction: "🫡" },
-      { kind: "agent", text: "Always — nothing gets placed without you seeing it and approving it first." },
-      {
-        kind: "activity",
-        when: "Now",
-        lines: ["Monitoring 4 positions", "No orders placed", "2 alerts sent"],
-      },
+      { kind: "agent", text: "I'm watching fares to Tokyo — I'll only interrupt you when one is genuinely worth booking.", at: "14:10" },
+      { kind: "you", text: "Only economy, and only if it's under $900.", reaction: "👍" },
+      { kind: "agent", text: "Got it — economy only, and I'll only flag it once it drops under $900.", at: "14:11" },
+      { kind: "agent", text: "I've also started keeping an eye on flights to Brazil, sent over from the main chat — same rules apply unless you tell me otherwise.", at: "14:23" },
+      { kind: "agent", text: "Found a fare drop on the São Paulo route: 22% below the recent average, still economy, still under $900. Sent to Starchild and Telegram.", at: "14:33" },
+    ],
+  },
+  {
+    id: "inbox",
+    name: "Inbox Manager",
+    role: "Goes through your inbox and drafts the routine replies.",
+    status: "working",
+    mood: "Nothing urgent this morning.",
+    resting: "Inbox Manager has nothing new to report.",
+    preview: "Nothing urgent this morning",
+    lastActive: "08:15",
+    accent: "#5b8c62", // "Moss"
+    alerts: ["telegram"],
+    instruction: "Go through my inbox every morning and draft replies to anything routine.",
+    lastChecked: "last checked this morning",
+    tools: ["gmail"],
+    thread: [
+      { kind: "agent", text: "I'm going through your inbox each morning — I'll draft replies to anything routine and leave the rest for you.", at: "08:00" },
+      { kind: "you", text: "Don't touch anything that looks personal.", reaction: "👍" },
+      { kind: "agent", text: "Understood — anything that reads as personal I'll leave for you, untouched.", at: "08:02" },
     ],
   },
 ];

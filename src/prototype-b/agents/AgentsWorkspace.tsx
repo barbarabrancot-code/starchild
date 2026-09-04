@@ -1,16 +1,21 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { PlusIcon, ArrowUpIcon, ChevronDownIcon, SettingsIcon } from "../icons";
+import {
+  PlusIcon,
+  ArrowUpIcon,
+  ChevronDownIcon,
+  PencilIcon,
+  DuplicateIcon,
+  TrashIcon,
+  PinIcon,
+} from "../icons";
 import { Reactable } from "../Reactable";
 import { AgentOrb } from "./AgentOrb";
 import { AgentOnboarding, type NewAgent } from "./AgentOnboarding";
 import { AgentPicker } from "./AgentPicker";
-import { NewAgentPanel, type NewDedicatedAgent } from "./NewAgentPanel";
 import { ACCENTS, FIRST_QUESTIONS, GREETING } from "./onboardingData";
-import { AppIcon } from "./AppIcon";
-import { STATUS_LABEL, lastAgentLine, type Agent, type AgentTurn } from "./agentsData";
-import { ConnectorPicker } from "./ConnectorPicker";
-import { BY_ID, type ConnectorId } from "./connectors";
+import { lastAgentLine, type Agent, type AgentTurn } from "./agentsData";
+import { type ConnectorId } from "./connectors";
 import { useAgents } from "./store";
 
 /**
@@ -35,15 +40,20 @@ import { useAgents } from "./store";
 const AgentRow = ({
   agent,
   active,
+  pinned,
   onSelect,
+  onContextMenu,
 }: {
   agent: Agent;
   active: boolean;
+  pinned: boolean;
   onSelect: () => void;
+  onContextMenu: (e: React.MouseEvent) => void;
 }) => (
   <button
     type="button"
     onClick={onSelect}
+    onContextMenu={onContextMenu}
     className={`ag-row${active ? " ag-row--on" : ""}`}
   >
     <span className="ag-row-orb" style={agent.accent ? { ["--agent-accent"]: agent.accent } as React.CSSProperties : undefined}>
@@ -52,6 +62,9 @@ const AgentRow = ({
     <span className="ag-row-body">
       <span className="ag-row-top">
         <span className="ag-row-name">{agent.name}</span>
+        {/* Pinned is read here, not as a badge elsewhere — the row's own
+            position already says so; this is just why. */}
+        {pinned && <span className="ag-row-pin" aria-label="Pinned" title="Pinned" />}
         <span className="ag-row-time">{agent.lastActive}</span>
       </span>
       <span className="ag-row-mood">{lastAgentLine(agent)}</span>
@@ -59,15 +72,58 @@ const AgentRow = ({
   </button>
 );
 
-/** What the agent did, as the person would describe it — never a tool call log.
- *  Centred and out of the message column on purpose, the way a messenger's own
- *  system notices are: this is not something said to you, it is something that
- *  happened, so it does not sit on a side the way a turn from a speaker would. */
-function ActivityBlock({ when, lines }: { when: string; lines: string[] }) {
+/** The floating menu a right-click opens — the same four things any list of
+ *  named things offers, none invented for agents specifically. */
+function AgentRowMenu({
+  x,
+  y,
+  pinned,
+  onEdit,
+  onDuplicate,
+  onDelete,
+  onPin,
+  onClose,
+}: {
+  x: number;
+  y: number;
+  pinned: boolean;
+  onEdit: () => void;
+  onDuplicate: () => void;
+  onDelete: () => void;
+  onPin: () => void;
+  onClose: () => void;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const onDown = (e: MouseEvent) => {
+      if (!ref.current?.contains(e.target as Node)) onClose();
+    };
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [onClose]);
+
   return (
-    <div className="ag-activity">
-      <p className="ag-activity-when">{when}</p>
-      <p className="ag-activity-line">{lines.join(" · ")}</p>
+    <div ref={ref} className="ag-ctx" style={{ left: x, top: y }} role="menu">
+      <button type="button" role="menuitem" onClick={onEdit}>
+        <PencilIcon className="size-3.5" /> Edit profile
+      </button>
+      <button type="button" role="menuitem" onClick={onDuplicate}>
+        <DuplicateIcon className="size-3.5" /> Duplicate
+      </button>
+      <div className="ag-ctx-sep" />
+      <button type="button" role="menuitem" className="ag-ctx-danger" onClick={onDelete}>
+        <TrashIcon className="size-3.5" /> Delete
+      </button>
+      <div className="ag-ctx-sep" />
+      <button type="button" role="menuitem" onClick={onPin}>
+        <PinIcon className="size-3.5" /> {pinned ? "Unpin" : "Pin"}
+      </button>
     </div>
   );
 }
@@ -115,7 +171,9 @@ function SummaryBlock({ name, cadence, apps }: { name: string; cadence: string; 
 }
 
 function Turn({ turn, onReply }: { turn: AgentTurn; onReply: (quote: string) => void }) {
-  if (turn.kind === "activity") return <ActivityBlock when={turn.when} lines={turn.lines} />;
+  // Activity notices are not something said to you — they don't render here,
+  // the way a system notice in a messenger doesn't sit in the message column.
+  if (turn.kind === "activity") return null;
   if (turn.kind === "approval") return <ApprovalBlock {...turn} />;
   if (turn.kind === "summary") return <SummaryBlock {...turn} />;
 
@@ -126,7 +184,10 @@ function Turn({ turn, onReply }: { turn: AgentTurn; onReply: (quote: string) => 
       reaction={turn.kind === "you" ? turn.reaction : undefined}
       onReply={() => onReply(turn.text)}
     >
-      <div className={`ag-bubble ag-msg${mine ? " ag-msg--mine" : ""}`}>{turn.text}</div>
+      <div className={`ag-msg-col${mine ? " ag-msg-col--mine" : ""}`}>
+        <div className={`ag-bubble ag-msg${mine ? " ag-msg--mine" : ""}`}>{turn.text}</div>
+        {turn.at && <span className="ag-msg-time">{turn.at}</span>}
+      </div>
     </Reactable>
   );
 }
@@ -143,7 +204,7 @@ export function AgentsWorkspace({
    * this for a while — `?agents=empty` starts it bare so the first-run intro and
    * the empty state can be reviewed without deleting anything.
    */
-  const { roster, addAgent, updateAgent, setAgentTools, removeAgent } = useAgents();
+  const { roster, addAgent, updateAgent, removeAgent } = useAgents();
 
   /**
    * The onboarding runs once ever. After that, clicking Agents opens the workspace
@@ -164,15 +225,20 @@ export function AgentsWorkspace({
    * know which. See AgentPicker.
    */
   const [picking, setPicking] = useState(false);
-  /** the structured "+ New agent" form. Non-null means open; the string is what to
-   *  prefill the name with — empty when opened straight off the "+", the typed
-   *  query when the picker found nothing that already matched it. */
-  const [formName, setFormName] = useState<string | null>(null);
+  /** A blank agent, not yet on the roster — held here rather than added straight
+   *  away, so the drawer on the right can be its whole creation form: a name, a
+   *  mission, a colour, and what it may reach, the same fields editing one uses,
+   *  just empty. Non-null means the drawer is showing this instead of a roster
+   *  agent. */
+  const [creating, setCreating] = useState<{ name: string; mission: string; accent: string; tools: ConnectorId[] } | null>(null);
 
   const startPicking = () => setPicking(true);
   const [activeId, setActiveId] = useState<string>(focusId ?? "");
-  /** the connector sheet, opened from the drawer */
-  const [managing, setManaging] = useState(false);
+  /** rows kept at the top of the roster, most recently pinned first — a display
+   *  order, not a fact about the agent, so it lives here rather than on `Agent`. */
+  const [pinnedIds, setPinnedIds] = useState<string[]>([]);
+  /** the row a right-click opened, and where */
+  const [rowMenu, setRowMenu] = useState<{ id: string; x: number; y: number } | null>(null);
   /** everything true about the agent that is not part of the conversation */
   const [drawer, setDrawer] = useState(false);
   /** deletion needs an explicit second action; it is the only irreversible control here */
@@ -197,11 +263,33 @@ export function AgentsWorkspace({
     removeAgent(agent.id);
     setActiveId(next?.id ?? "");
     setDrawer(false);
-    setManaging(false);
     setConfirmingDelete(false);
     setReplyTo(null);
     setDraft("");
   };
+
+  /** A row's own copy — same fields, a fresh id, a name that says so. Starts
+   *  paused: a duplicate is a template someone meant to change before it runs
+   *  loose doing the same job as the one it was copied from. */
+  const duplicateAgent = (source: Agent) => {
+    const copy: Agent = {
+      ...source,
+      id: `a${Date.now()}`,
+      name: `${source.name} (copy)`,
+      status: "paused",
+      mood: "Paused — just duplicated.",
+      thread: [{ kind: "agent", text: `I'm a copy of ${source.name}, paused until you tell me what to change.` }],
+    };
+    addAgent(copy);
+    setActiveId(copy.id);
+  };
+
+  const togglePin = (id: string) =>
+    setPinnedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [id, ...prev]));
+
+  const orderedRoster = pinnedIds.length
+    ? [...roster].sort((a, b) => Number(pinnedIds.includes(b.id)) - Number(pinnedIds.includes(a.id)))
+    : roster;
 
   /**
    * Every agent starts the same way: named, empty-handed, and talking. A colour
@@ -238,54 +326,48 @@ export function AgentsWorkspace({
   };
 
   /**
-   * A dedicated agent, fully formed, from the fields someone actually filled in —
+   * A dedicated agent, fully formed, from the drawer someone just filled in —
    * as against `birth`, which starts one empty-handed and lets a scripted
    * conversation fill it in over three questions. This is the other of the two
    * ways an agent can start existing, and the only one this model still allows
-   * from outside a conversation with the agent itself: on purpose, with a
-   * mission, a watchlist, and a channel list already decided.
+   * from outside a conversation with the agent itself: on purpose, with a name,
+   * a mission, a colour and a set of tools already decided, in the same panel
+   * that will keep editing it once it is real.
    */
-  const createDedicatedAgent = (made: NewDedicatedAgent) => {
+  const createFromDraft = () => {
+    if (!creating) return;
+    const name = creating.name.trim() || "New agent";
+    const mission = creating.mission.trim();
     const agent: Agent = {
       id: `a${Date.now()}`,
-      name: made.name,
-      role: made.mission,
-      instruction: made.mission,
+      name,
+      role: mission || "Working out its job with you",
+      instruction: mission || undefined,
       status: "working",
-      mood: "No signal yet.",
-      resting: `${made.name} has nothing new to report.`,
+      mood: mission ? "No signal yet." : "Just started. Getting its bearings.",
+      resting: `${name} has nothing new to report.`,
       preview: "No signal yet",
       lastActive: "just now",
-      accent: ACCENTS.ember.hex,
-      watchlist: made.watchlist,
-      // The trigger becomes the first, specific rule; the other two are the
-      // standing policy every dedicated agent made from this form starts under
-      // — report with context, never move toward execution unasked. A mission
-      // says what the agent is for; these say what it will never do on its own,
-      // and that second thing does not vary by mission the way the first does.
+      accent: creating.accent,
+      // The standing policy every dedicated agent starts under — report with
+      // context, never move toward execution unasked — regardless of what the
+      // mission turns out to be.
       rules: [
-        ...(made.trigger ? [`Alert ${made.trigger.replace(/^when\s+/i, "")}.`] : []),
         "Include market context before alerting.",
         "Do not suggest execution unless asked.",
       ],
-      alerts: made.alerts,
-      cadence: made.trigger || undefined,
       lastChecked: "Just created — first check due shortly",
-      tools: made.connectors,
-      thread: [
-        { kind: "you", text: made.mission },
-        {
-          kind: "agent",
-          text: made.watchlist.length
-            ? `Got it. I'll watch ${made.watchlist.join(", ")} and only interrupt you when it's genuinely worth it.`
-            : "Got it. I'll keep at this and only interrupt you when it's genuinely worth it.",
-        },
-      ],
+      tools: creating.tools,
+      thread: mission
+        ? [
+            { kind: "you", text: mission },
+            { kind: "agent", text: "Got it. I'll keep at this and only interrupt you when it's genuinely worth it." },
+          ]
+        : GREETING("Bárbara").map((text) => ({ kind: "agent", text }) as const),
     };
     addAgent(agent);
     setActiveId(agent.id);
-    setFormName(null);
-    setPicking(false);
+    setCreating(null);
   };
 
   /**
@@ -358,12 +440,17 @@ export function AgentsWorkspace({
             </div>
           )}
 
-          {roster.map((a) => (
+          {orderedRoster.map((a) => (
             <AgentRow
               key={a.id}
               agent={a}
               active={a.id === agent.id}
+              pinned={pinnedIds.includes(a.id)}
               onSelect={() => setActiveId(a.id)}
+              onContextMenu={(e) => {
+                e.preventDefault();
+                setRowMenu({ id: a.id, x: e.clientX, y: e.clientY });
+              }}
             />
           ))}
 
@@ -384,26 +471,45 @@ export function AgentsWorkspace({
         </div>
       </aside>
 
+      {rowMenu && (() => {
+        const row = roster.find((a) => a.id === rowMenu.id);
+        if (!row) return null;
+        return (
+          <AgentRowMenu
+            x={rowMenu.x}
+            y={rowMenu.y}
+            pinned={pinnedIds.includes(row.id)}
+            onEdit={() => { setActiveId(row.id); setCreating(null); setDrawer(true); setRowMenu(null); }}
+            onDuplicate={() => { duplicateAgent(row); setRowMenu(null); }}
+            onDelete={() => {
+              const next = roster.find((candidate) => candidate.id !== row.id);
+              removeAgent(row.id);
+              if (activeId === row.id) setActiveId(next?.id ?? "");
+              setPinnedIds((prev) => prev.filter((id) => id !== row.id));
+              setRowMenu(null);
+            }}
+            onPin={() => { togglePin(row.id); setRowMenu(null); }}
+            onClose={() => setRowMenu(null)}
+          />
+        );
+      })()}
+
       {/* Same slot as the thread, for the same reason setup uses it: the roster
           stays put, so whichever way this ends — an existing agent or a new one —
           the answer lands where the person was already looking. */}
-      {picking && formName === null && !setup && (
+      {picking && !creating && !setup && (
         <AgentPicker
           roster={roster}
           onPick={(id) => { setActiveId(id); setPicking(false); }}
-          // Into the structured form, not straight into a scripted conversation:
-          // a dedicated agent is created on purpose, with a mission and a
-          // watchlist decided up front, not discovered three questions in.
-          onCreate={(name) => setFormName(name?.trim() ?? "")}
+          // Straight into the drawer, blank, rather than a form of its own — the
+          // same panel that edits an agent is the one that makes it, so there is
+          // only ever one place these fields live.
+          onCreate={(name) => {
+            setCreating({ name: name?.trim() ?? "", mission: "", accent: ACCENTS.ember.hex, tools: [] });
+            setPicking(false);
+            setDrawer(true);
+          }}
           onClose={() => setPicking(false)}
-        />
-      )}
-
-      {picking && formName !== null && !setup && (
-        <NewAgentPanel
-          initialName={formName}
-          onCancel={() => setFormName(null)}
-          onCreate={createDedicatedAgent}
         />
       )}
 
@@ -420,8 +526,12 @@ export function AgentsWorkspace({
         />
       )}
 
+      {/* Blank, on purpose — the actual form is the drawer on the right, and
+          that is where the whole act of creating one now happens. */}
+      {!setup && !picking && creating && <section className="ag-thread ag-thread--blank" />}
+
       {/* the agent itself: who it is, what it can touch, and everything it has done */}
-      {!setup && !picking && agent && (
+      {!setup && !picking && !creating && agent && (
       <section className="ag-thread">
         {/* The schedule, the state and the tools are facts about the agent, not
             about the conversation — sat up here permanently they were a panel you
@@ -497,36 +607,7 @@ export function AgentsWorkspace({
             </motion.div>
           )}
 
-          {/* The bottom of a thread is where an agent is most obviously not a chat:
-              there is nothing to reply to, and something is still going on. */}
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.6, delay: 0.5 }}
-            className="ag-resting"
-          >
-            <AgentOrb status={agent.status} size={6} still />
-            {agent.resting}
-          </motion.p>
         </motion.div>
-
-        {/* In place, over the thread, rather than a page of its own: the question
-            being answered is "what may *this* agent reach", and the answer is only
-            legible next to the agent it is about. */}
-        {managing && (
-          <div className="ag-sheet">
-            <div className="ag-sheet-head">
-              <p className="ag-sheet-title">Tools {agent.name} can use</p>
-              <button type="button" className="ag-sheet-close" onClick={() => setManaging(false)}>
-                Done
-              </button>
-            </div>
-            <ConnectorPicker
-              enabled={agent.tools}
-              onToggle={(next) => setAgentTools(agent.id, next)}
-            />
-          </div>
-        )}
 
         <div className="ag-composer">
           {replyTo && (
@@ -557,7 +638,7 @@ export function AgentsWorkspace({
           thread — and enabling a tool from here should visibly change the chips,
           which it cannot do if the panel covering them has to be dismissed first. */}
       <AnimatePresence>
-        {!setup && !picking && agent && drawer && (
+        {!setup && !picking && (creating || agent) && drawer && (
           <motion.aside
             key="drawer"
             initial={{ width: 0, opacity: 0 }}
@@ -568,22 +649,32 @@ export function AgentsWorkspace({
           >
             <div className="ag-drawer-in">
               <div className="ag-drawer-top">
-                <p className="ag-drawer-kicker">Agent</p>
-                <button type="button" className="ag-drawer-x" onClick={() => { setDrawer(false); setConfirmingDelete(false); }} aria-label="Close">
+                <p className="ag-drawer-kicker">{creating ? "New agent" : "Agent"}</p>
+                <button
+                  type="button"
+                  className="ag-drawer-x"
+                  onClick={() => { setDrawer(false); setConfirmingDelete(false); setCreating(null); }}
+                  aria-label="Close"
+                >
                   ✕
                 </button>
               </div>
 
               <div className="ag-drawer-orb">
-                <AgentOrb status={agent.status} size={34} halo accent={agent.accent} still />
+                <AgentOrb status="working" size={34} halo accent={creating ? creating.accent : agent!.accent} still />
               </div>
 
               <label className="ag-field">
                 <span className="ag-field-label">Name</span>
                 <input
                   className="ag-field-in"
-                  value={agent.name}
-                  onChange={(e) => updateAgent(agent.id, (a) => ({ ...a, name: e.target.value }))}
+                  autoFocus={Boolean(creating)}
+                  value={creating ? creating.name : agent!.name}
+                  onChange={(e) =>
+                    creating
+                      ? setCreating({ ...creating, name: e.target.value })
+                      : updateAgent(agent!.id, (a) => ({ ...a, name: e.target.value }))
+                  }
                 />
               </label>
 
@@ -599,8 +690,12 @@ export function AgentsWorkspace({
                 <textarea
                   className="ag-field-in"
                   rows={3}
-                  value={agent.instruction ?? agent.role}
-                  onChange={(e) => updateAgent(agent.id, (a) => ({ ...a, instruction: e.target.value }))}
+                  value={creating ? creating.mission : (agent!.instruction ?? agent!.role)}
+                  onChange={(e) =>
+                    creating
+                      ? setCreating({ ...creating, mission: e.target.value })
+                      : updateAgent(agent!.id, (a) => ({ ...a, instruction: e.target.value }))
+                  }
                 />
               </label>
 
@@ -610,10 +705,10 @@ export function AgentsWorkspace({
                   clause out of a sentence in a text box is worse than just saying
                   the change: "only alert me if funding is acceptable too" is
                   already the whole interface for this. */}
-              {(agent.conditions?.length ?? 0) > 0 && (
+              {!creating && (agent!.conditions?.length ?? 0) > 0 && (
                 <div className="ag-field">
                   <span className="ag-field-label">Alerts when</span>
-                  <p className="ag-conditions">{agent.conditions!.join(", and ")}</p>
+                  <p className="ag-conditions">{agent!.conditions!.join(", and ")}</p>
                 </div>
               )}
 
@@ -623,98 +718,67 @@ export function AgentsWorkspace({
                     look at. Status stays carried by form and motion, so a tide-blue
                     agent that needs you is still a ring. */}
                 <div className="ag-swatches">
-                  {Object.entries(ACCENTS).map(([id, c]) => (
-                    <button
-                      key={id}
-                      type="button"
-                      aria-label={c.name}
-                      aria-pressed={agent.accent === c.hex}
-                      onClick={() => updateAgent(agent.id, (x) => ({ ...x, accent: c.hex }))}
-                      className={`ag-swatch${agent.accent === c.hex ? " ag-swatch--on" : ""}`}
-                      style={{ ["--pick" as string]: c.hex }}
-                    />
-                  ))}
+                  {Object.entries(ACCENTS).map(([id, c]) => {
+                    const on = (creating ? creating.accent : agent!.accent) === c.hex;
+                    return (
+                      <button
+                        key={id}
+                        type="button"
+                        aria-label={c.name}
+                        aria-pressed={on}
+                        onClick={() =>
+                          creating
+                            ? setCreating({ ...creating, accent: c.hex })
+                            : updateAgent(agent!.id, (x) => ({ ...x, accent: c.hex }))
+                        }
+                        className={`ag-swatch${on ? " ag-swatch--on" : ""}`}
+                        style={{ ["--pick" as string]: c.hex }}
+                      />
+                    );
+                  })}
                 </div>
               </div>
 
-              <div className="ag-field">
-                <span className="ag-field-label">Right now</span>
-                {/* Not a pill. Everything else pill-shaped in this column is
-                    something you press, and a status is the one thing here that is
-                    only ever read — so it is a dot and a word, the same two parts
-                    the roster uses to say the same thing. */}
-                <p className={`ag-state ag-state--${agent.status}`}>
-                  <i aria-hidden="true" />
-                  {STATUS_LABEL[agent.status]}
-                </p>
-                {agent.cadence && (
-                  <p className="ag-cadence">
-                    {/* the smallest possible sign that a schedule is a live thing and
-                        not a printed fact — one dot, going round slowly */}
-                    <span className="ag-tick" aria-hidden="true"><i /></span>
-                    {agent.cadence}
-                  </p>
-                )}
-              </div>
-
-              <div className="ag-field">
-                <span className="ag-field-head">
-                  Connectors
-                  {/* On the label rather than under the chips: a pill button sitting
-                      with the chips reads as a seventh connector nobody enabled. */}
-                  <button
-                    type="button"
-                    className="ag-gear"
-                    aria-label="Manage connectors"
-                    title="Manage connectors"
-                    onClick={() => setManaging(true)}
-                  >
-                    <SettingsIcon className="size-[18px]" />
-                  </button>
-                </span>
-                {/* chips, not rows: what an agent can reach is something you read at
-                    a glance. Changing it is a different act, and it has a button. */}
-                <div className="ag-chips">
-                  {agent.tools.map((id) => (
-                    <span key={id} className="ag-chip">
-                      <AppIcon kind={BY_ID[id].kind} className="size-3.5" />
-                      {BY_ID[id].name}
-                    </span>
-                  ))}
-                  {agent.tools.length === 0 && <span className="ag-chip ag-chip--none">Nothing yet</span>}
-                </div>
-              </div>
-
-              <div className="ag-danger-zone">
-                {confirmingDelete ? (
-                  <>
-                    <p>Delete {agent.name}? This cannot be undone.</p>
-                    <div>
-                      <button type="button" onClick={() => setConfirmingDelete(false)}>Cancel</button>
-                      <button type="button" className="ag-delete-confirm" onClick={deleteAgent}>Delete agent</button>
-                    </div>
-                  </>
-                ) : (
+              {creating ? (
+                <div className="ag-danger-zone">
                   <div>
-                    <button
-                      type="button"
-                      className="ag-pause"
-                      onClick={() =>
-                        updateAgent(agent.id, (a) =>
-                          a.status === "paused"
-                            ? { ...a, status: "working", mood: "Back on it." }
-                            : { ...a, status: "paused", mood: "Paused by you." },
-                        )
-                      }
-                    >
-                      {agent.status === "paused" ? "Resume agent" : "Pause agent"}
-                    </button>
-                    <button type="button" className="ag-delete" onClick={() => setConfirmingDelete(true)}>
-                      Delete agent
+                    <button type="button" className="ag-pause" onClick={createFromDraft}>
+                      Create agent
                     </button>
                   </div>
-                )}
-              </div>
+                </div>
+              ) : (
+                <div className="ag-danger-zone">
+                  {confirmingDelete ? (
+                    <>
+                      <p>Delete {agent!.name}? This cannot be undone.</p>
+                      <div>
+                        <button type="button" onClick={() => setConfirmingDelete(false)}>Cancel</button>
+                        <button type="button" className="ag-delete-confirm" onClick={deleteAgent}>Delete agent</button>
+                      </div>
+                    </>
+                  ) : (
+                    <div>
+                      <button
+                        type="button"
+                        className="ag-pause"
+                        onClick={() =>
+                          updateAgent(agent!.id, (a) =>
+                            a.status === "paused"
+                              ? { ...a, status: "working", mood: "Back on it." }
+                              : { ...a, status: "paused", mood: "Paused by you." },
+                          )
+                        }
+                      >
+                        {agent!.status === "paused" ? "Resume agent" : "Pause agent"}
+                      </button>
+                      <button type="button" className="ag-delete" onClick={() => setConfirmingDelete(true)}>
+                        Delete agent
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </motion.aside>
         )}
@@ -767,6 +831,30 @@ export function AgentsWorkspace({
           overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
         }
         .ag-row--on .ag-row-mood { color: rgba(255,255,255,.55); }
+        .ag-row-pin {
+          flex: none; width: 5px; height: 5px; border-radius: 999px;
+          background: var(--color-primary);
+        }
+
+        /* The right-click menu — fixed to the cursor, not the row, so it never
+           has to guess which edge of the sidebar has room. */
+        .ag-ctx {
+          position: fixed; z-index: 50; min-width: 172px; padding: 6px;
+          border-radius: 12px; border: 1px solid rgba(255,255,255,.1);
+          background: #1c1c1e; box-shadow: 0 20px 50px rgba(0,0,0,.55);
+          display: flex; flex-direction: column; gap: 1px;
+          font-family: var(--font-google-sans);
+        }
+        .ag-ctx button {
+          display: flex; align-items: center; gap: 10px; width: 100%;
+          padding: 8px 10px; border: 0; border-radius: 8px; cursor: pointer;
+          background: none; text-align: left;
+          font-family: inherit; font-size: 13.5px; color: rgba(255,255,255,.85);
+        }
+        .ag-ctx button:hover { background: rgba(255,255,255,.07); }
+        .ag-ctx-danger { color: #ff8a70 !important; }
+        .ag-ctx-danger:hover { background: rgba(248,70,0,.12) !important; }
+        .ag-ctx-sep { height: 1px; margin: 5px 4px; background: rgba(255,255,255,.08); }
 
         .ag-empty { padding: 18px 10px 8px; display: flex; flex-direction: column; gap: 7px; }
         .ag-empty-title { margin: 0; font-size: 14px; font-weight: 500; color: rgba(255,255,255,.6); }
@@ -892,19 +980,6 @@ export function AgentsWorkspace({
           text-transform: uppercase; color: rgba(255,255,255,.28);
         }
         .ag-field-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-        /* A 32px target with an 18px glyph. It was 14px in a 20px box, which is
-           under every hit-target floor there is and read as a smudge next to an
-           11px label. The negative margin keeps the row the height of the label,
-           so the target grew without the layout moving. */
-        .ag-gear {
-          display: flex; align-items: center; justify-content: center;
-          width: 32px; height: 32px; margin: -9px -7px -9px 0;
-          border: 0; border-radius: 8px; background: none; cursor: pointer;
-          color: rgba(255,255,255,.5);
-          transition: color .15s ease, background-color .15s ease;
-        }
-        .ag-gear:hover { color: #fff; background: rgba(255,255,255,.09); }
-        .ag-gear:focus-visible { outline: 2px solid rgba(248,70,0,.7); outline-offset: 1px; }
         /* editable, because the two things someone opens this for are what it is
            called and what it is for */
         .ag-field-in {
@@ -924,19 +999,6 @@ export function AgentsWorkspace({
         }
         .ag-swatch:hover { box-shadow: 0 0 0 2px rgba(255,255,255,.3); }
         .ag-swatch--on { border-color: #fff; }
-
-        .ag-chips { display: flex; flex-wrap: wrap; gap: 6px; }
-        .ag-chip {
-          display: inline-flex; align-items: center; gap: 6px;
-          padding: 5px 11px; border-radius: 999px;
-          border: 1px solid rgba(248,70,0,.32); background: rgba(248,70,0,.09);
-          font-size: 12px; color: rgba(255,255,255,.88);
-        }
-        .ag-chip svg { color: var(--color-primary); }
-        .ag-chip--none {
-          border-color: rgba(255,255,255,.12); border-style: dashed; background: none;
-          color: rgba(255,255,255,.3);
-        }
 
         .ag-danger-zone {
           margin-top: auto; padding-top: 18px; border-top: 1px solid rgba(255,255,255,.08);
@@ -1022,7 +1084,7 @@ export function AgentsWorkspace({
           /* hugs its text: the blocks are direct children of a flex column, so without
              this they stretch to the cap and a three-line receipt reads as wide as
              the longest sentence in the thread */
-          width: fit-content; align-self: flex-start;
+          width: fit-content;
           max-width: 560px; padding: 11px 16px; border-radius: 16px 16px 16px 4px;
           background: rgba(255,255,255,.05);
         }
@@ -1032,6 +1094,12 @@ export function AgentsWorkspace({
           border-radius: 16px 16px 4px 16px;
           background: rgba(248,70,0,.14);
         }
+
+        /* wraps a bubble and its send time, so the time can sit on the same
+           side as the bubble it belongs to without widening the row itself */
+        .ag-msg-col { display: flex; flex-direction: column; gap: 4px; width: fit-content; align-items: flex-start; }
+        .ag-msg-col--mine { align-items: flex-end; }
+        .ag-msg-time { font-size: 11px; padding: 0 4px; color: rgba(255,255,255,.32); }
 
         /* Work, not talk — a system notice, not a turn from a speaker, so it reads
            the way a messenger's own "you changed the group name" does: centred,
@@ -1087,20 +1155,6 @@ export function AgentsWorkspace({
         .ag-btn--go:hover { background: #ff5a1f; }
 
         /* ---------- composer ---------- */
-
-        .ag-sheet {
-          flex: none; margin: 0 24px 4px; padding: 16px 18px 18px;
-          border-radius: 16px; border: 1px solid rgba(255,255,255,.12);
-          background: rgba(20,20,22,.96);
-          display: flex; flex-direction: column; gap: 12px;
-        }
-        .ag-sheet-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-        .ag-sheet-title { margin: 0; font-size: 14px; font-weight: 600; }
-        .ag-sheet-close {
-          padding: 5px 14px; border-radius: 999px; cursor: pointer;
-          border: 0; background: var(--color-primary); color: #fff;
-          font-family: inherit; font-size: 12.5px; font-weight: 500;
-        }
 
         .ag-composer { flex: none; padding: 14px 24px 20px; }
         .ag-quote {

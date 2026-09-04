@@ -203,11 +203,12 @@ export function SavedThread({
         .sv-right + .sv-left { margin-top: 50px; }
 
         .sv-msg {
-          max-width: 520px; padding: 0;
+          max-width: 520px; padding: 11px 16px; border-radius: 16px 16px 16px 4px;
+          background: rgba(255,255,255,.05);
           font-size: 14.5px; line-height: 1.6; color: rgba(255,255,255,.85);
         }
         .sv-msg--mine {
-          padding: 11px 16px; border-radius: 16px 16px 4px 16px;
+          border-radius: 16px 16px 4px 16px;
           background: rgba(255,255,255,.08); color: rgba(255,255,255,.92);
         }
 

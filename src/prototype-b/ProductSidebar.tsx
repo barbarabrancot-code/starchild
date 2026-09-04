@@ -6,6 +6,7 @@ import {
   PuzzleIcon,
   BriefcaseIcon,
   EllipsisIcon,
+  SearchIcon,
   type IconComponent,
 } from "./icons";
 
@@ -118,6 +119,15 @@ export function ProductSidebar({
                   </button>
                 );
               })}
+
+              <button
+                type="button"
+                className="flex size-10 items-center justify-center rounded-lg text-white/45 transition-colors hover:bg-white/[0.05] hover:text-white"
+                aria-label="Search"
+                title="Search"
+              >
+                <SearchIcon className="size-[18px]" />
+              </button>
 
               <button
                 type="button"
@@ -259,6 +269,15 @@ function SidebarBody({
             </div>
           );
         })}
+
+        <button
+          type="button"
+          className="flex w-full items-center gap-3 rounded-lg px-2.5 py-2.5 text-left text-[14px] text-white/50 transition-colors duration-200 hover:bg-white/[0.05] hover:text-white"
+          style={{ fontFamily: "var(--font-google-sans)" }}
+        >
+          <span className="shrink-0 text-white/40"><SearchIcon className="size-[18px]" /></span>
+          Search Chats
+        </button>
 
         <button
           type="button"
