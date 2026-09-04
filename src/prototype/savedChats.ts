@@ -15,7 +15,9 @@ import type { ConnectorId } from "./agents/connectors";
  */
 
 export type SavedTurn =
-  /** the person */
+  /** the person. No reactions here — that is an Agent-thread thing, where
+   *  Starchild is the one other voice in the conversation; the main chat
+   *  never carries one. */
   | { who: "you"; text: string }
   /** Starchild */
   | { who: "ai"; text: string }

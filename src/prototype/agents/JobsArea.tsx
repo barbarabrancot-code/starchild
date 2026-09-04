@@ -23,15 +23,10 @@ import { ChatBubbleIcon, PencilIcon, PlusIcon } from "../icons";
  */
 export function JobsArea({
   focusId,
-  onBackToChat,
   onCreateWithChat,
 }: {
   /** open straight into one job's detail — set when arriving via "View job" elsewhere */
   focusId?: string;
-  /** "Back to chat" — handed the job that was open, so the chat it returns to
-   *  can focus the composer on that job specifically rather than landing
-   *  somewhere generic. */
-  onBackToChat: (task: ActiveTask) => void;
   onCreateWithChat: () => void;
 }) {
   const { activeTasks, addTask, updateTask, removeTask } = useAgents();
@@ -231,8 +226,6 @@ export function JobsArea({
                 </span>
               </div>
 
-              <p className="ja-started">Started from Chat</p>
-
               <label className="ja-prompt">
                 <span>Prompt</span>
                 <textarea
@@ -288,10 +281,6 @@ export function JobsArea({
                     <dd>{task.runs}</dd>
                   </div>
                 )}
-                <div>
-                  <dt>Started from</dt>
-                  <dd>Chat</dd>
-                </div>
                 </dl>
               </div>
 
@@ -301,9 +290,6 @@ export function JobsArea({
                 </button>
                 <button type="button" className="ja-btn ja-btn--danger" onClick={() => cancel(task.id)}>
                   Cancel
-                </button>
-                <button type="button" className="ja-btn ja-btn--quiet" onClick={() => onBackToChat(task)}>
-                  Back to chat
                 </button>
               </div>
             </div>
@@ -488,14 +474,12 @@ export function JobsArea({
         .ja-menu button:hover { background: rgba(255,255,255,.07); }
         .ja-menu-danger { color: rgba(255,120,90,.85) !important; }
 
-        /* A dot and a word: a healthy running task is green, while a state that
-           needs attention is orange. Paused remains deliberately quiet. */
+        /* A dot and a word, and only ever these two: a task is either running or
+           it isn't. Paused remains deliberately quiet. */
         .ja-status { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; color: rgba(255,255,255,.55); }
         .ja-status i { width: 5px; height: 5px; border-radius: 999px; background: currentColor; }
-        .ja-status--active { color: #00d89b; }
+        .ja-status--active { color: #ff7a45; }
         .ja-status--paused { color: rgba(255,255,255,.32); }
-        .ja-status--possible-setup { color: #ff7a45; }
-        .ja-status--needs-input { color: #ff7a45; }
 
         /* Same shape as AgentsWorkspace's own .ag-drawer/.ag-drawer-in: a
            fixed-width panel that owns its own scroll, animated on width so it
@@ -528,8 +512,6 @@ export function JobsArea({
           font: inherit; font-size: 13.5px; line-height: 1.5;
         }
         .ja-prompt textarea:focus { outline: none; border-color: rgba(248,70,0,.65); background: rgba(248,70,0,.04); }
-
-        .ja-started { margin: 8px 0 0; font-size: 12.5px; color: rgba(255,255,255,.35); }
 
         /* Narrower than the old free-standing layout's meta box — a 360px
            drawer has no room for two wide columns, so this reads down the
