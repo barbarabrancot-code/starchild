@@ -184,7 +184,10 @@ function Turn({ turn, onReply }: { turn: AgentTurn; onReply: (quote: string) => 
       reaction={turn.kind === "you" ? turn.reaction : undefined}
       onReply={() => onReply(turn.text)}
     >
-      <div className={`ag-bubble ag-msg${mine ? " ag-msg--mine" : ""}`}>{turn.text}</div>
+      <div className={`ag-msg-col${mine ? " ag-msg-col--mine" : ""}`}>
+        <div className={`ag-bubble ag-msg${mine ? " ag-msg--mine" : ""}`}>{turn.text}</div>
+        {turn.at && <span className="ag-msg-time">{turn.at}</span>}
+      </div>
     </Reactable>
   );
 }
@@ -1081,7 +1084,7 @@ export function AgentsWorkspace({
           /* hugs its text: the blocks are direct children of a flex column, so without
              this they stretch to the cap and a three-line receipt reads as wide as
              the longest sentence in the thread */
-          width: fit-content; align-self: flex-start;
+          width: fit-content;
           max-width: 560px; padding: 11px 16px; border-radius: 16px 16px 16px 4px;
           background: rgba(255,255,255,.05);
         }
@@ -1091,6 +1094,12 @@ export function AgentsWorkspace({
           border-radius: 16px 16px 4px 16px;
           background: rgba(248,70,0,.14);
         }
+
+        /* wraps a bubble and its send time, so the time can sit on the same
+           side as the bubble it belongs to without widening the row itself */
+        .ag-msg-col { display: flex; flex-direction: column; gap: 4px; width: fit-content; align-items: flex-start; }
+        .ag-msg-col--mine { align-items: flex-end; }
+        .ag-msg-time { font-size: 11px; padding: 0 4px; color: rgba(255,255,255,.32); }
 
         /* Work, not talk — a system notice, not a turn from a speaker, so it reads
            the way a messenger's own "you changed the group name" does: centred,

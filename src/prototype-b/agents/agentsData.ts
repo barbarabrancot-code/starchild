@@ -70,9 +70,12 @@ export const STATUS_LABEL: Record<AgentStatus, string> = {
  *  the agent's work surfacing in the conversation, and they look different. */
 export type AgentTurn =
   /** `reaction`, when set, is what Starchild left on this one — not a control,
-   *  just what happened. Most turns get none; it is not a running tally. */
-  | { kind: "you"; text: string; reaction?: string }
-  | { kind: "agent"; text: string }
+   *  just what happened. Most turns get none; it is not a running tally.
+   *  `at`, when set, is the send time shown under the bubble; omitted on a
+   *  handful of turns is fine, the same way a messenger drops it on messages
+   *  sent seconds apart. */
+  | { kind: "you"; text: string; reaction?: string; at?: string }
+  | { kind: "agent"; text: string; at?: string }
   /** what it did, in the words someone would use about their own inbox */
   | { kind: "activity"; when: string; lines: string[] }
   /** the one thing that stops and asks */
@@ -277,9 +280,10 @@ export const AGENTS: Agent[] = [
       {
         kind: "agent",
         text: "I'm watching HYPE, SOL, ETH and BTC for funding moves — I'll only interrupt you when something actually moves out of the ordinary.",
+        at: "11:20",
       },
       { kind: "you", text: "Only alert me if it's a real move, not just noise.", reaction: "👍" },
-      { kind: "agent", text: "Understood — I'll only flag it when funding is meaningfully outside the usual range, with the market context alongside it." },
+      { kind: "agent", text: "Understood — I'll only flag it when funding is meaningfully outside the usual range, with the market context alongside it.", at: "11:21" },
       {
         kind: "activity",
         when: "13:42",
@@ -309,9 +313,9 @@ export const AGENTS: Agent[] = [
     accent: "#8a5f95", // "Plum"
     tools: ["notion", "gdrive"],
     thread: [
-      { kind: "agent", text: "I'm digging into how the AI tools people actually pay for are priced — I'll come back with the pattern, not a table of everyone." },
+      { kind: "agent", text: "I'm digging into how the AI tools people actually pay for are priced — I'll come back with the pattern, not a table of everyone.", at: "15:10" },
       { kind: "you", text: "Make sure you cover what Anthropic and OpenAI do specifically." },
-      { kind: "agent", text: "Will do — I'll call those two out on their own rather than folding them into the average." },
+      { kind: "agent", text: "Will do — I'll call those two out on their own rather than folding them into the average.", at: "15:11" },
       {
         kind: "activity",
         when: "Now",
@@ -332,15 +336,15 @@ export const AGENTS: Agent[] = [
     cadence: "Every Monday at 9:00",
     tools: ["gmail", "gcal", "notion"],
     thread: [
-      { kind: "agent", text: "Every Monday I'll go through the calendar and the docs and give you the honest version of where the project actually is." },
+      { kind: "agent", text: "Every Monday I'll go through the calendar and the docs and give you the honest version of where the project actually is.", at: "09:00" },
       { kind: "you", text: "Post it to Slack too, not just here.", reaction: "✅" },
-      { kind: "agent", text: "Will do — I'll post the Monday summary to Slack from now on." },
+      { kind: "agent", text: "Will do — I'll post the Monday summary to Slack from now on.", at: "09:01" },
       {
         kind: "activity",
         when: "Monday, 9:00",
         lines: ["Read the calendar and Notion", "3 tasks moved for the second week running", "Posted the summary to Slack"],
       },
-      { kind: "agent", text: "One thing worth saying out loud: the design review has moved twice. It's the only thing blocking two other tasks." },
+      { kind: "agent", text: "One thing worth saying out loud: the design review has moved twice. It's the only thing blocking two other tasks.", at: "09:06" },
     ],
   },
   {
@@ -354,32 +358,21 @@ export const AGENTS: Agent[] = [
     lastActive: "14:33",
     accent: "#4a7fa5", // "Tide"
     // Brazil joined this list via the main chat, thirteen minutes after this
-    // agent was made — see the activity entry below and the "Travel watchlist"
-    // saved conversation, which reads this live rather than replaying a copy.
+    // agent was made — see the "Travel watchlist" saved conversation, which
+    // reads this live rather than replaying a copy. Said in its own thread as
+    // a line from the agent, not a log entry, for the same reason funding's
+    // watchlist change is: the thread is the only place this account reads it.
     watchlist: ["Tokyo", "Brazil"],
     alerts: ["telegram"],
     instruction: "Watch fares for my trips and let me know when one's worth booking.",
     lastChecked: "last checked 7 minutes ago",
     tools: [],
     thread: [
-      { kind: "agent", text: "I'm watching fares to Tokyo — I'll only interrupt you when one is genuinely worth booking." },
+      { kind: "agent", text: "I'm watching fares to Tokyo — I'll only interrupt you when one is genuinely worth booking.", at: "14:10" },
       { kind: "you", text: "Only economy, and only if it's under $900.", reaction: "👍" },
-      { kind: "agent", text: "Got it — economy only, and I'll only flag it once it drops under $900." },
-      {
-        kind: "activity",
-        when: "14:33",
-        lines: ["Brazil added to the travel watchlist from main chat."],
-      },
-      {
-        kind: "activity",
-        when: "14:46",
-        lines: [
-          "Fare drop detected on São Paulo route.",
-          "Price dropped 22% below the recent average.",
-          "Still economy, still under the $900 line.",
-          "Alert sent to Starchild and Telegram.",
-        ],
-      },
+      { kind: "agent", text: "Got it — economy only, and I'll only flag it once it drops under $900.", at: "14:11" },
+      { kind: "agent", text: "I've also started keeping an eye on flights to Brazil, sent over from the main chat — same rules apply unless you tell me otherwise.", at: "14:23" },
+      { kind: "agent", text: "Found a fare drop on the São Paulo route: 22% below the recent average, still economy, still under $900. Sent to Starchild and Telegram.", at: "14:33" },
     ],
   },
   {
@@ -397,9 +390,9 @@ export const AGENTS: Agent[] = [
     lastChecked: "last checked this morning",
     tools: ["gmail"],
     thread: [
-      { kind: "agent", text: "I'm going through your inbox each morning — I'll draft replies to anything routine and leave the rest for you." },
+      { kind: "agent", text: "I'm going through your inbox each morning — I'll draft replies to anything routine and leave the rest for you.", at: "08:00" },
       { kind: "you", text: "Don't touch anything that looks personal.", reaction: "👍" },
-      { kind: "agent", text: "Understood — anything that reads as personal I'll leave for you, untouched." },
+      { kind: "agent", text: "Understood — anything that reads as personal I'll leave for you, untouched.", at: "08:02" },
     ],
   },
 ];
