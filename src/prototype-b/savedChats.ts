@@ -128,27 +128,27 @@ export const SAVED: SavedChat[] = [
     The shape here is the whole point being demonstrated: the first exchange is
     two lines of plain text, no card, because a delegated change is a sentence,
     not a conversation the dedicated agent's page needs a second copy of — open
-    Hyperliquid Funding Watcher afterward and the same change is sitting there as
-    one line in its activity log, timestamped, not replayed as a transcript.
-    Only when the agent itself found something does a card appear here at all,
-    and even then it is three actions, not four: "Open agent" for depth, not
-    "View details" for an expansion that has nowhere to expand to in a main chat
-    that was never holding this agent's history to begin with.
+    Travel Watcher afterward and the same change is sitting there as one line
+    in its activity log, timestamped, not replayed as a transcript. Only when
+    the agent itself found something does a card appear here at all, and even
+    then it is three actions, not four: "Open agent" for depth, not "View
+    details" for an expansion that has nowhere to expand to in a main chat that
+    was never holding this agent's history to begin with.
   */
   {
-    id: "funding-watcher-delegate",
-    title: "Funding watchlist",
+    id: "travel-watcher-delegate",
+    title: "Travel watchlist",
     when: "Today",
     turns: [
-      { who: "you", text: "Add PURR to the funding watchlist." },
-      { who: "ai", text: "Sent to Hyperliquid Funding Watcher. PURR is now part of the funding watchlist." },
+      { who: "you", text: "Add flights to Brazil to the travel watchlist." },
+      { who: "ai", text: "Sent to Travel Watcher. Flights to Brazil are now part of the watchlist." },
 
       { who: "gap", text: "Thirteen minutes later" },
 
       {
         who: "signal",
-        agentId: "funding-watcher",
-        found: "Hyperliquid Funding Watcher found unusual funding on HYPE. Open the agent for details, or keep watching.",
+        agentId: "travel",
+        found: "Travel Watcher found a fare drop to Brazil. Open the agent for details, or keep watching.",
         detailsLabel: "Open agent",
       },
     ],

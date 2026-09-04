@@ -346,21 +346,40 @@ export const AGENTS: Agent[] = [
   {
     id: "travel",
     name: "Travel Watcher",
-    role: "Watches a fare to Tokyo and tells you when it's worth booking.",
+    role: "Watches fares for the trips you're tracking and tells you when one's worth booking.",
     status: "working",
     mood: "No drop yet.",
     resting: "Travel Watcher has nothing new to report.",
     preview: "No drop yet",
-    lastActive: "14:20",
+    lastActive: "14:33",
     accent: "#4a7fa5", // "Tide"
+    // Brazil joined this list via the main chat, thirteen minutes after this
+    // agent was made — see the activity entry below and the "Travel watchlist"
+    // saved conversation, which reads this live rather than replaying a copy.
+    watchlist: ["Tokyo", "Brazil"],
     alerts: ["telegram"],
-    instruction: "Watch the fare to Tokyo and let me know when it's worth booking.",
-    lastChecked: "last checked 20 minutes ago",
+    instruction: "Watch fares for my trips and let me know when one's worth booking.",
+    lastChecked: "last checked 7 minutes ago",
     tools: [],
     thread: [
       { kind: "agent", text: "I'm watching fares to Tokyo — I'll only interrupt you when one is genuinely worth booking." },
       { kind: "you", text: "Only economy, and only if it's under $900.", reaction: "👍" },
       { kind: "agent", text: "Got it — economy only, and I'll only flag it once it drops under $900." },
+      {
+        kind: "activity",
+        when: "14:33",
+        lines: ["Brazil added to the travel watchlist from main chat."],
+      },
+      {
+        kind: "activity",
+        when: "14:46",
+        lines: [
+          "Fare drop detected on São Paulo route.",
+          "Price dropped 22% below the recent average.",
+          "Still economy, still under the $900 line.",
+          "Alert sent to Starchild and Telegram.",
+        ],
+      },
     ],
   },
   {
