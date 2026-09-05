@@ -5,7 +5,7 @@ import { ConnectorChoice } from "../prototype-b/agents/AgentChatCards";
 import { ConnectorMark } from "../prototype-b/agents/ConnectorMark";
 import { ConnectorAdded } from "../prototype-b/agents/ConnectorAdded";
 import { OptionModal } from "../prototype-b/OptionModal";
-import { ConnectFirst, AgentOffer, AgentMade } from "../prototype-b/agents/ChatHandoff";
+import { AgentOffer, AgentMade } from "../prototype-b/agents/ChatHandoff";
 import { Reactable } from "../prototype-b/Reactable";
 import { ActivityLine } from "../prototype-b/ActivityLine";
 import { SavedThread } from "../prototype-b/SavedThread";
@@ -129,14 +129,6 @@ export function LibraryApp() {
               desc="A plain orange dot with a soft, steady halo, no animation. Shows what Starchild is doing right now — thinking, reading, checking, routing, taking action — for the latest active step only, and disappears the instant the result is ready. No completed activity stays in the chat history."
             >
               <ActivityLine label="Reading through it…" />
-            </Entry>
-
-            <Entry
-              title="ConnectFirst"
-              path="src/prototype-b/agents/ChatHandoff.tsx"
-              desc="A one-time action that needs a tool nobody's connected yet — asked and answered inline, mid-task."
-            >
-              <ConnectFirst needs={["figma"]} onReady={() => {}} />
             </Entry>
 
             <Entry
