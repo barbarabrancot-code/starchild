@@ -26,6 +26,15 @@ export type SavedTurn =
   /** time passing between one ask and the next — the whole point of the second one */
   | { who: "gap"; text: string }
   /**
+   * What Starchild worked out before answering — the status line itself, not
+   * a generic "show reasoning" label, so the collapsed row already says the
+   * one true thing ("Checking your Gmail connection now.") rather than
+   * announcing that something is hidden behind it. `lines` is folded away
+   * until clicked open — true and worth keeping, just not something reading
+   * the transcript should mean reading through.
+   */
+  | { who: "reasoning"; label: string; lines: string[] }
+  /**
    * A dedicated agent, at the point in the story where it exists.
    *
    * Rendered live — reading the real roster, not a snapshot frozen at the moment
@@ -39,11 +48,25 @@ export type SavedTurn =
   | { who: "signal"; agentId: string; found: string; tightenLabel?: string; detailsLabel?: string }
   /** what the same finding looked like somewhere that is not Starchild */
   | { who: "external"; agentId: string; headline: string; detail: string }
-  /** the same idea as "made", for an active task rather than a dedicated agent —
-   *  read live from `activeTasks` */
-  | { who: "taskCard"; taskId: string }
-  /** the same idea as "signal", for an active task */
-  | { who: "taskUpdate"; taskId: string; found: string };
+  /** the same idea as "signal", for an active task — read live from `activeTasks` */
+  | { who: "taskUpdate"; taskId: string; found: string }
+  /** the moment before a connector gets added — see ConnectorChoice */
+  | { who: "connectorChoice" }
+  /**
+   * A small orange dot and one line — what's now watching, changed, or worth
+   * a look, without the weight of a card. Purely informative: status lines
+   * are for awareness, never a button — see StatusLine. If something needs a
+   * decision, that's a "decision" turn instead, not a click waiting to reveal one.
+   */
+  | { who: "status"; label: string }
+  /**
+   * The one thing that stops and asks — a real decision, not an update. The
+   * modal is on screen the moment this turn is, never gated behind a click:
+   * the bubble right before it already said why a decision is needed, so
+   * asking someone to click again just to see the choice would be asking
+   * twice.
+   */
+  | { who: "decision"; title: string; options: { letter: string; label: string; desc?: string }[] };
 
 export type SavedChat = {
   id: string;
@@ -91,32 +114,49 @@ export const SAVED: SavedChat[] = [
         who: "ai",
         text: "Got it. I'll watch HYPE for a resistance break with volume confirmation and update you here.",
       },
+      { who: "status", label: "Watching HYPE breakout" },
 
       { who: "you", text: "Also check funding before alerting me." },
       {
         who: "ai",
         text: "Updated. I'll only alert you if funding conditions are acceptable too.",
       },
+      { who: "status", label: "Watching · funding added" },
 
       { who: "you", text: "Make it stricter. Only alert me if open interest is rising too." },
       {
         who: "ai",
         text: "Updated. I'll only alert you if resistance breaks with volume confirmation, acceptable funding, and rising open interest.",
       },
-
-      // Everything above is talk; this is the task those sentences actually
-      // produced. Read live, so it shows the condition exactly as the
-      // conversation left it rather than a copy frozen at the moment this line
-      // was written.
-      { who: "taskCard", taskId: "watching-hype" },
+      { who: "status", label: "Watching · stricter conditions" },
 
       { who: "gap", text: "A few minutes later" },
 
+      // Awareness, not a decision — nothing here needs an answer, so it's a
+      // status line and nothing more.
       {
         who: "taskUpdate",
         taskId: "watching-hype",
         found:
-          "HYPE update: possible setup forming. Price is testing resistance, volume is rising, open interest is increasing, and funding remains neutral.",
+          "HYPE update: possible setup forming. Price is testing resistance, volume is rising, open interest is increasing, and funding remains neutral. It has not confirmed the breakout yet, so I'll keep watching.",
+      },
+
+      { who: "gap", text: "A few hours later" },
+
+      // Now it is a decision — so the modal is just here, not behind a click
+      // on a status line pretending it might not be.
+      {
+        who: "ai",
+        text: "HYPE confirmed the breakout. I prepared a possible long strategy, but I need your approval before placing anything.",
+      },
+      {
+        who: "decision",
+        title: "What should I do?",
+        options: [
+          { letter: "A", label: "Approve strategy", desc: "Place the order with the proposed entry, stop loss, and take profit" },
+          { letter: "B", label: "Edit strategy", desc: "Adjust entry, risk, stop loss, or take profit first" },
+          { letter: "C", label: "Reject", desc: "Do not place the trade" },
+        ],
       },
     ],
   },
@@ -173,6 +213,53 @@ export const SAVED: SavedChat[] = [
         who: "ai",
         text: "HYPE is up today with stronger volume and neutral funding. The move looks momentum-driven, but it has not confirmed a clean breakout yet.",
       },
+    ],
+  },
+  /*
+    Adding a connector to an agent that already exists, asked and answered
+    inside the conversation rather than by leaving it for the agent's own
+    settings page. Cut off right at the open choice, the same way
+    "hype-analysis" is cut off at its own answer — the point being
+    demonstrated is the card, not a resolution nothing here actually decided.
+  */
+  {
+    id: "add-connector",
+    title: "Add a connector",
+    when: "Today",
+    turns: [
+      { who: "you", text: "Can you add a connector to Research Agent?" },
+      { who: "ai", text: "Sure. Which one do you want to plug in?" },
+      { who: "connectorChoice" },
+    ],
+  },
+  /*
+    The other half of "connect a tool mid-task": not the moment it happens
+    (that's "joao", a single "connect Gmail" line folded into the request), but
+    the moment just before — what Starchild says when the thing it was asked to
+    do turns out to need a tool nobody has connected yet. The real explanation
+    of what that connection involves (the OAuth flow, what it can then read and
+    send) is still here — folded behind the reasoning dot rather than said
+    outright between "checking now" and "want me to connect it", which is the
+    only decision this transcript is actually about.
+  */
+  {
+    id: "check-mail",
+    title: "Check my mail",
+    when: "Today",
+    turns: [
+      { who: "ai", text: "Hey! What can I help you with today?" },
+      { who: "you", text: "can you check my mail" },
+      { who: "ai", text: "I'll help you check your mail." },
+      {
+        who: "reasoning",
+        label: "Checking your Gmail connection now.",
+        lines: [
+          "You don't have Gmail connected yet — your connections list is empty, so there's nothing for me to check.",
+          "To set it up, I can send you a connect prompt. It's a one-time OAuth flow (you'll sign in with your Google account in a popup on the web app), and after that I can read, search, draft, and send email whenever you ask.",
+        ],
+      },
+      { who: "ai", text: "Want me to trigger the Gmail connection now?" },
+      { who: "you", text: "Yes, connect my Gmail" },
     ],
   },
   {

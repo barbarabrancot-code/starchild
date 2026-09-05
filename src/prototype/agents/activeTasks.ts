@@ -13,8 +13,8 @@
  * standing. It has a condition, a status, and nothing else that would make it
  * heavy — no watchlist of tools, no notification-channel picker, no controls
  * beyond editing the condition and pausing it. It reports in exactly one place,
- * which is here, in the conversation that made it. `ActiveTaskCard` is where the
- * shape of that shows.
+ * which is here, in the conversation that made it — a bubble plus a small
+ * `StatusLine`, with `OptionModal` for whatever there is to decide about it.
  */
 
 export type ActiveTaskStatus = "active" | "paused";

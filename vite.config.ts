@@ -16,6 +16,8 @@ export default defineConfig({
         // the page being taken forward — see src/landing-main.tsx
         landing: resolve(__dirname, "landing.html"),
         onboarding: resolve(__dirname, "onboarding.html"),
+        // dev-facing catalog of Chat/Agents components — see src/library-main.tsx
+        library: resolve(__dirname, "library.html"),
       },
     },
   },

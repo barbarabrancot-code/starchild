@@ -8,11 +8,15 @@ import {
   DuplicateIcon,
   TrashIcon,
   PinIcon,
+  SearchIcon,
 } from "../icons";
 import { Reactable } from "../Reactable";
+import { ThinkingLine } from "../ThinkingLine";
 import { AgentOrb } from "./AgentOrb";
 import { AgentOnboarding, type NewAgent } from "./AgentOnboarding";
 import { AgentPicker } from "./AgentPicker";
+import { RichText } from "./RichText";
+import { ConnectorChoice } from "./AgentChatCards";
 import { ACCENTS, FIRST_QUESTIONS, GREETING } from "./onboardingData";
 import { lastAgentLine, type Agent, type AgentTurn } from "./agentsData";
 import { type ConnectorId } from "./connectors";
@@ -170,25 +174,81 @@ function SummaryBlock({ name, cadence, apps }: { name: string; cadence: string; 
   );
 }
 
-function Turn({ turn, onReply }: { turn: AgentTurn; onReply: (quote: string) => void }) {
+/**
+ * What got worked out, not said — closed by default, the same small orange
+ * dot as a live thinking line, except this one doesn't move on its own: it
+ * is not thinking right now, it is a folded note from when it was. The label
+ * is the real status line ("Checking your Gmail connection now."), not a
+ * generic "show reasoning" — the row already says the one true thing;
+ * opening it is the reader's choice, not something the thread volunteers.
+ */
+function ReasoningRow({ label, lines }: { label: string; lines: string[] }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="ag-reason">
+      <button
+        type="button"
+        className="ag-reason-toggle"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+      >
+        <ThinkingLine label={label} />
+      </button>
+      {open && (
+        <div className="ag-reason-body">
+          {lines.map((line, i) => (
+            <p key={i} className="ag-reason-line">{line}</p>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Between sending and the reply landing — the agent's own orb, in its own
+ * colour, doing the same "working" wander it does everywhere else. Wordless
+ * at first, the way a colleague's status dot going active is enough on its
+ * own; the name only shows up once the wait has actually run long enough to
+ * ask for an explanation.
+ */
+function ThinkingRow({ agent }: { agent: Agent }) {
+  const [showLabel, setShowLabel] = useState(false);
+  useEffect(() => {
+    const t = window.setTimeout(() => setShowLabel(true), 1800);
+    return () => window.clearTimeout(t);
+  }, []);
+  return (
+    <div className="ag-thinking">
+      <AgentOrb status="working" size={12} halo accent={agent.accent} />
+      {showLabel && <span className="ag-thinking-label">{agent.name} is working on this.</span>}
+    </div>
+  );
+}
+
+export function Turn({ turn, onReply }: { turn: AgentTurn; onReply: (quote: string) => void }) {
   // Activity notices are not something said to you — they don't render here,
   // the way a system notice in a messenger doesn't sit in the message column.
   if (turn.kind === "activity") return null;
   if (turn.kind === "approval") return <ApprovalBlock {...turn} />;
   if (turn.kind === "summary") return <SummaryBlock {...turn} />;
+  if (turn.kind === "reasoning") return <ReasoningRow label={turn.label} lines={turn.lines} />;
+  if (turn.kind === "date") return <p className="ag-date">{turn.label}</p>;
+  if (turn.kind === "connectorChoice") return <ConnectorChoice />;
 
   const mine = turn.kind === "you";
   return (
-    <Reactable
-      align={mine ? "right" : "left"}
-      reaction={turn.kind === "you" ? turn.reaction : undefined}
-      onReply={() => onReply(turn.text)}
-    >
-      <div className={`ag-msg-col${mine ? " ag-msg-col--mine" : ""}`}>
-        <div className={`ag-bubble ag-msg${mine ? " ag-msg--mine" : ""}`}>{turn.text}</div>
-        {turn.at && <span className="ag-msg-time">{turn.at}</span>}
-      </div>
-    </Reactable>
+    <div className={`ag-msg-col${mine ? " ag-msg-col--mine" : ""}`}>
+      <Reactable
+        align={mine ? "right" : "left"}
+        reaction={turn.kind === "you" ? turn.reaction : undefined}
+        text={turn.text}
+        onReply={() => onReply(turn.text)}
+      >
+        <div className={`ag-bubble ag-msg${mine ? " ag-msg--mine" : ""}`}><RichText text={turn.text} /></div>
+      </Reactable>
+      {turn.at && <span className="ag-msg-time">{turn.at}</span>}
+    </div>
   );
 }
 
@@ -225,6 +285,8 @@ export function AgentsWorkspace({
    * know which. See AgentPicker.
    */
   const [picking, setPicking] = useState(false);
+  /** filters the roster by name — the list itself, not a separate picker */
+  const [rosterQuery, setRosterQuery] = useState("");
   const startPicking = () => setPicking(true);
   const [activeId, setActiveId] = useState<string>(focusId ?? "");
   /** rows kept at the top of the roster, most recently pinned first — a display
@@ -237,9 +299,60 @@ export function AgentsWorkspace({
   /** deletion needs an explicit second action; it is the only irreversible control here */
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [draft, setDraft] = useState("");
+  /** between sending and the reply actually landing in the thread */
+  const [thinking, setThinking] = useState(false);
+  useEffect(() => { setThinking(false); }, [activeId]);
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const agent = roster.find((a) => a.id === activeId) ?? roster[0];
   useEffect(() => { setConfirmingDelete(false); }, [agent?.id]);
+
+  const turnsRef = useRef<HTMLDivElement>(null);
+  const turnsBottomRef = useRef<HTMLDivElement>(null);
+  /** how many things arrived while scrolled up and reading something older —
+   *  0 means the pill above the composer is hidden */
+  const [newMessages, setNewMessages] = useState(0);
+
+  function scrollTurnsToBottom() {
+    turnsBottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+    setNewMessages(0);
+  }
+
+  /** close enough to the bottom that arriving content should just carry the
+   *  view down with it, the way it would if nothing had scrolled at all */
+  function isTurnsNearBottom() {
+    const el = turnsRef.current;
+    if (!el) return true;
+    return el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+  }
+
+  const handleTurnsScroll = () => {
+    if (isTurnsNearBottom()) setNewMessages(0);
+  };
+
+  /**
+   * What a new turn actually does: carries the view down when the person is
+   * already reading the bottom, and — when they've scrolled up into
+   * something older — leaves them where they are and counts instead. The
+   * pill above the composer is that count, not a second notification system.
+   */
+  function revealNewTurn() {
+    if (isTurnsNearBottom()) scrollTurnsToBottom();
+    else setNewMessages((n) => n + 1);
+  }
+
+  // Opening a different agent starts at the bottom of its thread, not
+  // wherever the last one happened to be scrolled to.
+  useEffect(() => {
+    setNewMessages(0);
+    turnsBottomRef.current?.scrollIntoView({ block: "end" });
+  }, [agent?.id]);
+
+  useEffect(() => {
+    if (!agent) return;
+    const t = setTimeout(revealNewTurn, 50);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [agent?.thread.length]);
   // Arriving from a chat that just made one: open on it. Being dropped on someone
   // else's thread straight after creating an agent reads as the creation failing.
   useEffect(() => { if (focusId) setActiveId(focusId); }, [focusId]);
@@ -283,6 +396,9 @@ export function AgentsWorkspace({
   const orderedRoster = pinnedIds.length
     ? [...roster].sort((a, b) => Number(pinnedIds.includes(b.id)) - Number(pinnedIds.includes(a.id)))
     : roster;
+  const shownRoster = rosterQuery.trim()
+    ? orderedRoster.filter((a) => a.name.toLowerCase().includes(rosterQuery.trim().toLowerCase()))
+    : orderedRoster;
 
   /**
    * Every agent starts the same way: named, empty-handed, and talking. A colour
@@ -358,8 +474,20 @@ export function AgentsWorkspace({
 
     const said: AgentTurn = { kind: "you", text };
     updateAgent(agent.id, (a) => ({ ...a, thread: [...a.thread, said] }));
+    setThinking(true);
 
-    if (!agent.onboarding) return;
+    if (!agent.onboarding) {
+      // Nothing scripted for free-form input on an established agent — it
+      // still owes an acknowledgement, just not a specific one.
+      window.setTimeout(() => {
+        updateAgent(agent.id, (a) => ({
+          ...a,
+          thread: [...a.thread, { kind: "agent", text: "Got it — I'll factor that in." }],
+        }));
+        setThinking(false);
+      }, 1100 + Math.random() * 700);
+      return;
+    }
 
     const step = asked;
     setAsked(step + 1);
@@ -386,6 +514,7 @@ export function AgentsWorkspace({
             thread: [...a.thread, next],
           };
       });
+      setThinking(false);
     }, 900);
   };
 
@@ -401,10 +530,20 @@ export function AgentsWorkspace({
       {/* the roster — who is working for you, and which of them needs something */}
       <aside className="ag-list">
         <div className="ag-list-head">
-          <p className="ag-list-title">Agents</p>
-          <button type="button" className="ag-new" aria-label="Find or create an agent" onClick={startPicking}>
-            <PlusIcon className="size-4" />
-          </button>
+          <div className="ag-list-head-top">
+            <button type="button" className="ag-new" aria-label="Find or create an agent" onClick={startPicking}>
+              <PlusIcon className="size-4" />
+            </button>
+          </div>
+          <label className="ag-search">
+            <SearchIcon className="size-3.5" />
+            <input
+              value={rosterQuery}
+              onChange={(e) => setRosterQuery(e.target.value)}
+              placeholder="Search"
+              aria-label="Search agents"
+            />
+          </label>
         </div>
 
         <div className="ag-rows">
@@ -413,10 +552,18 @@ export function AgentsWorkspace({
             <div className="ag-empty">
               <p className="ag-empty-title">No agents yet.</p>
               <p className="ag-empty-body">This is where they'll live, each with its own thread.</p>
+              <button type="button" className="ag-empty-cta" onClick={startPicking}>
+                <PlusIcon className="size-3.5" />
+                New agent
+              </button>
             </div>
           )}
 
-          {orderedRoster.map((a) => (
+          {roster.length > 0 && shownRoster.length === 0 && (
+            <p className="ag-search-none">No agents match “{rosterQuery.trim()}”.</p>
+          )}
+
+          {shownRoster.map((a) => (
             <AgentRow
               key={a.id}
               agent={a}
@@ -529,10 +676,14 @@ export function AgentsWorkspace({
           animate={{ opacity: 1 }}
           transition={{ duration: 0.3 }}
           className="ag-turns"
+          ref={turnsRef}
+          onScroll={handleTurnsScroll}
         >
           {agent.thread.map((turn, i) => (
             <Turn key={i} turn={turn} onReply={setReplyTo} />
           ))}
+
+          {thinking && <ThinkingRow key={`thinking-${agent.thread.length}`} agent={agent} />}
 
           {/* An agent that has come back with something has asked a question, and
               a question with no answers under it is a dead end. These are the same
@@ -578,9 +729,32 @@ export function AgentsWorkspace({
             </motion.div>
           )}
 
+          <div ref={turnsBottomRef} />
         </motion.div>
 
         <div className="ag-composer">
+          {/* Only shown when scrolled up into something older and a new turn
+              landed below the fold — clicking it is the same scroll that
+              would have happened anyway, had the person not been reading. */}
+          {newMessages > 0 && (
+            <div className="ag-newmsg-row">
+              <button type="button" className="ag-newmsg" onClick={scrollTurnsToBottom}>
+                <ChevronDownIcon className="size-3.5" />
+                {newMessages === 1 ? "1 new message" : `${newMessages} new messages`}
+                <span
+                  role="button"
+                  tabIndex={0}
+                  onClick={(e) => { e.stopPropagation(); setNewMessages(0); }}
+                  onKeyDown={(e) => { if (e.key === "Enter") { e.stopPropagation(); setNewMessages(0); } }}
+                  aria-label="Dismiss"
+                  className="ag-newmsg-x"
+                >
+                  ✕
+                </span>
+              </button>
+            </div>
+          )}
+
           {replyTo && (
             <div className="ag-quote">
               <p>{replyTo}</p>
@@ -743,18 +917,28 @@ export function AgentsWorkspace({
         .ag-list {
           display: flex; flex-direction: column; flex: none; width: 272px;
           border-right: 1px solid rgba(255,255,255,.08);
+          background: #0c0c0d;
         }
         .ag-list-head {
-          display: flex; align-items: center; justify-content: space-between;
-          padding: 18px 16px 12px;
+          display: flex; flex-direction: column; gap: 8px;
+          padding: 14px 16px 12px;
         }
-        .ag-list-title {
-          margin: 0; font-size: 11px; font-weight: 600; letter-spacing: .18em;
-          text-transform: uppercase; color: rgba(255,255,255,.4);
+        .ag-list-head-top { display: flex; justify-content: flex-end; }
+        .ag-search {
+          display: flex; align-items: center; gap: 8px;
+          padding: 6px 11px; border-radius: 9px;
+          border: 1px solid rgba(255,255,255,.1); background: rgba(255,255,255,.04);
+          color: rgba(255,255,255,.35);
         }
+        .ag-search input {
+          flex: 1; min-width: 0; border: 0; background: none; outline: none;
+          font-family: inherit; font-size: 13px; color: #fff;
+        }
+        .ag-search input::placeholder { color: rgba(255,255,255,.35); }
+        .ag-search-none { margin: 10px 4px; font-size: 12.5px; color: rgba(255,255,255,.35); }
         .ag-new {
-          display: flex; align-items: center; justify-content: center;
-          width: 26px; height: 26px; border: 0; border-radius: 999px; cursor: pointer;
+          flex: none; display: flex; align-items: center; justify-content: center;
+          width: 30px; height: 30px; border: 0; border-radius: 999px; cursor: pointer;
           background: none; color: rgba(255,255,255,.45);
           transition: background-color .15s ease, color .15s ease;
         }
@@ -807,6 +991,14 @@ export function AgentsWorkspace({
         .ag-empty { padding: 18px 10px 8px; display: flex; flex-direction: column; gap: 7px; }
         .ag-empty-title { margin: 0; font-size: 14px; font-weight: 500; color: rgba(255,255,255,.6); }
         .ag-empty-body { margin: 0; font-size: 12.5px; line-height: 1.5; color: rgba(255,255,255,.32); }
+        .ag-empty-cta {
+          display: flex; align-items: center; justify-content: center; gap: 6px;
+          margin-top: 8px; padding: 9px 14px; border: 0; border-radius: 999px; cursor: pointer;
+          background: var(--color-primary); color: #fff; font-family: inherit;
+          font-size: 13px; font-weight: 500;
+          transition: background-color .15s ease;
+        }
+        .ag-empty-cta:hover { background: #ff5a1f; }
 
         /* Same shape as .ag-empty — a title line over a quieter body line —
            but this one shows alongside a roster that already has agents in
@@ -827,7 +1019,7 @@ export function AgentsWorkspace({
 
         /* ---------- thread ---------- */
 
-        .ag-thread { display: flex; flex-direction: column; flex: 1; min-width: 0; min-height: 0; }
+        .ag-thread { display: flex; flex-direction: column; flex: 1; min-width: 0; min-height: 0; background: #000; }
 
         /* The selected agent is awake, and this is the whole of how that is said:
            a soft warmth behind the name, going nowhere. No animation — presence is
@@ -997,6 +1189,16 @@ export function AgentsWorkspace({
         /* what is going on when there is nothing to answer */
         /* Aligned with the agent's own words above them, not centred and not
            right-aligned: they are answers to the thing it just said. */
+        .ag-thinking { display: flex; align-items: center; gap: 10px; align-self: flex-start; }
+        .ag-thinking-label {
+          font-size: 13px; color: rgba(255,255,255,.4);
+          animation: ag-thinking-in .35s cubic-bezier(.16,1,.3,1);
+        }
+        @keyframes ag-thinking-in {
+          from { opacity: 0; transform: translateY(3px); }
+          to { opacity: 1; transform: none; }
+        }
+
         .ag-answers { display: flex; flex-wrap: wrap; gap: 7px; padding: 2px 0 4px; }
         .ag-answer {
           border-radius: 999px; padding: 6px 13px; font-size: 12.5px;
@@ -1016,6 +1218,11 @@ export function AgentsWorkspace({
         .ag-turns {
           flex: 1; overflow-y: auto; padding: 24px;
           display: flex; flex-direction: column; gap: 18px;
+          /* A clipped bubble at the scroll edge reads as a stray coloured line,
+             not as "there's more below" — fading it out says the same thing
+             without the artifact. */
+          mask-image: linear-gradient(to bottom, black calc(100% - 20px), transparent 100%);
+          -webkit-mask-image: linear-gradient(to bottom, black calc(100% - 20px), transparent 100%);
         }
 
         /*
@@ -1045,9 +1252,29 @@ export function AgentsWorkspace({
 
         /* wraps a bubble and its send time, so the time can sit on the same
            side as the bubble it belongs to without widening the row itself */
-        .ag-msg-col { display: flex; flex-direction: column; gap: 4px; width: fit-content; align-items: flex-start; }
-        .ag-msg-col--mine { align-items: flex-end; }
+        .ag-msg-col {
+          display: flex; flex-direction: column; gap: 4px; width: fit-content;
+          align-items: flex-start; align-self: flex-start;
+        }
+        .ag-msg-col--mine { align-items: flex-end; align-self: flex-end; }
         .ag-msg-time { font-size: 11px; padding: 0 4px; color: rgba(255,255,255,.32); }
+
+        .ag-reason { display: flex; flex-direction: column; gap: 10px; max-width: 520px; align-self: flex-start; }
+        .ag-reason-toggle {
+          align-self: flex-start; border: 0; background: none; padding: 2px; cursor: pointer;
+        }
+        .ag-reason-body {
+          display: flex; flex-direction: column; gap: 10px;
+          padding: 12px 16px; border-radius: 14px;
+          border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.03);
+        }
+        .ag-reason-line { margin: 0; font-size: 13.5px; line-height: 1.6; color: rgba(255,255,255,.55); }
+
+        /* A mark of time passing, not a turn from a speaker — centred and out
+           of the left/right column, the same reason .ag-activity is. */
+        .ag-date {
+          align-self: center; margin: 0; font-size: 12px; color: rgba(255,255,255,.32);
+        }
 
         /* Work, not talk — a system notice, not a turn from a speaker, so it reads
            the way a messenger's own "you changed the group name" does: centred,
@@ -1104,7 +1331,26 @@ export function AgentsWorkspace({
 
         /* ---------- composer ---------- */
 
-        .ag-composer { flex: none; padding: 14px 24px 20px; }
+        /* Solid, not transparent — the thread above scrolls behind everything
+           else in this column, so without a real backdrop here the last
+           bubble's edge shows straight through the composer. */
+        .ag-composer { flex: none; position: relative; z-index: 1; background: #000; padding: 14px 24px 20px; }
+
+        .ag-newmsg-row { display: flex; justify-content: center; margin-bottom: 12px; }
+        .ag-newmsg {
+          display: flex; align-items: center; gap: 8px;
+          padding: 8px 8px 8px 14px; border: 0; border-radius: 999px; cursor: pointer;
+          background: #2563eb; color: #fff; font-family: inherit; font-size: 12.5px; font-weight: 500;
+          transition: background-color .15s ease;
+        }
+        .ag-newmsg:hover { background: #3b74f0; }
+        .ag-newmsg-x {
+          display: flex; align-items: center; justify-content: center;
+          width: 20px; height: 20px; border-radius: 999px; font-size: 11px;
+          color: rgba(255,255,255,.7); transition: background-color .15s ease, color .15s ease;
+        }
+        .ag-newmsg-x:hover { background: rgba(255,255,255,.2); color: #fff; }
+
         .ag-quote {
           display: flex; align-items: center; gap: 10px; margin-bottom: 8px;
           padding-left: 11px; border-left: 2px solid var(--color-primary);

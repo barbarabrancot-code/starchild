@@ -1,7 +1,8 @@
 import { motion } from "motion/react";
 import { AgentOrb } from "./AgentOrb";
 import { useAgents } from "./store";
-import { STATUS_LABEL, type Agent } from "./agentsData";
+import { type Agent } from "./agentsData";
+import { OptionModal } from "../OptionModal";
 
 /**
  * What an ongoing agent looks like from inside the conversation that made it.
@@ -117,173 +118,6 @@ export function AgentLive({
 /* ──────────────────────────────────────────────────────────────────────────── */
 
 /**
- * The agent coming back with something.
- *
- * This is the moment the whole model is for: work happened while nobody was
- * looking, and it arrives in the conversation that asked for it rather than in a
- * notifications tab. The finding is the agent's own sentence — it is a colleague
- * reporting, not a system emitting an event — and the actions under it are the
- * four things anyone actually does next.
- */
-export function AgentUpdate({
-  agent,
-  found,
-  onDetails,
-  onThreshold,
-  /**
-   * What the third button asks for.
-   *
-   * "Change threshold" made sense for a single number — Travel Watcher's price
-   * ceiling. A condition-based watcher has no one number to move; what it has is
-   * a bar to raise, so the same slot reads "Tighten conditions" there instead.
-   * One button, two jobs it can honestly name.
-   */
-  thresholdLabel = "Change threshold",
-  /**
-   * What the first button does. Usually an inline expansion ("View details");
-   * for a dedicated agent's update it is real navigation, so the label says so
-   * rather than promising something the click doesn't do — "View details" that
-   * actually opens a whole other page is a small daily surprise.
-   */
-  detailsLabel = "View details",
-}: {
-  agent: Agent;
-  found: string;
-  onDetails: () => void;
-  /** omit for a dedicated agent's update — see scenario 8: three actions, not four */
-  onThreshold?: () => void;
-  thresholdLabel?: string;
-  detailsLabel?: string;
-}) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-      className="acard acard--found"
-    >
-      <div className="acard-head">
-        <p className="acard-name">{agent.name}</p>
-        {/* The same word the roster and the drawer would use for this agent right
-            now, not a label invented for this card. "Found something" read well
-            here and appeared nowhere else in the product, which is how a status
-            vocabulary stops being one — the headline below already says what it
-            found, and what the status has to carry is that it is now waiting on
-            you. */}
-        <span className="acard-state acard-state--hit">{STATUS_LABEL[agent.status]}</span>
-      </div>
-
-      <p className="acard-found">{found}</p>
-
-      <div className="acard-acts">
-        <button type="button" className="acard-btn acard-btn--go" onClick={onDetails}>
-          {detailsLabel}
-        </button>
-        {onThreshold && (
-          <button type="button" className="acard-btn" onClick={onThreshold}>
-            {thresholdLabel}
-          </button>
-        )}
-      </div>
-
-      <CardStyle />
-    </motion.div>
-  );
-}
-
-/* ──────────────────────────────────────────────────────────────────────────── */
-
-/**
- * A prepared strategy, waiting on a person.
- *
- * The one card in this set that is not describing something that already
- * happened. Everything above reports; this asks. So it is the only one with an
- * accent-filled action, and the only one where the quiet option is not "pause"
- * but "reject" — pausing a watcher costs nothing, and leaving a prepared order
- * ambiguous costs whatever the market does next.
- *
- * Nothing here places anything. There is no code path in this prototype from
- * this card to an order, approved or otherwise, and the line at the foot is not
- * decoration: it is the claim the card exists to make.
- */
-export function StrategyCard({
-  agent,
-  entry,
-  stop,
-  takeProfit,
-  risk,
-  onApprove,
-  onEdit,
-  onReject,
-  onKeep,
-}: {
-  agent: Agent;
-  entry: string;
-  stop: string;
-  takeProfit: string[];
-  risk: string;
-  onApprove: () => void;
-  onEdit: () => void;
-  onReject: () => void;
-  onKeep: () => void;
-}) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-      className="acard acard--gate"
-    >
-      <div className="acard-head">
-        <AgentOrb status="approval" size={12} halo accent={agent.accent} />
-        <p className="acard-name">{agent.name}</p>
-        <span className="acard-state acard-state--hit">Signal found. Approval required.</span>
-      </div>
-
-      <dl className="acard-plan">
-        <div>
-          <dt>Entry</dt>
-          <dd>{entry}</dd>
-        </div>
-        <div>
-          <dt>Stop loss</dt>
-          <dd>{stop}</dd>
-        </div>
-        <div>
-          <dt>Take profit</dt>
-          <dd>{takeProfit.join(" · ")}</dd>
-        </div>
-        <div>
-          <dt>Risk</dt>
-          <dd>{risk}</dd>
-        </div>
-      </dl>
-
-      <div className="acard-acts">
-        <button type="button" className="acard-btn acard-btn--go" onClick={onApprove}>
-          Approve
-        </button>
-        <button type="button" className="acard-btn" onClick={onEdit}>
-          Edit strategy
-        </button>
-        <button type="button" className="acard-btn" onClick={onReject}>
-          Reject
-        </button>
-        <button type="button" className="acard-btn acard-btn--quiet" onClick={onKeep}>
-          Keep watching
-        </button>
-      </div>
-
-      <p className="acard-foot">No trade placed without your approval.</p>
-
-      <CardStyle />
-    </motion.div>
-  );
-}
-
-/* ──────────────────────────────────────────────────────────────────────────── */
-
-/**
  * What the same finding looks like somewhere that is not Starchild.
  *
  * Rendered as a preview inside the product, which is the only honest way to show
@@ -371,6 +205,33 @@ export function ExternalAlert({
 
 /* ──────────────────────────────────────────────────────────────────────────── */
 
+/**
+ * The moment before a connector gets added, asked as a real choice inside the
+ * conversation rather than a jump into the agent's own settings. Letters, not
+ * icons: five short options read faster as A/B/C/D/E than as a row of glyphs
+ * someone has to match to a name.
+ */
+export function ConnectorChoice({ onClose = () => {} }: { onClose?: () => void } = {}) {
+  return (
+    <OptionModal
+      title="Which connector should I add?"
+      subtitle="Once you choose, I'll add it here on this agent."
+      options={[
+        { letter: "A", label: "GitHub", desc: "PRs, issues, repos" },
+        { letter: "B", label: "Figma", desc: "Design files and comments" },
+        { letter: "C", label: "Google Workspace", desc: "Docs, Drive, Gmail, Calendar" },
+        { letter: "D", label: "Slack", desc: "Channels and DMs" },
+        { letter: "E", label: "Other" },
+      ]}
+      onPick={() => {}}
+      onCustom={() => {}}
+      onClose={onClose}
+    />
+  );
+}
+
+/* ──────────────────────────────────────────────────────────────────────────── */
+
 function CardStyle() {
   return (
     <style>{`
@@ -383,11 +244,6 @@ function CardStyle() {
         border-radius: 18px; background: rgba(255,255,255,.04);
         font-family: var(--font-google-sans); color: #fff;
       }
-      .acard--found { background: rgba(248,70,0,.07); }
-      /* The only card that is asking rather than telling, and the only one with a
-         visible edge. It earns the edge by being the one you must not scroll past. */
-      .acard--gate { background: rgba(248,70,0,.08); box-shadow: inset 0 0 0 1px rgba(248,70,0,.22); }
-
       /* Tickers as marks, not as chips: no fill, no border, just the letterform
          given room and a little weight. A row of coloured pills is a dashboard. */
       .acard-marks { display: flex; flex-wrap: wrap; gap: 12px; margin: -2px 0 0; }
@@ -406,13 +262,6 @@ function CardStyle() {
         width: 5px; height: 5px; border-radius: 999px; background: currentColor;
       }
 
-      /* Four facts that are read as a set, so they are laid out as one. */
-      .acard-plan { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 26px; margin: 0; }
-      .acard-plan dt {
-        margin: 0; font-size: 11px; letter-spacing: .07em; text-transform: uppercase;
-        color: rgba(255,255,255,.3);
-      }
-      .acard-plan dd { margin: 3px 0 0; font-size: 13.5px; line-height: 1.45; color: rgba(255,255,255,.8); }
       .acard--off { opacity: .62; }
 
       .acard-head { display: flex; align-items: center; gap: 9px; }
@@ -420,10 +269,8 @@ function CardStyle() {
       .acard-state {
         margin-left: auto; font-size: 12px; color: rgba(255,255,255,.4);
       }
-      .acard-state--hit { color: #ff7a45; }
 
       .acard-doing { margin: 0; font-size: 14px; line-height: 1.55; color: rgba(255,255,255,.78); }
-      .acard-found { margin: 0; font-size: 14.5px; line-height: 1.6; color: rgba(255,255,255,.9); }
 
       /* Two facts, side by side, as label-over-value. As a sentence they read as
          prose nobody finishes; as a table they read as a dashboard. This is the
@@ -434,18 +281,6 @@ function CardStyle() {
         color: rgba(255,255,255,.3);
       }
       .acard-facts dd { margin: 3px 0 0; font-size: 13px; color: rgba(255,255,255,.65); }
-
-      .acard-acts { display: flex; flex-wrap: wrap; gap: 7px; }
-      .acard-btn {
-        border-radius: 999px; padding: 6px 13px; font-size: 12.5px;
-        background: rgba(255,255,255,.07); color: rgba(255,255,255,.78);
-        transition: background .2s, color .2s;
-      }
-      .acard-btn:hover { background: rgba(255,255,255,.13); color: #fff; }
-      .acard-btn--go { background: rgba(248,70,0,.18); color: #ff7a45; }
-      .acard-btn--go:hover { background: rgba(248,70,0,.26); color: #fff; }
-      .acard-btn--quiet { background: none; color: rgba(255,255,255,.42); }
-      .acard-btn--quiet:hover { background: rgba(255,255,255,.07); color: rgba(255,255,255,.8); }
 
       .acard-foot { margin: 0; font-size: 12px; color: rgba(255,255,255,.32); }
       .acard-actions { display: flex; flex-wrap: wrap; gap: 8px; }

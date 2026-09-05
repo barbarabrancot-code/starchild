@@ -10,10 +10,10 @@ import { PresenceOrb } from "./presence/PresenceOrb";
 import { FirstMeeting, useFirstMeeting, type Tone } from "./onboarding/FirstMeeting";
 import { Reactable } from "./Reactable";
 import { ConductorIntroPopover } from "./onboarding/ConductorIntroPopover";
-import { ConnectFirst } from "./agents/ChatHandoff";
+import { ConnectFirst, AgentOffer } from "./agents/ChatHandoff";
 import { readControl, type Control } from "./agents/agentControl";
 import { readTaskControl, type TaskControl } from "./agents/taskControl";
-import { ActiveTaskCard } from "./agents/ActiveTaskCard";
+import { StatusLine } from "./StatusLine";
 import { AgentOrb } from "./agents/AgentOrb";
 import type { ActiveTask } from "./agents/activeTasks";
 import { readRequest, sameAsk, tickersIn, type Request } from "./agents/readRequest";
@@ -49,38 +49,71 @@ import {
  * it with per-scenario copy in ../data once the design is settled; until then,
  * nothing should be read into the words.
  */
-function PlaceholderAnswer() {
+/** the same curved-arrow glyph Reactable's own reply button uses, so a quote
+ *  reads as the same gesture wherever it shows up */
+function ReplyQuoteIcon() {
   return (
-    <div className="ca-answer">
-      <p>Here's where I'd start.</p>
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.4}
+      strokeLinecap="round" strokeLinejoin="round" className="size-3.5" aria-hidden="true">
+      <path d="M6.4 3.2 2.2 7.4l4.2 4.2" />
+      <path d="M2.2 7.4h6.2a5.4 5.4 0 0 1 5.4 5.4v.2" />
+    </svg>
+  );
+}
 
-      <p>
-        Three things are actually holding this up, and the rest is noise until they're
-        settled. I've put them in the order that unblocks the most with the least effort —
-        the first one changes what the other two even look like.
-      </p>
+/**
+ * Three sends, not one paragraph wearing a bullet list — the lead, the actual
+ * substance, and the question at the end read as three separate thoughts when
+ * someone says them out loud, so they arrive as three bubbles, each reactable
+ * and reply-able on its own the way any other turn is.
+ */
+function PlaceholderAnswer({ onReply }: { onReply: (quote: string) => void }) {
+  const lead = "Here's where I'd start.";
+  const closing =
+    "Want me to turn this into something you can work through, or go deeper on any one of them?";
 
-      <ul>
-        <li>
-          <strong>The thing you keep putting off.</strong> It's small, it's overdue, and
-          it's quietly making two other decisions harder than they need to be.
-        </li>
-        <li>
-          <strong>The one with a real deadline.</strong> Worth an hour this week rather
-          than a scramble next week; the shape of it is already clear enough to start.
-        </li>
-        <li>
-          <strong>Everything else.</strong> None of it needs you today, and deciding that
-          on purpose is what stops it sitting in the back of your head.
-        </li>
-      </ul>
+  return (
+    <div className="ca-answer-group">
+      <Reactable onReply={() => onReply(lead)} text={lead}>
+        <div className="ca-answer">
+          <p>{lead}</p>
+        </div>
+      </Reactable>
 
-      <p>
-        Want me to turn this into something you can work through, or go deeper on any one
-        of them?
-      </p>
+      <Reactable onReply={() => onReply("Starchild's answer")}>
+        <div className="ca-answer">
+          <p>
+            Three things are actually holding this up, and the rest is noise until they're
+            settled. I've put them in the order that unblocks the most with the least effort —
+            the first one changes what the other two even look like.
+          </p>
+
+          <ul>
+            <li>
+              <strong>The thing you keep putting off.</strong> It's small, it's overdue, and
+              it's quietly making two other decisions harder than they need to be.
+            </li>
+            <li>
+              <strong>The one with a real deadline.</strong> Worth an hour this week rather
+              than a scramble next week; the shape of it is already clear enough to start.
+            </li>
+            <li>
+              <strong>Everything else.</strong> None of it needs you today, and deciding that
+              on purpose is what stops it sitting in the back of your head.
+            </li>
+          </ul>
+        </div>
+      </Reactable>
+
+      <Reactable onReply={() => onReply(closing)} text={closing}>
+        <div className="ca-answer">
+          <p>{closing}</p>
+        </div>
+      </Reactable>
 
       <style>{`
+        .ca-answer-group { display: flex; flex-direction: column; gap: 10px; }
+
         .ca-answer {
           display: flex; flex-direction: column; gap: 16px;
           max-width: 640px; padding: 14px 18px; border-radius: 18px 18px 18px 4px;
@@ -827,9 +860,12 @@ export function ChatScreen({
             transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
             className="overflow-hidden"
           >
-            <div className="mb-3 flex items-start gap-2.5 border-l-2 border-[#f84600] pl-3">
+            <div className="mb-3 flex items-center gap-2 rounded-full bg-white/[0.06] px-3 py-2">
+              <span className="shrink-0 text-white/45">
+                <ReplyQuoteIcon />
+              </span>
               <p
-                className="min-w-0 flex-1 truncate text-[13px] text-white/45"
+                className="min-w-0 flex-1 truncate text-[13px] text-white/55"
                 style={{ fontFamily: "var(--font-google-sans)" }}
               >
                 {replyTo}
@@ -1185,16 +1221,6 @@ export function ChatScreen({
                   >
                     Let's get to work
                   </h1>
-                  {/* Subtle on purpose — a caption under the heading, not a second
-                      one. The model this names (answer, act, or keep something
-                      running) is the same one the rest of the screen argues for;
-                      this just says it once, in passing, rather than teaching it. */}
-                  <p
-                    className="mt-2 text-[13.5px] text-white/35"
-                    style={{ fontFamily: "var(--font-google-sans)" }}
-                  >
-                    Chat with your Chief Agent. Ask anything. It can answer, act, or keep things running.
-                  </p>
                 </motion.div>
               )}
 
@@ -1256,7 +1282,7 @@ export function ChatScreen({
 
               {!reading && (
               <div className="ca-user-turn">
-                <Reactable align="right" onReply={() => setReplyTo(message)}>
+                <Reactable align="right" text={message ?? undefined} onReply={() => setReplyTo(message)}>
                   <div
                     className="max-w-full rounded-2xl rounded-tr-sm bg-white/[0.07] px-4 py-2.5 text-[14.5px] text-white/90"
                     style={{ fontFamily: "var(--font-google-sans)" }}
@@ -1294,9 +1320,7 @@ export function ChatScreen({
                     >
                       {/* No reaction seeded on the placeholder answer — Starchild does
                           not react to its own words either. Reply still works. */}
-                      <Reactable onReply={() => setReplyTo("Starchild's answer")}>
-                        <PlaceholderAnswer />
-                      </Reactable>
+                      <PlaceholderAnswer onReply={setReplyTo} />
                     </motion.div>
                   )}
                 </StepFlow>
@@ -1316,84 +1340,64 @@ export function ChatScreen({
                   suggestion serves both rather than one being agent-shaped and
                   the other task-shaped. */}
               {offering && (reading?.offer || request) && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.45, delay: 0.35, ease: [0.16, 1, 0.3, 1] }}
-                    className="ca-offer"
-                  >
-                    <h3 className="ca-offer-title">Create an Agent for this?</h3>
-                    <p className="ca-offer-copy">
-                      {reading?.offer?.because ??
-                        (request && request.repeats >= 2
-                          ? `That's a few times now. I can keep an eye on this on my own from here, and this conversation stays as it is either way.`
-                          : `It would keep going for you and update you here.`)}
-                    </p>
-                    <div className="ca-offer-actions">
-                      <button
-                        type="button"
-                        className="ca-offer-go"
-                        onClick={() => {
-                          const name = reading?.offer?.name ?? request!.name;
-                          const role = reading?.offer?.role ?? request!.summary;
-                          const watchlist = reading?.offer
-                            ? tickersIn(reading.offer.role)
-                            : tickersIn(request!.summary);
-                          const agent: Agent = {
-                            id: `a${Date.now()}`,
-                            name,
-                            role,
-                            instruction: reading?.offer?.prompt ?? role,
-                            status: "working",
-                            mood: "No signal yet.",
-                            resting: `${name} has nothing new to report.`,
-                            preview: "No signal yet",
-                            lastActive: "just now",
-                            accent: ACCENTS.ember.hex,
-                            watchlist: watchlist.length ? watchlist : undefined,
-                            rules: [
-                              "Include market context before alerting.",
-                              "Do not suggest execution unless asked.",
-                            ],
-                            alerts: reading?.offer?.tools?.filter((id) => isConnected(id)),
-                            cadence: reading?.offer?.cadence,
-                            lastChecked: "Just created — first check due shortly",
-                            tools: reading?.offer?.tools ?? [],
-                            thread: [
-                              { kind: "you", text: role },
-                              {
-                                kind: "agent",
-                                text: watchlist.length
-                                  ? `Got it. I'll watch ${watchlist.join(", ")} and only interrupt you when it's genuinely worth it.`
-                                  : "Got it. I'll keep at this and only interrupt you when it's genuinely worth it.",
-                              },
-                            ],
-                          };
-                          addAgent(agent);
-                          // The offer answered is an offer gone — otherwise it keeps
-                          // asking a question that was just said yes to, stacked right
-                          // above the card that says so.
-                          if (reading) setReading({ ...reading, offer: undefined });
-                          else setRequest(null);
-                          pushTail({ kind: "agentHandled", agentId: agent.id });
-                          setTimeout(scrollToBottom, 60);
-                        }}
-                      >
-                        Create Agent
-                      </button>
-                      <button
-                        type="button"
-                        className="ca-offer-quiet"
-                        onClick={() =>
-                          reading
-                            ? setReading({ ...reading, offer: undefined })
-                            : setDeclined((d) => [...d, request!.summary])
-                        }
-                      >
-                        Not now
-                      </button>
-                    </div>
-                  </motion.div>
+                <AgentOffer
+                  copy={
+                    reading?.offer?.because ??
+                    (request && request.repeats >= 2
+                      ? `That's a few times now. I can keep an eye on this on my own from here, and this conversation stays as it is either way.`
+                      : `It would keep going for you and update you here.`)
+                  }
+                  onCreate={() => {
+                    const name = reading?.offer?.name ?? request!.name;
+                    const role = reading?.offer?.role ?? request!.summary;
+                    const watchlist = reading?.offer
+                      ? tickersIn(reading.offer.role)
+                      : tickersIn(request!.summary);
+                    const agent: Agent = {
+                      id: `a${Date.now()}`,
+                      name,
+                      role,
+                      instruction: reading?.offer?.prompt ?? role,
+                      status: "working",
+                      mood: "No signal yet.",
+                      resting: `${name} has nothing new to report.`,
+                      preview: "No signal yet",
+                      lastActive: "just now",
+                      accent: ACCENTS.ember.hex,
+                      watchlist: watchlist.length ? watchlist : undefined,
+                      rules: [
+                        "Include market context before alerting.",
+                        "Do not suggest execution unless asked.",
+                      ],
+                      alerts: reading?.offer?.tools?.filter((id) => isConnected(id)),
+                      cadence: reading?.offer?.cadence,
+                      lastChecked: "Just created — first check due shortly",
+                      tools: reading?.offer?.tools ?? [],
+                      thread: [
+                        { kind: "you", text: role },
+                        {
+                          kind: "agent",
+                          text: watchlist.length
+                            ? `Got it. I'll watch ${watchlist.join(", ")} and only interrupt you when it's genuinely worth it.`
+                            : "Got it. I'll keep at this and only interrupt you when it's genuinely worth it.",
+                        },
+                      ],
+                    };
+                    addAgent(agent);
+                    // The offer answered is an offer gone — otherwise it keeps
+                    // asking a question that was just said yes to, stacked right
+                    // above the card that says so.
+                    if (reading) setReading({ ...reading, offer: undefined });
+                    else setRequest(null);
+                    pushTail({ kind: "agentHandled", agentId: agent.id });
+                    setTimeout(scrollToBottom, 60);
+                  }}
+                  onDismiss={() =>
+                    reading
+                      ? setReading({ ...reading, offer: undefined })
+                      : setDeclined((d) => [...d, request!.summary])
+                  }
+                />
               )}
 
               {/* Made on purpose, said plainly, and the conversation does not move.
@@ -1426,32 +1430,11 @@ export function ChatScreen({
                     font-size: 15px; line-height: 1.6; color: #fff !important;
                   }
                   .ca-user-turn + .ca-assistant-turn, .ca-you + .ca-said { margin-top: 36px; }
-                  /* Dashed, and quiet — nothing exists yet, so nothing here should
-                     look like it already happened. That register is reserved for
-                     .ca-created below, once something real is on the roster. */
-                  .ca-offer {
-                    display: flex; flex-direction: column; gap: 12px; width: 100%;
-                    box-sizing: border-box; padding: 20px 24px; border-radius: 16px;
-                    border: 1px dashed rgba(255,255,255,.16); background: none;
-                    font-family: var(--font-google-sans);
-                  }
-                  .ca-offer-title { margin: 0; color: #fff; font-size: 15px; font-weight: 600; }
-                  .ca-offer-copy {
-                    margin: 0; color: rgba(255,255,255,.55);
-                    font-size: 13.5px; line-height: 1.55; letter-spacing: -.01em;
-                  }
-                  .ca-offer-actions { display: flex; align-items: center; gap: 18px; margin-top: 4px; }
-                  .ca-offer-go {
-                    border-radius: 999px; padding: 9px 16px; background: rgba(255,255,255,.08);
-                    color: #fff; font: inherit; font-size: 14px; font-weight: 600;
-                    transition: background .18s;
-                  }
-                  .ca-offer-go:hover { background: rgba(255,255,255,.14); }
-                  .ca-offer-quiet { color: rgba(255,255,255,.35); font: inherit; font-size: 14px; font-weight: 600; }
-                  .ca-offer-quiet:hover { color: rgba(255,255,255,.7); }
 
                   /* Solid, and orange — the one card in this pair allowed to look
-                     finished, because it is: the agent it names already exists. */
+                     finished, because it is: the agent it names already exists.
+                     Its dashed counterpart, .ca-offer, moved out to AgentOffer
+                     in agents/ChatHandoff.tsx — a real reusable component now. */
                   .ca-created {
                     display: flex; flex-direction: column; gap: 10px; width: 100%;
                     box-sizing: border-box; padding: 20px 24px; border-radius: 16px;
@@ -1474,27 +1457,8 @@ export function ChatScreen({
                   .ca-created-go:hover { background: #ff5a1f; transform: translateY(-1px); }
                   .ca-created-note { font-size: 13px; color: rgba(255,255,255,.35); }
 
-                  .ca-handled {
-                    display: flex; flex-direction: column; gap: 20px; width: 100%;
-                    box-sizing: border-box; padding: 24px 26px; border-radius: 18px;
-                    background: #151515; font-family: var(--font-google-sans);
-                  }
-                  .ca-handled-title { margin: 0; color: #fff; font-size: 14px; line-height: 1.55; }
-                  .ca-handled-actions { display: flex; align-items: center; gap: 30px; }
-                  .ca-handled-go {
-                    border-radius: 999px; padding: 9px 16px; background: rgba(248,70,0,.18);
-                    color: #f84600; font: inherit; font-size: 14px; font-weight: 600;
-                    transition: background .18s, transform .18s;
-                  }
-                  .ca-handled-go:hover { background: rgba(248,70,0,.28); transform: translateY(-1px); }
-                  .ca-handled-quiet { color: rgba(255,255,255,.35); font: inherit; font-size: 14px; font-weight: 600; }
-                  .ca-handled-quiet:hover { color: rgba(255,255,255,.7); }
                   @media (max-width: 640px) {
-                    .ca-offer, .ca-created { padding: 18px 20px; }
-                    .ca-handled { gap: 20px; padding: 22px; }
-                    .ca-handled-title { font-size: 14px; }
-                    .ca-handled-actions { gap: 22px; }
-                    .ca-handled-go, .ca-handled-quiet { font-size: 14px; }
+                    .ca-created { padding: 18px 20px; }
                   }
                 `}</style>
               )}
@@ -1558,56 +1522,40 @@ export function ChatScreen({
                 const subject = activeTasks.find((t) => t.id === entry.taskId);
                 if (!subject) return null;
 
+                // taskHandled/taskCard (a task was created or amended) and
+                // taskUpdate (a finding) are both awareness, not a decision —
+                // a status line and nothing else. A finding that actually
+                // needs a decision arrives as its own kind of turn instead
+                // (see the "decision" pattern), with the modal already on
+                // screen rather than waiting behind a click.
                 if (entry.kind === "taskHandled" || entry.kind === "taskCard") {
+                  const handledText = `Handled. I'll keep watching ${subject.title.replace(/^Watching\s+/i, "")} and update you here when something meaningful changes.`;
                   return (
                     <motion.div
                       key={entry.id}
                       initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                      className="ca-handled"
+                      className="flex flex-col items-start gap-2"
                     >
-                      <p className="ca-handled-title">
-                        Handled. I&apos;ll keep watching {subject.title.replace(/^Watching\s+/i, "")} and update you here when something meaningful changes.
-                      </p>
-                      <div className="ca-handled-actions">
-                        <button
-                          type="button"
-                          className="ca-handled-quiet"
-                          onClick={() => setTail((items) => items.filter((item) => item.id !== entry.id))}
-                        >
-                          Dismiss
-                        </button>
-                      </div>
+                      <Reactable text={handledText} onReply={() => setReplyTo(handledText)}>
+                        <div className="ca-answer">
+                          <p>{handledText}</p>
+                        </div>
+                      </Reactable>
+                      <StatusLine label={subject.title} />
                     </motion.div>
                   );
                 }
 
-                // taskUpdate — the sentence and the card are two different
-                // things: the sentence is what happened, the card (with "View
-                // details" now live, since armTaskFinding wrote `activity` onto
-                // the task) is where it lives afterward.
                 return (
-                  <div key={entry.id} className="flex flex-col gap-3">
-                    <p className="ca-said">{entry.found}</p>
-                    <ActiveTaskCard
-                      task={subject}
-                      onEdit={() => {
-                        setEditingTask(subject);
-                        setLastTaskId(subject.id);
-                        inputRef.current?.focus();
-                      }}
-                      onPause={() =>
-                        applyTaskControl({
-                          kind: "pause",
-                          task: subject,
-                          say: `Paused. I'll stop watching ${subject.title.replace(/^Watching\s+/i, "")} until you say otherwise.`,
-                        })
-                      }
-                      onKeepWatching={() =>
-                        applyTaskControl({ kind: "resume", task: subject, say: "Still watching. I'll tell you if it moves again." })
-                      }
-                    />
+                  <div key={entry.id} className="flex flex-col items-start gap-2">
+                    <Reactable text={entry.found} onReply={() => setReplyTo(entry.found)}>
+                      <div className="ca-answer">
+                        <p>{entry.found}</p>
+                      </div>
+                    </Reactable>
+                    <StatusLine label="Signal forming" />
                   </div>
                 );
               })}
@@ -1651,6 +1599,7 @@ export function ChatScreen({
         {pinComposer && (
           <div className="shrink-0 px-5 py-4 sm:px-8">
             <div className="mx-auto w-full max-w-[560px]">
+
               {composerBox}
 
               {!guest && (

@@ -18,7 +18,7 @@ import type { AppKind } from "./agentsData";
  */
 export const ACCENTS = {
   ember: { name: "Ember", hex: "#f84600" },
-  amber: { name: "Amber", hex: "#d08a1c" },
+  amber: { name: "Amber", hex: "#ffbe0b" },
   moss: { name: "Moss", hex: "#5b8c62" },
   tide: { name: "Tide", hex: "#4a7fa5" },
   plum: { name: "Plum", hex: "#8a5f95" },

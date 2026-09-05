@@ -78,6 +78,20 @@ export type AgentTurn =
   | { kind: "agent"; text: string; at?: string }
   /** what it did, in the words someone would use about their own inbox */
   | { kind: "activity"; when: string; lines: string[] }
+  /**
+   * What it worked out before answering — the status line itself, not a
+   * generic "show reasoning" label, so the collapsed row already says the one
+   * true thing rather than announcing that something is hidden behind it.
+   * `lines` is folded away until clicked open. Same idea as the main chat's
+   * own reasoning turn — see SavedThread.
+   */
+  | { kind: "reasoning"; label: string; lines: string[] }
+  /** when a new day or a fresh session starts in the thread — a divider, not
+   *  a message, so it reads as the calendar marking time rather than either
+   *  side saying something */
+  | { kind: "date"; label: string }
+  /** the moment before a connector gets added — see ConnectorChoice */
+  | { kind: "connectorChoice" }
   /** the one thing that stops and asks */
   | { kind: "approval"; text: string; detail: string; confirm: string }
   /** the lightweight "you're all set" that closes the first conversation */
@@ -277,6 +291,7 @@ export const AGENTS: Agent[] = [
     lastChecked: "last checked funding rates 2 hours ago",
     tools: [],
     thread: [
+      { kind: "date", label: "Today 11:20" },
       {
         kind: "agent",
         text: "I'm watching HYPE, SOL, ETH and BTC for funding moves — I'll only interrupt you when something actually moves out of the ordinary.",
@@ -313,6 +328,7 @@ export const AGENTS: Agent[] = [
     accent: "#8a5f95", // "Plum"
     tools: ["notion", "gdrive"],
     thread: [
+      { kind: "date", label: "Today 15:10" },
       { kind: "agent", text: "I'm digging into how the AI tools people actually pay for are priced — I'll come back with the pattern, not a table of everyone.", at: "15:10" },
       { kind: "you", text: "Make sure you cover what Anthropic and OpenAI do specifically." },
       { kind: "agent", text: "Will do — I'll call those two out on their own rather than folding them into the average.", at: "15:11" },
@@ -321,6 +337,12 @@ export const AGENTS: Agent[] = [
         when: "Now",
         lines: ["Read 9 sources", "Pulled pricing from 14 products", "Writing it up in Notion"],
       },
+      // The same "add a connector" moment the main chat's own demo points at —
+      // asked and answered here, in the agent's own thread, since that's
+      // where the connector actually ends up.
+      { kind: "you", text: "Can you add a connector to this agent?" },
+      { kind: "agent", text: "Sure. Which one do you want to plug in?" },
+      { kind: "connectorChoice" },
     ],
   },
   {
@@ -332,10 +354,11 @@ export const AGENTS: Agent[] = [
     resting: "Project Assistant is waiting for Monday.",
     preview: "Next run Monday, 9:00",
     lastActive: "Friday",
-    accent: "#d08a1c", // "Amber"
+    accent: "#ffbe0b", // "Amber"
     cadence: "Every Monday at 9:00",
     tools: ["gmail", "gcal", "notion"],
     thread: [
+      { kind: "date", label: "Today 09:00" },
       { kind: "agent", text: "Every Monday I'll go through the calendar and the docs and give you the honest version of where the project actually is.", at: "09:00" },
       { kind: "you", text: "Post it to Slack too, not just here.", reaction: "✅" },
       { kind: "agent", text: "Will do — I'll post the Monday summary to Slack from now on.", at: "09:01" },
@@ -368,6 +391,7 @@ export const AGENTS: Agent[] = [
     lastChecked: "last checked 7 minutes ago",
     tools: [],
     thread: [
+      { kind: "date", label: "Today 14:10" },
       { kind: "agent", text: "I'm watching fares to Tokyo — I'll only interrupt you when one is genuinely worth booking.", at: "14:10" },
       { kind: "you", text: "Only economy, and only if it's under $900.", reaction: "👍" },
       { kind: "agent", text: "Got it — economy only, and I'll only flag it once it drops under $900.", at: "14:11" },
@@ -390,6 +414,16 @@ export const AGENTS: Agent[] = [
     lastChecked: "last checked this morning",
     tools: ["gmail"],
     thread: [
+      // How this agent actually got its Gmail access — the same exchange as
+      // the "Check my mail" saved chat in the main conversation, replicated
+      // here because it happened in this thread, not there. Everything below
+      // it is what started once the connection actually existed.
+      { kind: "date", label: "Today 07:52" },
+      { kind: "agent", text: "Hey! What can I help you with today?", at: "07:52" },
+      { kind: "you", text: "can you check my mail" },
+      { kind: "agent", text: "I'll help you check your mail." },
+      { kind: "agent", text: "Want me to trigger the Gmail connection now?" },
+      { kind: "you", text: "Yes, connect my Gmail", at: "07:53" },
       { kind: "agent", text: "I'm going through your inbox each morning — I'll draft replies to anything routine and leave the rest for you.", at: "08:00" },
       { kind: "you", text: "Don't touch anything that looks personal.", reaction: "👍" },
       { kind: "agent", text: "Understood — anything that reads as personal I'll leave for you, untouched.", at: "08:02" },

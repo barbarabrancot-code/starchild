@@ -81,6 +81,75 @@ export function ConnectFirst({
 }
 
 /* ────────────────────────────────────────────────────────────────────────────
+   1b · the same offer, in the register a real agent gets
+   ──────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * The main chat's own version of "you keep asking for this" — dashed rather
+ * than solid, because nothing has been created yet and the border should say
+ * so. Distinct from `AgentSuggestion` below: that one offers a lightweight
+ * task; this one offers the real thing, with a name and a job already
+ * decided, one click from existing.
+ */
+export function AgentOffer({
+  title = "Create an Agent for this?",
+  copy,
+  onCreate,
+  onDismiss,
+}: {
+  title?: string;
+  copy: string;
+  onCreate: () => void;
+  onDismiss: () => void;
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.45, delay: 0.35, ease: [0.16, 1, 0.3, 1] }}
+      className="ca-offer"
+    >
+      <h3 className="ca-offer-title">{title}</h3>
+      <p className="ca-offer-copy">{copy}</p>
+      <div className="ca-offer-actions">
+        <button type="button" className="ca-offer-go" onClick={onCreate}>
+          Create Agent
+        </button>
+        <button type="button" className="ca-offer-quiet" onClick={onDismiss}>
+          Not now
+        </button>
+      </div>
+
+      <style>{`
+        .ca-offer {
+          display: flex; flex-direction: column; gap: 12px; width: 100%;
+          box-sizing: border-box; padding: 20px 24px; border-radius: 16px;
+          border: 1px dashed rgba(255,255,255,.16); background: none;
+          font-family: var(--font-google-sans);
+        }
+        .ca-offer-title { margin: 0; color: #fff; font-size: 15px; font-weight: 600; }
+        .ca-offer-copy {
+          margin: 0; color: rgba(255,255,255,.55);
+          font-size: 13.5px; line-height: 1.55; letter-spacing: -.01em;
+        }
+        .ca-offer-actions { display: flex; align-items: center; gap: 18px; margin-top: 4px; }
+        .ca-offer-go {
+          border-radius: 999px; padding: 9px 16px; background: rgba(255,255,255,.08);
+          color: #fff; font: inherit; font-size: 14px; font-weight: 600;
+          transition: background .18s;
+        }
+        .ca-offer-go:hover { background: rgba(255,255,255,.14); }
+        .ca-offer-quiet { color: rgba(255,255,255,.35); font: inherit; font-size: 14px; font-weight: 600; }
+        .ca-offer-quiet:hover { color: rgba(255,255,255,.7); }
+        @media (max-width: 640px) {
+          .ca-offer { padding: 18px 20px; }
+        }
+      `}</style>
+    </motion.div>
+  );
+}
+
+/* ────────────────────────────────────────────────────────────────────────────
    2 · a request that would outlive its answer
    ──────────────────────────────────────────────────────────────────────────── */
 
