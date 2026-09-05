@@ -8,17 +8,20 @@ import { BY_ID, type ConnectorId } from "./connectors";
  *
  * Not shown pre-added: authorizing an account is the one part of this Starchild
  * cannot do on someone's behalf, so the card starts exactly where the person's
- * own part of the work starts — a real "Add", the same solid weight as
- * ConnectFirst's own "Connect" — and only turns into the quiet green "Added"
- * once they've clicked it, the same way `ConnectorsPage`'s own row would.
+ * own part of the work starts — a real, secondary-weight "Add" — and only
+ * turns into the quiet green "Added" once they've clicked it, the same way
+ * `ConnectorsPage`'s own row would.
  */
 export function ConnectorAdded({
   id,
   /** starts already added — for showing the resting state without a click, e.g. in the library */
   initiallyAdded = false,
+  /** fires alongside the local Added state, for a caller with a real connect to make */
+  onAdd,
 }: {
   id: ConnectorId;
   initiallyAdded?: boolean;
+  onAdd?: () => void;
 }) {
   const [added, setAdded] = useState(initiallyAdded);
   const connector = BY_ID[id];
@@ -35,7 +38,14 @@ export function ConnectorAdded({
           Added
         </span>
       ) : (
-        <button type="button" className="conn-added-connect" onClick={() => setAdded(true)}>
+        <button
+          type="button"
+          className="conn-added-connect"
+          onClick={() => {
+            setAdded(true);
+            onAdd?.();
+          }}
+        >
           Add
         </button>
       )}
@@ -58,12 +68,12 @@ export function ConnectorAdded({
           font-size: 12.5px; font-weight: 600;
         }
         .conn-added-connect {
-          margin-left: auto; flex: none; padding: 8px 16px; border-radius: 999px; cursor: pointer;
-          border: 0; background: var(--color-primary);
-          font-family: inherit; font-size: 13.5px; font-weight: 500; color: #fff;
+          margin-left: auto; flex: none; padding: 6px 15px; border-radius: 999px; cursor: pointer;
+          border: 1px solid rgba(255,255,255,.22); background: rgba(255,255,255,.05);
+          font-family: inherit; font-size: 12.5px; font-weight: 500; color: #fff;
           transition: background .15s ease;
         }
-        .conn-added-connect:hover { background: #ff5a1f; }
+        .conn-added-connect:hover { background: rgba(255,255,255,.12); }
       `}</style>
     </div>
   );

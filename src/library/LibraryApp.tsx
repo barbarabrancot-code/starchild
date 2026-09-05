@@ -15,8 +15,6 @@ import { AgentsWorkspace, Turn } from "../prototype-b/agents/AgentsWorkspace";
 import { type AgentStatus } from "../prototype-b/agents/agentsData";
 import { SAVED } from "../prototype-b/savedChats";
 import { FirstMeeting, useFirstMeeting } from "../prototype-b/onboarding/FirstMeeting";
-import { ConductorIntroPopover } from "../prototype-b/onboarding/ConductorIntroPopover";
-import { AgentsIntroPopover } from "../prototype-b/onboarding/AgentsIntroPopover";
 
 /**
  * A dev-facing catalog, not a product screen — for the Chat and Agents areas
@@ -84,14 +82,26 @@ export function LibraryApp() {
             <Entry
               title="Intro popovers: Conductor + Agents"
               path="src/prototype-b/onboarding/{ConductorIntroPopover,AgentsIntroPopover}.tsx"
-              desc="Two of the three quiet first-run notes — not a tour, just one thing worth knowing before it comes up, in the same card shape either way (a visual, a title, one line, Dismiss or the real action). Conductor's hangs off the Conductor Mode control in the composer; Agents' hangs off Agents in the sidebar and its CTA opens straight there instead of just dismissing. Shown side by side and shrunk down — not pinned to a real anchor here."
+              desc="Two of the three quiet first-run notes — not a tour, just one thing worth knowing before it comes up, in the same card shape either way (a visual, a title, one line, Dismiss or the real action). Conductor's hangs off the Conductor Mode control in the composer; Agents' hangs off Agents in the sidebar and its CTA opens straight there instead of just dismissing. The real components always position themselves absolutely off that real anchor, which this page doesn't have, so — unlike everything else here — these two are redrawn by hand rather than mounted live."
             >
               <div className="lib-intro-pair">
-                <div className="lib-intro-box">
-                  <ConductorIntroPopover onClose={() => {}} />
+                <div className="lib-intro-mock">
+                  <div className="lib-intro-mock-visual" aria-hidden="true" />
+                  <h3 className="lib-intro-mock-title">Meet Conductor Mode</h3>
+                  <p className="lib-intro-mock-body">Starchild chooses the right AI for each task, so you don&rsquo;t have to.</p>
+                  <div className="lib-intro-mock-actions">
+                    <span className="lib-intro-mock-dismiss">Dismiss</span>
+                    <span className="lib-intro-mock-cta">Got it</span>
+                  </div>
                 </div>
-                <div className="lib-intro-box">
-                  <AgentsIntroPopover placement="right" onOpen={() => {}} onClose={() => {}} />
+                <div className="lib-intro-mock">
+                  <div className="lib-intro-mock-visual" aria-hidden="true" />
+                  <h3 className="lib-intro-mock-title">Meet your Agents</h3>
+                  <p className="lib-intro-mock-body">Hand something over and it keeps going on its own — checking, running, and coming back when it matters.</p>
+                  <div className="lib-intro-mock-actions">
+                    <span className="lib-intro-mock-dismiss">Dismiss</span>
+                    <span className="lib-intro-mock-cta">Open Agents</span>
+                  </div>
                 </div>
               </div>
             </Entry>
@@ -336,8 +346,6 @@ function FirstMeetingDemo() {
   return <FirstMeeting meeting={meeting} />;
 }
 
-/** advances the real hook past question 1 on mount, via the same `choose`
- *  it would take a click to call live — so question 2 is real, not redrawn */
 /**
  * Question 2, without waiting on the real hook's own timed transition — that
  * transition schedules a timer inside `useFirstMeeting` itself, and driving it
@@ -539,22 +547,34 @@ function Style() {
       .lib-sequence-arrow { flex: none; font-size: 20px; color: rgba(255,255,255,.25); }
 
       /* IntroPopover's own outer wrapper is always position:absolute, sized
-         off whatever real anchor it hangs from in the product — with no real
-         anchor here to size against, that positioning just floated the card
-         over whatever else happened to be on the page. Forcing it back to
-         static lays the card out as a plain block instead, same as any other
-         component preview on this page. */
-      /* IntroPopover's own outer wrapper always positions itself absolutely off
-         a real anchor this page doesn't have — there's no popup to hang here,
-         so it's forced back to a plain static block and just shows the card
-         itself, laid out like any other component preview. */
+         off a real anchor this page doesn't have — every attempt to neutralise
+         that (a stylesheet override, then a JS-level inline !important) still
+         left it floating over the rest of the page, so these two are drawn by
+         hand instead, the one exception on this page to "always the real
+         component". */
       .lib-intro-pair { display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start; }
-      .lib-intro-box > div {
-        position: static !important; inset: auto !important;
-        /* the "right" placement also carries a -translate-y-1/2 to vertically
-           centre on its real anchor — with no anchor here, that transform is
-           the other half of what was floating this off its own box */
-        transform: none !important;
+      .lib-intro-mock {
+        display: flex; flex-direction: column; gap: 10px;
+        width: 292px; border-radius: 16px;
+        border: 1px solid rgba(255,255,255,.1); background: #1a1a1c;
+        box-shadow: 0 20px 50px rgba(0,0,0,.35);
+        font-family: var(--font-google-sans); color: #fff;
+        overflow: hidden;
+      }
+      .lib-intro-mock-visual {
+        height: 96px; background: rgba(255,255,255,.03);
+        border-bottom: 1px solid rgba(255,255,255,.06);
+      }
+      .lib-intro-mock-title { margin: 14px 16px 0; font-size: 14.5px; font-weight: 600; color: var(--color-primary); }
+      .lib-intro-mock-body { margin: 0 16px; font-size: 12.5px; line-height: 1.5; color: rgba(255,255,255,.55); }
+      .lib-intro-mock-actions {
+        display: flex; align-items: center; justify-content: space-between;
+        margin: 4px 16px 16px;
+      }
+      .lib-intro-mock-dismiss { font-size: 12.5px; color: rgba(255,255,255,.4); }
+      .lib-intro-mock-cta {
+        padding: 8px 16px; border-radius: 999px; background: var(--color-primary);
+        font-size: 12.5px; font-weight: 500; color: #fff;
       }
       /* Relies on AgentsWorkspace's own <style> tag being on the page (it is —
          see the Screens section above) for .ag-bubble/.ag-msg-col/etc.; this
