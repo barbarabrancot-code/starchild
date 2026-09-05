@@ -7,7 +7,7 @@ import { SiteHeaderE } from "./SiteHeaderE";
 import { OrbLoop } from "./OrbLoop";
 import { STILL } from "./still";
 import { replyTo } from "./heroReplies";
-import { ThinkingLine } from "../../ThinkingLine";
+import { ActivityLine } from "../../ActivityLine";
 import type { OrbState } from "../../presence/PresenceOrb";
 
 /**
@@ -306,7 +306,7 @@ export function HeroScreenE({
                           and the thinking line carries its own small presence */}
                       <span className="he-face he-face--empty" aria-hidden="true" />
                       <div className="he-thinking">
-                        <ThinkingLine label={thinking} />
+                        <ActivityLine label={thinking} />
                       </div>
                     </div>
                   )}

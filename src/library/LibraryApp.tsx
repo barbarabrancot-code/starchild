@@ -1,19 +1,22 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { AgentsProvider, useAgents } from "../prototype-b/agents/store";
 import { AgentOrb } from "../prototype-b/agents/AgentOrb";
-import { AppIcon } from "../prototype-b/agents/AppIcon";
-import { AgentLive, ExternalAlert, ConnectorChoice } from "../prototype-b/agents/AgentChatCards";
-import { StatusLine } from "../prototype-b/StatusLine";
+import { ConnectorChoice } from "../prototype-b/agents/AgentChatCards";
+import { ConnectorMark } from "../prototype-b/agents/ConnectorMark";
+import { ConnectorAdded } from "../prototype-b/agents/ConnectorAdded";
 import { OptionModal } from "../prototype-b/OptionModal";
 import { ConnectFirst, AgentOffer, AgentMade } from "../prototype-b/agents/ChatHandoff";
 import { Reactable } from "../prototype-b/Reactable";
-import { ThinkingLine } from "../prototype-b/ThinkingLine";
+import { ActivityLine } from "../prototype-b/ActivityLine";
 import { SavedThread } from "../prototype-b/SavedThread";
 import { ProductSidebar } from "../prototype-b/ProductSidebar";
 import { ChatScreen } from "../prototype-b/ChatScreen";
 import { AgentsWorkspace, Turn } from "../prototype-b/agents/AgentsWorkspace";
-import { AGENTS, type AgentStatus } from "../prototype-b/agents/agentsData";
+import { type AgentStatus } from "../prototype-b/agents/agentsData";
 import { SAVED } from "../prototype-b/savedChats";
+import { FirstMeeting, useFirstMeeting } from "../prototype-b/onboarding/FirstMeeting";
+import { ConductorIntroPopover } from "../prototype-b/onboarding/ConductorIntroPopover";
+import { AgentsIntroPopover } from "../prototype-b/onboarding/AgentsIntroPopover";
 
 /**
  * A dev-facing catalog, not a product screen — for the Chat and Agents areas
@@ -23,7 +26,7 @@ import { SAVED } from "../prototype-b/savedChats";
  * component it shows actually changed, and never for any other reason.
  */
 
-const STATUSES: AgentStatus[] = ["working", "waiting", "scheduled", "settled", "paused", "approval"];
+const STATUSES: AgentStatus[] = ["working", "paused"];
 
 export function LibraryApp() {
   return (
@@ -36,10 +39,12 @@ export function LibraryApp() {
             <Entry
               title="ChatScreen"
               path="src/prototype-b/ChatScreen.tsx"
-              desc="The signed-in conversation: composer, message turns, connector/agent hand-off cards. Full-height, so it's shown at its own scroll rather than fit to the page."
+              desc="The signed-in conversation: composer, message turns, connector/agent hand-off cards. Full-height, so it's shown at its own scroll rather than fit to the page. Wider than this column — the sidebar wants its full expanded width, not the collapsed rail — so this one preview scrolls sideways rather than cropping."
             >
-              <div className="lib-frame" style={{ height: 640 }}>
-                <ChatScreen onBack={() => {}} />
+              <div className="lib-frame-scroll">
+                <div className="lib-frame" style={{ width: 1040, height: 640 }}>
+                  <ChatScreen onBack={() => {}} />
+                </div>
               </div>
             </Entry>
 
@@ -48,8 +53,46 @@ export function LibraryApp() {
               path="src/prototype-b/agents/AgentsWorkspace.tsx"
               desc="Roster, thread, and the edit drawer — the whole second product area. Click a row, right-click for the context menu, click a name to open the drawer."
             >
-              <div className="lib-frame" style={{ height: 640 }}>
+              <div className="lib-frame" style={{ height: 820, display: "flex", flexDirection: "column" }}>
                 <AgentsWorkspace />
+              </div>
+            </Entry>
+          </Section>
+
+          <Section id="onboarding" title="Onboarding">
+            <Entry
+              title="FirstMeeting: question 1 → question 2"
+              path="src/prototype-b/onboarding/FirstMeeting.tsx"
+              desc="The very first thing a new account sees, before there's a chat to have. Two questions, asked one at a time — what's on your mind, then how direct you want Starchild to be — answered by tapping a chip or typing. In the real flow the second replaces the first rather than stacking under it; shown stacked here only so both are visible at once."
+            >
+              <div className="lib-stack">
+                <div className="lib-sequence-step">
+                  <p className="lib-sequence-label">1 · What's on your mind</p>
+                  <div className="lib-frame lib-frame--pad">
+                    <FirstMeetingDemo />
+                  </div>
+                </div>
+                <div className="lib-sequence-step">
+                  <p className="lib-sequence-label">2 · How direct you want Starchild to be</p>
+                  <div className="lib-frame lib-frame--pad">
+                    <FirstMeetingStage2Demo />
+                  </div>
+                </div>
+              </div>
+            </Entry>
+
+            <Entry
+              title="Intro popovers: Conductor + Agents"
+              path="src/prototype-b/onboarding/{ConductorIntroPopover,AgentsIntroPopover}.tsx"
+              desc="Two of the three quiet first-run notes — not a tour, just one thing worth knowing before it comes up, in the same card shape either way (a visual, a title, one line, Dismiss or the real action). Conductor's hangs off the Conductor Mode control in the composer; Agents' hangs off Agents in the sidebar and its CTA opens straight there instead of just dismissing. Shown side by side and shrunk down — not pinned to a real anchor here."
+            >
+              <div className="lib-intro-pair">
+                <div className="lib-intro-box">
+                  <ConductorIntroPopover onClose={() => {}} />
+                </div>
+                <div className="lib-intro-box">
+                  <AgentsIntroPopover placement="right" onOpen={() => {}} onClose={() => {}} />
+                </div>
               </div>
             </Entry>
           </Section>
@@ -71,11 +114,11 @@ export function LibraryApp() {
             </Entry>
 
             <Entry
-              title="ThinkingLine"
-              path="src/prototype-b/ThinkingLine.tsx"
-              desc="The small wandering orb + status label shown while a live answer is being worked out. Also reused, static, as the collapsed toggle for a ReasoningRow."
+              title="ActivityLine"
+              path="src/prototype-b/ActivityLine.tsx"
+              desc="A plain orange dot with a soft, steady halo, no animation. Shows what Starchild is doing right now — thinking, reading, checking, routing, taking action — for the latest active step only, and disappears the instant the result is ready. No completed activity stays in the chat history."
             >
-              <ThinkingLine label="Reading through it…" />
+              <ActivityLine label="Reading through it…" />
             </Entry>
 
             <Entry
@@ -87,42 +130,63 @@ export function LibraryApp() {
             </Entry>
 
             <Entry
-              title="AgentOffer"
+              title="Agent creation from chat (AgentOffer → AgentMade)"
               path="src/prototype-b/agents/ChatHandoff.tsx"
-              desc="Starchild noticing a repeated ask and offering to make a real agent for it — dashed border, because nothing exists yet. Two equal-weight answers; “Not now” really ends it."
+              desc="Two states of one sequence, not two components: Starchild notices a repeated ask and offers to make a real agent for it (dashed border, nothing exists yet); once you say yes, a solid receipt shows it now exists, with a door to it. The conversation never leaves the chat for either state."
             >
-              <AgentOffer
-                copy="That's a few times now you've asked me to check João's emails. I can keep watching on my own and only bother you when a reply actually needs your attention. This conversation stays as it is either way."
-                onCreate={() => {}}
-                onDismiss={() => {}}
-              />
+              <div className="lib-stack">
+                <div className="lib-sequence-step" style={{ width: 480 }}>
+                  <p className="lib-sequence-label">1 · AgentOffer</p>
+                  <AgentOffer
+                    copy="That's a few times now you've asked me to check João's emails. I can keep watching on my own and only bother you when a reply actually needs your attention. This conversation stays as it is either way."
+                    onCreate={() => {}}
+                    onDismiss={() => {}}
+                  />
+                </div>
+                <div className="lib-sequence-step" style={{ width: 480 }}>
+                  <p className="lib-sequence-label">2 · AgentMade</p>
+                  <AgentMadeDemo />
+                </div>
+              </div>
             </Entry>
 
             <Entry
-              title="AgentMade"
-              path="src/prototype-b/agents/ChatHandoff.tsx"
-              desc="The receipt after an agent gets created from the chat: it exists, here's what it's called, here's the door. The conversation stays put."
-            >
-              <AgentMadeDemo />
-            </Entry>
-
-            <Entry
-              title="OptionModal"
+              title="OptionModal: asking → picked"
               path="src/prototype-b/OptionModal.tsx"
-              desc="A real decision, not an update — on screen the moment it's needed, never gated behind a click on a status line. Status lines are for awareness; this is for choosing. ConnectorChoice below is this same component, just called with its own five options."
+              desc="A real decision, not an update — on screen the moment it's needed, never gated behind a click on a status line. Two states of the same component: click a row (or pass `picked`, for a decision read back out of history) and the list collapses to the one row that was chosen, with a checkmark. ConnectorChoice below is this same component, just called with its own five options."
             >
-              <OptionModal
-                title="What should I do?"
-                options={[
-                  { letter: "A", label: "Approve strategy", desc: "Place the order with the proposed entry, stop loss, and take profit" },
-                  { letter: "B", label: "Edit strategy", desc: "Adjust entry, risk, stop loss, or take profit first" },
-                  { letter: "C", label: "Reject", desc: "Do not place the trade" },
-                ]}
-                onPick={() => {}}
-                onCustom={() => {}}
-                onClose={() => {}}
-                placeholder="Type your own response"
-              />
+              <div className="lib-sequence">
+                <div className="lib-sequence-step">
+                  <p className="lib-sequence-label">1 · Asking</p>
+                  <OptionModal
+                    title="What should I do?"
+                    options={[
+                      { letter: "A", label: "Approve strategy", desc: "Place the order with the proposed entry, stop loss, and take profit" },
+                      { letter: "B", label: "Edit strategy", desc: "Adjust entry, risk, stop loss, or take profit first" },
+                      { letter: "C", label: "Reject", desc: "Do not place the trade" },
+                    ]}
+                    onPick={() => {}}
+                    onCustom={() => {}}
+                    onClose={() => {}}
+                    placeholder="Type your own response"
+                  />
+                </div>
+                <div className="lib-sequence-arrow" aria-hidden="true">→</div>
+                <div className="lib-sequence-step">
+                  <p className="lib-sequence-label">2 · Picked</p>
+                  <OptionModal
+                    title="What should I do?"
+                    options={[
+                      { letter: "A", label: "Approve strategy", desc: "Place the order with the proposed entry, stop loss, and take profit" },
+                      { letter: "B", label: "Edit strategy", desc: "Adjust entry, risk, stop loss, or take profit first" },
+                      { letter: "C", label: "Reject", desc: "Do not place the trade" },
+                    ]}
+                    picked="A"
+                    onPick={() => {}}
+                    onClose={() => {}}
+                  />
+                </div>
+              </div>
             </Entry>
 
             <Entry
@@ -131,6 +195,23 @@ export function LibraryApp() {
               desc="The moment before a connector gets added to an agent — a lettered choice asked inside the conversation, plus a free-text answer."
             >
               <ConnectorChoice />
+            </Entry>
+
+            <Entry
+              title="ConnectorAdded: add → added"
+              path="src/prototype-b/agents/ConnectorAdded.tsx"
+              desc="A connector landing, mid-conversation. Starts on a real, secondary-weight 'Add' — authorizing an account is the one part of this Starchild can't do on its own — and turns into the quiet green 'Added' once it's clicked."
+            >
+              <div className="lib-stack">
+                <div className="lib-sequence-step">
+                  <p className="lib-sequence-label">1 · Add</p>
+                  <ConnectorAdded id="gcal" />
+                </div>
+                <div className="lib-sequence-step">
+                  <p className="lib-sequence-label">2 · Added</p>
+                  <ConnectorAdded id="gcal" initiallyAdded />
+                </div>
+              </div>
             </Entry>
 
             <Entry
@@ -162,7 +243,7 @@ export function LibraryApp() {
             <Entry
               title="Agent chat (Turn)"
               path="src/prototype-b/agents/AgentsWorkspace.tsx"
-              desc="What a message actually looks like inside a dedicated agent's thread — bubble, timestamp, a reaction glued to the corner, a link rendered by RichText, a collapsed reasoning row, and the date divider between sessions. One render function per AgentTurn kind."
+              desc="What a message actually looks like inside a dedicated agent's thread — bubble, timestamp, a reaction glued to the corner, a link rendered by RichText, a decision, a connector landing, and the date divider between sessions. One render function per AgentTurn kind (reasoning excluded here — see the note below and the ActivityLine entry above)."
             >
               <div className="lib-agturns">
                 <Turn turn={{ kind: "date", label: "Today 11:20" }} onReply={() => {}} />
@@ -178,14 +259,28 @@ export function LibraryApp() {
                   turn={{ kind: "you", text: "Only alert me if it's a real move, not just noise.", reaction: "👍" }}
                   onReply={() => {}}
                 />
+                {/* No `reasoning` example here on purpose: it only ever renders on
+                    the last turn (see Turn's `isLast`), and this list keeps going
+                    after it — showing it mid-sequence would demonstrate exactly
+                    the thing it's not allowed to do. See the ActivityLine entry
+                    above for what it looks like on its own. */}
                 <Turn
                   turn={{
-                    kind: "reasoning",
-                    label: "Checking your Gmail connection now.",
-                    lines: ["You don't have Gmail connected yet — your connections list is empty, so there's nothing for me to check."],
+                    kind: "decision",
+                    title: "Add the Google Calendar connector?",
+                    options: [
+                      { letter: "A", label: "Yes, add it" },
+                      { letter: "B", label: "Not now" },
+                    ],
+                    picked: "A",
                   }}
                   onReply={() => {}}
                 />
+                <Turn turn={{ kind: "connectorAdded", id: "gcal" }} onReply={() => {}} />
+                {/* Only makes sense once the connector above actually exists —
+                    kept in this order so the RichText-link example doesn't
+                    imply a calendar event got sent before there was a
+                    calendar to send it to. */}
                 <Turn
                   turn={{ kind: "agent", text: "Sent — [open the event](https://calendar.example.com/event/1) to see the details." }}
                   onReply={() => {}}
@@ -209,52 +304,18 @@ export function LibraryApp() {
             </Entry>
 
             <Entry
-              title="AppIcon"
-              path="src/prototype-b/agents/AppIcon.tsx"
-              desc="One glyph per connector kind — no brand marks in the project, so a category stands in (mail, calendar, drive, and so on)."
+              title="ConnectorMark"
+              path="src/prototype-b/agents/ConnectorMark.tsx"
+              desc="A connector's real logo where one exists as a static asset (.svg, or .webp for the odd exported one), falling back to AppIcon's glyph the moment neither does — a failed image load moves to the next extension, then to the glyph, live. Gmail, Calendar, Drive, Notion, Slack, Telegram and Figma have real marks on file; GitHub doesn't yet, so it falls back right here."
             >
               <div className="lib-row">
-                {(["mail", "calendar", "drive", "notion", "slack", "telegram", "web", "flights"] as const).map((k) => (
-                  <div key={k} className="lib-orb-cell">
-                    <AppIcon kind={k} className="size-5" />
-                    <span>{k}</span>
+                {(["gmail", "gcal", "gdrive", "notion", "slack", "telegram", "github", "figma"] as const).map((id) => (
+                  <div key={id} className="lib-orb-cell">
+                    <ConnectorMark id={id} className="size-5" />
+                    <span>{id}</span>
                   </div>
                 ))}
               </div>
-            </Entry>
-
-            <Entry
-              title="AgentLive"
-              path="src/prototype-b/agents/AgentChatCards.tsx"
-              desc="The standing card inside the main chat: an agent exists and can be changed from right here. Reads live from the roster."
-            >
-              <AgentLive agent={AGENTS[0]} />
-            </Entry>
-
-            <Entry
-              title="Agent update (bubble + StatusLine)"
-              path="src/prototype-b/SavedThread.tsx"
-              desc="An agent came back with something, mid-transcript rather than only on its own page — a bubble plus a status line now, not a card. AgentUpdate (the old card) was retired once every 'agent update' moment moved to this shape."
-            >
-              <div className="lib-stack">
-                <div className="lib-bubble">Travel Watcher found a fare drop to Brazil. Open the agent for details, or keep watching.</div>
-                <StatusLine label="Agent update" />
-              </div>
-            </Entry>
-
-            <Entry
-              title="ExternalAlert"
-              path="src/prototype-b/agents/AgentChatCards.tsx"
-              desc="What the same finding looks like somewhere that isn't Starchild — rendered as a thin preview, not a convincing forgery of another product's chrome."
-            >
-              <ExternalAlert
-                agent={AGENTS[0]}
-                headline="Unusual funding detected on HYPE."
-                detail="Funding moved unusually positive. Alert sent to Starchild and Telegram."
-                onOpen={() => {}}
-                onKeep={() => {}}
-                onPause={() => {}}
-              />
             </Entry>
           </Section>
         </main>
@@ -267,7 +328,40 @@ export function LibraryApp() {
 
 function AgentMadeDemo() {
   const { roster } = useAgents();
-  return <AgentMade agent={roster[0]} onOpen={() => {}} />;
+  return <AgentMade agent={roster[0]} onOpen={() => {}} onDismiss={() => {}} />;
+}
+
+function FirstMeetingDemo() {
+  const meeting = useFirstMeeting({ onDone: () => {} });
+  return <FirstMeeting meeting={meeting} />;
+}
+
+/** advances the real hook past question 1 on mount, via the same `choose`
+ *  it would take a click to call live — so question 2 is real, not redrawn */
+/**
+ * Question 2, without waiting on the real hook's own timed transition — that
+ * transition schedules a timer inside `useFirstMeeting` itself, and driving it
+ * from outside is exactly the kind of thing React's dev-mode double-effect
+ * can quietly cancel before it fires. Same real `FirstMeeting`, fed a plain
+ * literal `meeting` shaped like the hook's own return value instead — no
+ * different, in principle, from any other demo on this page that hands a
+ * component a fixed prop instead of the live state that would normally
+ * produce it (see the `Turn` demos' `picked` decisions).
+ */
+function FirstMeetingStage2Demo() {
+  const meeting: ReturnType<typeof useFirstMeeting> = {
+    step: "preference",
+    currentQuestion: {
+      id: "demo-preference",
+      stage: 1,
+      text: "One thing that helps me work better with you: do you want me to be more direct, or give you more room to think things through?",
+    },
+    thinking: false,
+    acceptsText: false,
+    submit: () => {},
+    choose: () => {},
+  };
+  return <FirstMeeting meeting={meeting} />;
 }
 
 function SidebarDemo() {
@@ -284,14 +378,49 @@ function SidebarDemo() {
   );
 }
 
+const NAV_SECTIONS = [
+  { id: "screens", label: "Screens" },
+  { id: "onboarding", label: "Onboarding" },
+  { id: "chat-components", label: "Chat components" },
+  { id: "agent-components", label: "Agent components" },
+];
+
 function Nav() {
+  const [active, setActive] = useState(NAV_SECTIONS[0].id);
+
+  useEffect(() => {
+    const sections = NAV_SECTIONS
+      .map((s) => document.getElementById(s.id))
+      .filter((el): el is HTMLElement => el !== null);
+
+    // A section counts as "current" once it has crossed a line near the top
+    // of the viewport — the same idea any reading app's own scroll position
+    // uses, so the highlighted item is always the one actually on screen.
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries.filter((e) => e.isIntersecting);
+        if (visible.length === 0) return;
+        const topmost = visible.reduce((a, b) =>
+          a.boundingClientRect.top < b.boundingClientRect.top ? a : b,
+        );
+        setActive(topmost.target.id);
+      },
+      { rootMargin: "-15% 0px -75% 0px", threshold: 0 },
+    );
+
+    sections.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <nav className="lib-nav">
       <p className="lib-nav-title">Starchild</p>
       <p className="lib-nav-sub">Component library</p>
-      <a href="#screens">Screens</a>
-      <a href="#chat-components">Chat components</a>
-      <a href="#agent-components">Agent components</a>
+      {NAV_SECTIONS.map((s) => (
+        <a key={s.id} href={`#${s.id}`} className={active === s.id ? "lib-nav-active" : undefined}>
+          {s.label}
+        </a>
+      ))}
     </nav>
   );
 }
@@ -359,6 +488,9 @@ function Style() {
         text-decoration: none;
       }
       .lib-nav a:hover { background: rgba(255,255,255,.06); color: #fff; }
+      .lib-nav a.lib-nav-active {
+        background: rgba(248,70,0,.12); color: var(--color-primary); font-weight: 600;
+      }
 
       .lib-main { flex: 1; min-width: 0; padding: 40px 48px 120px; max-width: 1000px; }
 
@@ -389,8 +521,41 @@ function Style() {
 
       .lib-frame { border-radius: 10px; overflow: hidden; border: 1px solid rgba(255,255,255,.08); }
       .lib-frame--pad { padding: 20px; }
+      /* Some screens are wider than this column on purpose (a full sidebar,
+         not the collapsed rail) — scrolls sideways here rather than clipping. */
+      .lib-frame-scroll { overflow-x: auto; }
 
       .lib-stack { display: flex; flex-direction: column; gap: 14px; }
+
+      /* Different states of one sequence, shown side by side rather than as
+         separate catalog entries — the point being made is the progression,
+         not two unrelated components that happen to share a file. */
+      .lib-sequence { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+      .lib-sequence-step { display: flex; flex-direction: column; gap: 10px; }
+      .lib-sequence-label {
+        margin: 0; font-size: 11px; font-weight: 600; letter-spacing: .08em;
+        text-transform: uppercase; color: rgba(255,255,255,.35);
+      }
+      .lib-sequence-arrow { flex: none; font-size: 20px; color: rgba(255,255,255,.25); }
+
+      /* IntroPopover's own outer wrapper is always position:absolute, sized
+         off whatever real anchor it hangs from in the product — with no real
+         anchor here to size against, that positioning just floated the card
+         over whatever else happened to be on the page. Forcing it back to
+         static lays the card out as a plain block instead, same as any other
+         component preview on this page. */
+      /* IntroPopover's own outer wrapper always positions itself absolutely off
+         a real anchor this page doesn't have — there's no popup to hang here,
+         so it's forced back to a plain static block and just shows the card
+         itself, laid out like any other component preview. */
+      .lib-intro-pair { display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start; }
+      .lib-intro-box > div {
+        position: static !important; inset: auto !important;
+        /* the "right" placement also carries a -translate-y-1/2 to vertically
+           centre on its real anchor — with no anchor here, that transform is
+           the other half of what was floating this off its own box */
+        transform: none !important;
+      }
       /* Relies on AgentsWorkspace's own <style> tag being on the page (it is —
          see the Screens section above) for .ag-bubble/.ag-msg-col/etc.; this
          just gives Turn's output the same dark backdrop and gap it has there. */

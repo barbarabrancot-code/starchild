@@ -74,7 +74,7 @@ export type AgentTurn =
    *  `at`, when set, is the send time shown under the bubble; omitted on a
    *  handful of turns is fine, the same way a messenger drops it on messages
    *  sent seconds apart. */
-  | { kind: "you"; text: string; reaction?: string; at?: string }
+  | { kind: "you"; text: string; reaction?: string; at?: string; replyTo?: string }
   | { kind: "agent"; text: string; at?: string }
   /** what it did, in the words someone would use about their own inbox */
   | { kind: "activity"; when: string; lines: string[] }
@@ -92,6 +92,19 @@ export type AgentTurn =
   | { kind: "date"; label: string }
   /** the moment before a connector gets added — see ConnectorChoice */
   | { kind: "connectorChoice" }
+  /** a real decision, on screen the moment it's needed — `picked`, when set,
+   *  is already decided, read back out of history rather than waiting for a
+   *  click that already happened. Same component the main chat's own
+   *  `decision` SavedTurn uses. */
+  | {
+      kind: "decision";
+      title: string;
+      subtitle?: string;
+      options: { letter: string; label: string; desc?: string }[];
+      picked?: string;
+    }
+  /** a connector actually landing, mid-thread — see ConnectorAdded */
+  | { kind: "connectorAdded"; id: ConnectorId }
   /** the one thing that stops and asks */
   | { kind: "approval"; text: string; detail: string; confirm: string }
   /** the lightweight "you're all set" that closes the first conversation */
@@ -291,6 +304,16 @@ export const AGENTS: Agent[] = [
     lastChecked: "last checked funding rates 2 hours ago",
     tools: [],
     thread: [
+      // Where this agent actually started — a week and a half before today's
+      // activity, so the thread reads as one it has been in the whole time,
+      // not something that began the same morning as its latest update.
+      { kind: "date", label: "Tue, Aug 25 15:34" },
+      {
+        kind: "agent",
+        text: "I'm all set up — watching funding on HYPE, SOL, ETH and BTC from here.",
+        at: "15:34",
+      },
+      { kind: "you", text: "Perfect, thanks." },
       { kind: "date", label: "Today 11:20" },
       {
         kind: "agent",
@@ -326,7 +349,7 @@ export const AGENTS: Agent[] = [
     preview: "Reading 9 sources on the pricing question",
     lastActive: "15:52",
     accent: "#8a5f95", // "Plum"
-    tools: ["notion", "gdrive"],
+    tools: ["notion", "gdrive", "gcal"],
     thread: [
       { kind: "date", label: "Today 15:10" },
       { kind: "agent", text: "I'm digging into how the AI tools people actually pay for are priced — I'll come back with the pattern, not a table of everyone.", at: "15:10" },
@@ -339,10 +362,38 @@ export const AGENTS: Agent[] = [
       },
       // The same "add a connector" moment the main chat's own demo points at —
       // asked and answered here, in the agent's own thread, since that's
-      // where the connector actually ends up.
+      // where the connector actually ends up. Shown as history now, not a
+      // live pending choice — the `decision` turns render already picked
+      // (see OptionModal's `picked`), and the rest of the sequence is what
+      // actually happened once the pick landed.
       { kind: "you", text: "Can you add a connector to this agent?" },
       { kind: "agent", text: "Sure. Which one do you want to plug in?" },
-      { kind: "connectorChoice" },
+      {
+        kind: "decision",
+        title: "Which connector should I add?",
+        subtitle: "Once you choose, I'll add it here on this agent.",
+        options: [
+          { letter: "A", label: "GitHub", desc: "PRs, issues, repos" },
+          { letter: "B", label: "Figma", desc: "Design files and comments" },
+          { letter: "C", label: "Google Workspace", desc: "Docs, Drive, Gmail, Calendar" },
+          { letter: "D", label: "Slack", desc: "Channels and DMs" },
+          { letter: "E", label: "Other" },
+        ],
+        picked: "C",
+      },
+      { kind: "agent", text: "Google Workspace — I'll start with your calendar, so I know when to bring findings to you." },
+      {
+        kind: "decision",
+        title: "Add the Google Calendar connector?",
+        options: [
+          { letter: "A", label: "Yes, add it" },
+          { letter: "B", label: "Not now" },
+        ],
+        picked: "A",
+      },
+      { kind: "agent", text: "Adding Google Calendar now — a card should appear below for you to authorize the Google account." },
+      { kind: "connectorAdded", id: "gcal" },
+      { kind: "agent", text: "Google Calendar connected. Want me to look at your agenda today?" },
     ],
   },
   {

@@ -1,4 +1,7 @@
+import { useEffect, useState } from "react";
 import { motion } from "motion/react";
+import { StarchildDot } from "./StarchildDot";
+import { usePrefersReducedMotion } from "../presence/usePresence";
 import { IntroPopover, type IntroPlacement } from "./IntroPopover";
 
 // The last of the first-run notes, hanging off the Agents item in the sidebar.
@@ -9,54 +12,56 @@ import { IntroPopover, type IntroPlacement } from "./IntroPopover";
 // capability rather than about a place. Agents is a place now, and the sentence
 // that used to describe a feature is the sentence that describes the door.
 
-/** where the runs land along the rail, as a fraction of it */
-const RUNS = [0.16, 0.36, 0.56, 0.76];
+// An agent is still a conversation — the one thing this whole area could let
+// someone forget. So the visual says exactly that: Starchild says something
+// (a blank bubble — the words aren't the point), you answer, done. One beat,
+// not a loop, same as Conductor's own visual.
+type Beat = "waiting" | "said" | "replied";
 
-// A dot that keeps travelling, leaving finished work behind it — the only claim
-// the area makes that a conversation cannot. The last mark is a ring, because a
-// ring is what "it needs you" looks like everywhere else in the product.
 function AgentsVisual() {
+  const reduced = usePrefersReducedMotion();
+  const [beat, setBeat] = useState<Beat>("waiting");
+
+  useEffect(() => {
+    if (reduced) {
+      setBeat("replied");
+      return;
+    }
+    const said = window.setTimeout(() => setBeat("said"), 500);
+    const replied = window.setTimeout(() => setBeat("replied"), 1650);
+    return () => {
+      window.clearTimeout(said);
+      window.clearTimeout(replied);
+    };
+  }, [reduced]);
+
   return (
     <>
-      <span
-        className="absolute h-px bg-white/12"
-        style={{ left: 28, right: 28, top: "calc(50% + 12px)" }}
-      />
-
-      {RUNS.map((at, i) => (
-        <motion.span
-          key={at}
-          className="absolute rounded-[1px] bg-[#f84600]"
-          style={{
-            width: 3,
-            height: 14,
-            left: `calc(28px + (100% - 56px) * ${at})`,
-            top: "calc(50% - 2px)",
-            transformOrigin: "bottom",
-          }}
-          animate={{ scaleY: [0, 0, 1, 1, 1], opacity: [0, 0, 0.85, 0.85, 0] }}
-          transition={{
-            duration: 4.4,
-            times: [0, 0.1 + i * 0.16, 0.16 + i * 0.16, 0.92, 1],
-            repeat: Infinity,
-            ease: "easeOut",
-          }}
+      <span className="absolute" style={{ left: 20, top: 32 }}>
+        <StarchildDot
+          state={beat === "waiting" ? "idle" : beat === "replied" ? "settled" : "acknowledging"}
+          depth={beat === "waiting" ? 0.25 : 0.6}
+          size={11}
         />
-      ))}
-
-      {/* the one that stopped and asked */}
+      </span>
+      {/* Starchild's side — blank on purpose, the same reason Conductor's marks
+          are unnamed: what it said isn't the point here, that it's a message is. */}
       <motion.span
-        className="absolute rounded-full border-[1.5px] border-[#f84600]"
-        style={{ width: 13, height: 13, left: "calc(28px + (100% - 56px) * 0.93)", top: "calc(50% - 14px)" }}
-        animate={{ scale: [0.4, 0.4, 1.12, 1, 1, 0.4], opacity: [0, 0, 1, 1, 1, 0] }}
-        transition={{ duration: 4.4, times: [0, 0.74, 0.82, 0.86, 0.94, 1], repeat: Infinity, ease: "easeOut" }}
+        aria-hidden="true"
+        className="absolute rounded-2xl bg-white/[0.14]"
+        style={{ left: 54, top: 18, width: 128, height: 32 }}
+        initial={{ opacity: 0, scale: 0.85 }}
+        animate={beat === "waiting" ? { opacity: 0, scale: 0.85 } : { opacity: 1, scale: 1 }}
+        transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
       />
-
+      {/* the reply, in the one colour this whole vocabulary reserves for you */}
       <motion.span
-        className="absolute rounded-full bg-[#f84600]"
-        style={{ width: 7, height: 7, top: "calc(50% + 9px)", boxShadow: "0 0 16px rgba(248,70,0,.6)" }}
-        animate={{ left: ["24px", "calc(100% - 31px)"] }}
-        transition={{ duration: 4.4, repeat: Infinity, ease: "linear" }}
+        aria-hidden="true"
+        className="absolute rounded-2xl bg-[#f84600]/45"
+        style={{ left: 108, top: 58, width: 108, height: 28 }}
+        initial={{ opacity: 0, scale: 0.85 }}
+        animate={beat === "replied" ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.85 }}
+        transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
       />
     </>
   );

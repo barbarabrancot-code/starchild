@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { AppIcon } from "./AppIcon";
+import { ConnectorMark } from "./ConnectorMark";
 import { CATALOG, type ConnectorId } from "./connectors";
 import { useAgents } from "./store";
 
@@ -48,7 +48,7 @@ export function ConnectorsPage() {
                   aria-expanded={expanded}
                 >
                   <span className="cn-card-top">
-                    <span className="cn-glyph"><AppIcon kind={c.kind} className="size-[18px]" /></span>
+                    <span className="cn-glyph"><ConnectorMark id={c.id} className="size-[18px]" /></span>
                     <span className="cn-card-body">
                       <span className="cn-name">{c.name}</span>
                       <span className="cn-account">Connected as {conn?.account}</span>
@@ -98,7 +98,7 @@ export function ConnectorsPage() {
         <div className="cn-grid">
           {available.map((c) => (
             <div key={c.id} className="cn-avail">
-              <span className="cn-glyph"><AppIcon kind={c.kind} className="size-4" /></span>
+              <span className="cn-glyph"><ConnectorMark id={c.id} className="size-4" /></span>
               <span className="cn-card-body">
                 <span className="cn-name">{c.name}</span>
                 <span className="cn-what">{c.what}</span>

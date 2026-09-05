@@ -34,16 +34,6 @@ export type SavedTurn =
    * the transcript should mean reading through.
    */
   | { who: "reasoning"; label: string; lines: string[] }
-  /**
-   * A dedicated agent, at the point in the story where it exists.
-   *
-   * Rendered live — reading the real roster, not a snapshot frozen at the moment
-   * this line was written — for the same reason the chat's own inline card does:
-   * a card that only ever showed what was true when the conversation happened
-   * would go stale the instant somebody edited the agent from anywhere else, and
-   * a saved conversation whose cards silently lie is worse than one that has none.
-   */
-  | { who: "made"; agentId: string }
   /** the agent came back with something, mid-transcript rather than only on its own page */
   | { who: "signal"; agentId: string; found: string; tightenLabel?: string; detailsLabel?: string }
   /** what the same finding looked like somewhere that is not Starchild */
@@ -66,7 +56,16 @@ export type SavedTurn =
    * asking someone to click again just to see the choice would be asking
    * twice.
    */
-  | { who: "decision"; title: string; options: { letter: string; label: string; desc?: string }[] };
+  | {
+      who: "decision";
+      title: string;
+      subtitle?: string;
+      options: { letter: string; label: string; desc?: string }[];
+      /** already decided, read back out of history — renders collapsed, not waiting for a click */
+      picked?: string;
+    }
+  /** a connector actually landing, mid-conversation — see ConnectorAdded */
+  | { who: "connectorAdded"; id: ConnectorId };
 
 export type SavedChat = {
   id: string;
@@ -130,7 +129,7 @@ export const SAVED: SavedChat[] = [
       },
       { who: "status", label: "Watching · stricter conditions" },
 
-      { who: "gap", text: "A few minutes later" },
+      { who: "gap", text: "11:26" },
 
       // Awareness, not a decision — nothing here needs an answer, so it's a
       // status line and nothing more.
@@ -141,7 +140,7 @@ export const SAVED: SavedChat[] = [
           "HYPE update: possible setup forming. Price is testing resistance, volume is rising, open interest is increasing, and funding remains neutral. It has not confirmed the breakout yet, so I'll keep watching.",
       },
 
-      { who: "gap", text: "A few hours later" },
+      { who: "gap", text: "13:40" },
 
       // Now it is a decision — so the modal is just here, not behind a click
       // on a status line pretending it might not be.
@@ -183,7 +182,7 @@ export const SAVED: SavedChat[] = [
       { who: "you", text: "Add flights to Brazil to the travel watchlist." },
       { who: "ai", text: "Sent to Travel Watcher. Flights to Brazil are now part of the watchlist." },
 
-      { who: "gap", text: "Thirteen minutes later" },
+      { who: "gap", text: "14:47" },
 
       {
         who: "signal",
@@ -233,14 +232,13 @@ export const SAVED: SavedChat[] = [
     ],
   },
   /*
-    The other half of "connect a tool mid-task": not the moment it happens
-    (that's "joao", a single "connect Gmail" line folded into the request), but
-    the moment just before — what Starchild says when the thing it was asked to
-    do turns out to need a tool nobody has connected yet. The real explanation
-    of what that connection involves (the OAuth flow, what it can then read and
-    send) is still here — folded behind the reasoning dot rather than said
-    outright between "checking now" and "want me to connect it", which is the
-    only decision this transcript is actually about.
+    The other half of "connect a tool mid-task", and now the fuller version of
+    it: not the one-line "connected" "joao" folds into its own request, but
+    what actually happens when the thing being asked for turns out to need a
+    tool nobody has connected yet — the reasoning, the decision to go ahead
+    (rendered picked, since this is history being read back), the connector
+    actually landing, and Starchild picking the conversation back up once it
+    has.
   */
   {
     id: "check-mail",
@@ -260,6 +258,18 @@ export const SAVED: SavedChat[] = [
       },
       { who: "ai", text: "Want me to trigger the Gmail connection now?" },
       { who: "you", text: "Yes, connect my Gmail" },
+      {
+        who: "decision",
+        title: "Connect the Gmail connector?",
+        options: [
+          { letter: "A", label: "Yes, connect" },
+          { letter: "B", label: "Not now" },
+        ],
+        picked: "A",
+      },
+      { who: "ai", text: "Connecting Gmail now — a card should appear below for you to authorize the Google account." },
+      { who: "connectorAdded", id: "gmail" },
+      { who: "ai", text: "Gmail connected. Want me to look at your inbox now?" },
     ],
   },
   {
@@ -278,7 +288,7 @@ export const SAVED: SavedChat[] = [
         text: "Sent. I asked him to look at the deck before Friday and to flag anything he'd change.",
       },
 
-      { who: "gap", text: "Two days later" },
+      { who: "gap", text: "Thu, Sep 3 09:14" },
 
       { who: "you", text: "Send João another email — ask whether he's had a chance to look at the deck yet." },
       { who: "ai", text: "Sent. I kept it short and asked if he's had a look." },

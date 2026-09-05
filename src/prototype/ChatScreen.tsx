@@ -228,7 +228,7 @@ const TRADING_ASKED_BEFORE = [
  * reported in — the difference rule 4 exists to keep visible.
  */
 type TailBody =
-  | { kind: "you"; text: string }
+  | { kind: "you"; text: string; replyTo?: string }
   | { kind: "said"; text: string }
   | { kind: "taskCard"; taskId: string }
   | { kind: "taskHandled"; taskId: string }
@@ -791,7 +791,8 @@ export function ChatScreen({
       if (control.kind === "none") return false;
       setValue("");
       setEditing(null);
-      pushTail({ kind: "you", text: trimmed });
+      pushTail({ kind: "you", text: trimmed, replyTo: replyTo ?? undefined });
+      setReplyTo(null);
       window.setTimeout(() => applyControl(control), 520);
       return true;
     };
@@ -801,7 +802,8 @@ export function ChatScreen({
       if (taskControl.kind === "none") return false;
       setValue("");
       setEditingTask(null);
-      pushTail({ kind: "you", text: trimmed });
+      pushTail({ kind: "you", text: trimmed, replyTo: replyTo ?? undefined });
+      setReplyTo(null);
       window.setTimeout(() => applyTaskControl(taskControl), 520);
       return true;
     };
@@ -824,6 +826,7 @@ export function ChatScreen({
     setReading(null);
     // the composer outlives the send now, so it has to be emptied by hand
     setValue("");
+    setReplyTo(null);
     // On a task card the user only supplies the missing detail ("BTC"), so the
     // standing context is what actually routes the work — their reply alone wouldn't.
     const full = activeTask ? `${activeTask.basePrompt} ${trimmed}` : trimmed;
@@ -1517,6 +1520,22 @@ export function ChatScreen({
                      amendment about an agent is not a different kind of thing
                      from the question that came before it. Alignment and weight
                      separate the voices, and that is as much as it needs. */
+                  .ca-you-col {
+                    display: flex; flex-direction: column; align-items: flex-end;
+                    align-self: flex-end; gap: 6px; max-width: 480px;
+                  }
+                  /* The quoted line a reply points at — the same curved arrow and
+                     muted tone as the composer's own reply preview, so the gesture
+                     reads the same whether it is still a draft or already sent. */
+                  .ca-reply-quote {
+                    display: flex; align-items: center; gap: 6px; margin: 0;
+                    max-width: 100%; font-family: var(--font-google-sans);
+                    font-size: 12.5px; color: rgba(255,255,255,.4);
+                  }
+                  .ca-reply-quote svg { flex: none; color: rgba(255,255,255,.35); }
+                  .ca-reply-quote span {
+                    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+                  }
                   .ca-you {
                     align-self: flex-end; max-width: 480px; margin: 0;
                     padding: 10px 15px; border-radius: 16px 16px 4px 16px;
@@ -1529,7 +1548,7 @@ export function ChatScreen({
                     font-family: var(--font-google-sans);
                     font-size: 15px; line-height: 1.6; color: #fff !important;
                   }
-                  .ca-user-turn + .ca-assistant-turn, .ca-you + .ca-said { margin-top: 36px; }
+                  .ca-user-turn + .ca-assistant-turn, .ca-you-col + .ca-said { margin-top: 36px; }
                   .ca-offer {
                     display: flex; flex-direction: column; gap: 20px; width: 100%;
                     box-sizing: border-box; padding: 24px 26px; border-radius: 18px;
@@ -1560,15 +1579,21 @@ export function ChatScreen({
               {tail.map((entry) => {
                 if (entry.kind === "you") {
                   return (
-                    <motion.p
+                    <motion.div
                       key={entry.id}
                       initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.35 }}
-                      className="ca-you"
+                      className="ca-you-col"
                     >
-                      {entry.text}
-                    </motion.p>
+                      {entry.replyTo && (
+                        <p className="ca-reply-quote">
+                          <ReplyQuoteIcon />
+                          <span>{entry.replyTo}</span>
+                        </p>
+                      )}
+                      <p className="ca-you">{entry.text}</p>
+                    </motion.div>
                   );
                 }
 

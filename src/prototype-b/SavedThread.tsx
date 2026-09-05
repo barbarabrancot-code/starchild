@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { motion } from "motion/react";
-import { AppIcon } from "./agents/AppIcon";
+import { ConnectorMark } from "./agents/ConnectorMark";
 import { BY_ID } from "./agents/connectors";
 import { Reactable } from "./Reactable";
 import type { SavedChat } from "./savedChats";
 import { useAgents } from "./agents/store";
-import { AgentLive, ExternalAlert, ConnectorChoice } from "./agents/AgentChatCards";
-import { ThinkingLine } from "./ThinkingLine";
+import { ExternalAlert, ConnectorChoice } from "./agents/AgentChatCards";
+import { ConnectorAdded } from "./agents/ConnectorAdded";
+import { ActivityLine } from "./ActivityLine";
 import { StatusLine } from "./StatusLine";
 import { OptionModal } from "./OptionModal";
 
@@ -28,7 +29,7 @@ function ReasoningRow({ label, lines }: { label: string; lines: string[] }) {
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
       >
-        <ThinkingLine label={label} />
+        <ActivityLine label={label} />
       </button>
       {open && (
         <div className="sv-reason-body">
@@ -54,50 +55,24 @@ export function SavedThread({
   chat,
   onReply,
   onOpenAgent,
-  onEditAgent,
 }: {
   chat: SavedChat;
   onReply: (quote: string) => void;
   onOpenAgent: (id: string) => void;
-  /** "Edit here" on a card inside history: focuses the live composer on this agent */
-  onEditAgent: (id: string) => void;
+  /** "Edit here" on a card inside history — no longer used since AgentLive
+   *  (the only card with an Edit here button) was retired, kept optional so
+   *  callers built for the old shape don't have to change */
+  onEditAgent?: (id: string) => void;
   /** the same idea, for an active task — no longer used here (status lines
    *  don't open anything), kept optional so callers built for the old shape
    *  don't have to change */
   onEditTask?: (id: string) => void;
 }) {
-  const { roster, updateAgent } = useAgents();
-  const pause = (id: string) =>
-    updateAgent(id, (a) =>
-      a.status === "paused"
-        ? { ...a, status: "working", mood: "Back on it." }
-        : { ...a, status: "paused", mood: "Paused by you." },
-    );
-  const resume = (id: string, mood: string) => updateAgent(id, (a) => ({ ...a, status: "working", mood }));
+  const { roster } = useAgents();
 
   return (
     <div className="sv-thread">
       {chat.turns.map((turn, i) => {
-        if (turn.who === "made") {
-          const agent = roster.find((a) => a.id === turn.agentId);
-          if (!agent) return null;
-          return (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              <AgentLive
-                agent={agent}
-                onOpen={() => onOpenAgent(agent.id)}
-                onEditHere={() => onEditAgent(agent.id)}
-                onPause={() => pause(agent.id)}
-              />
-            </motion.div>
-          );
-        }
-
         if (turn.who === "signal") {
           const agent = roster.find((a) => a.id === turn.agentId);
           if (!agent) return null;
@@ -146,12 +121,27 @@ export function SavedThread({
             >
               <OptionModal
                 title={turn.title}
+                subtitle={turn.subtitle}
                 options={turn.options}
+                picked={turn.picked}
                 onPick={() => {}}
-                onCustom={() => {}}
+                onCustom={turn.picked ? undefined : () => {}}
                 onClose={() => {}}
                 placeholder="Type your own response"
               />
+            </motion.div>
+          );
+        }
+
+        if (turn.who === "connectorAdded") {
+          return (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <ConnectorAdded id={turn.id} />
             </motion.div>
           );
         }
@@ -171,8 +161,6 @@ export function SavedThread({
                 headline={turn.headline}
                 detail={turn.detail}
                 onOpen={() => onOpenAgent(agent.id)}
-                onKeep={() => resume(agent.id, "Still watching.")}
-                onPause={() => pause(agent.id)}
               />
             </motion.div>
           );
@@ -203,6 +191,12 @@ export function SavedThread({
         }
 
         if (turn.who === "reasoning") {
+          // A status, not a permanent fixture: it says what's happening right
+          // before the answer that resolves it, and once that answer is in the
+          // transcript the status has nothing left to say. Never rendered
+          // except on the last turn — reading back a finished conversation
+          // means every reasoning turn here already has its answer below it.
+          if (i !== chat.turns.length - 1) return null;
           return (
             <div key={i} className="sv-left">
               <ReasoningRow label={turn.label} lines={turn.lines} />
@@ -213,7 +207,7 @@ export function SavedThread({
         if (turn.who === "connected") {
           return (
             <p key={i} className="sv-connected">
-              <AppIcon kind={BY_ID[turn.app].kind} className="size-3.5" />
+              <ConnectorMark id={turn.app} className="size-3.5" />
               <strong>{BY_ID[turn.app].name} connected</strong>
               <span>{turn.note}</span>
             </p>

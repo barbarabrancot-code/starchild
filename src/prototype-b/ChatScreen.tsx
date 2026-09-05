@@ -10,11 +10,10 @@ import { PresenceOrb } from "./presence/PresenceOrb";
 import { FirstMeeting, useFirstMeeting, type Tone } from "./onboarding/FirstMeeting";
 import { Reactable } from "./Reactable";
 import { ConductorIntroPopover } from "./onboarding/ConductorIntroPopover";
-import { ConnectFirst, AgentOffer } from "./agents/ChatHandoff";
+import { ConnectFirst, AgentOffer, AgentMade } from "./agents/ChatHandoff";
 import { readControl, type Control } from "./agents/agentControl";
 import { readTaskControl, type TaskControl } from "./agents/taskControl";
 import { StatusLine } from "./StatusLine";
-import { AgentOrb } from "./agents/AgentOrb";
 import type { ActiveTask } from "./agents/activeTasks";
 import { readRequest, sameAsk, tickersIn, type Request } from "./agents/readRequest";
 import { useAgents } from "./agents/store";
@@ -196,7 +195,7 @@ const TRADING_ASKED_BEFORE = [
  * reported in — the difference rule 4 exists to keep visible.
  */
 type TailBody =
-  | { kind: "you"; text: string }
+  | { kind: "you"; text: string; replyTo?: string }
   | { kind: "said"; text: string }
   | { kind: "taskCard"; taskId: string }
   | { kind: "taskHandled"; taskId: string }
@@ -371,6 +370,8 @@ export function ChatScreen({
 
   const pushTail = (entry: TailBody) =>
     setTail((prev) => [...prev, { ...entry, id: nextTail() }]);
+  /** closes a card without undoing what it reported — the thing it named still stands */
+  const removeTail = (id: number) => setTail((prev) => prev.filter((t) => t.id !== id));
   /** the saved conversation being read back, if any */
   const [reading, setReading] = useState<SavedChat | null>(null);
 
@@ -708,7 +709,8 @@ export function ChatScreen({
       if (control.kind === "none") return false;
       setValue("");
       setEditing(null);
-      pushTail({ kind: "you", text: trimmed });
+      pushTail({ kind: "you", text: trimmed, replyTo: replyTo ?? undefined });
+      setReplyTo(null);
       window.setTimeout(() => applyControl(control), 520);
       return true;
     };
@@ -718,7 +720,8 @@ export function ChatScreen({
       if (taskControl.kind === "none") return false;
       setValue("");
       setEditingTask(null);
-      pushTail({ kind: "you", text: trimmed });
+      pushTail({ kind: "you", text: trimmed, replyTo: replyTo ?? undefined });
+      setReplyTo(null);
       window.setTimeout(() => applyTaskControl(taskControl), 520);
       return true;
     };
@@ -729,6 +732,7 @@ export function ChatScreen({
     setReading(null);
     // the composer outlives the send now, so it has to be emptied by hand
     setValue("");
+    setReplyTo(null);
     // On a task card the user only supplies the missing detail ("BTC"), so the
     // standing context is what actually routes the work — their reply alone wouldn't.
     const full = activeTask ? `${activeTask.basePrompt} ${trimmed}` : trimmed;
@@ -1417,6 +1421,22 @@ export function ChatScreen({
                      amendment about an agent is not a different kind of thing
                      from the question that came before it. Alignment and weight
                      separate the voices, and that is as much as it needs. */
+                  .ca-you-col {
+                    display: flex; flex-direction: column; align-items: flex-end;
+                    align-self: flex-end; gap: 6px; max-width: 480px;
+                  }
+                  /* The quoted line a reply points at — the same curved arrow and
+                     muted tone as the composer's own reply preview, so the gesture
+                     reads the same whether it is still a draft or already sent. */
+                  .ca-reply-quote {
+                    display: flex; align-items: center; gap: 6px; margin: 0;
+                    max-width: 100%; font-family: var(--font-google-sans);
+                    font-size: 12.5px; color: rgba(255,255,255,.4);
+                  }
+                  .ca-reply-quote svg { flex: none; color: rgba(255,255,255,.35); }
+                  .ca-reply-quote span {
+                    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+                  }
                   .ca-you {
                     align-self: flex-end; max-width: 480px; margin: 0;
                     padding: 10px 15px; border-radius: 16px 16px 4px 16px;
@@ -1429,52 +1449,28 @@ export function ChatScreen({
                     font-family: var(--font-google-sans);
                     font-size: 15px; line-height: 1.6; color: #fff !important;
                   }
-                  .ca-user-turn + .ca-assistant-turn, .ca-you + .ca-said { margin-top: 36px; }
-
-                  /* Solid, and orange — the one card in this pair allowed to look
-                     finished, because it is: the agent it names already exists.
-                     Its dashed counterpart, .ca-offer, moved out to AgentOffer
-                     in agents/ChatHandoff.tsx — a real reusable component now. */
-                  .ca-created {
-                    display: flex; flex-direction: column; gap: 10px; width: 100%;
-                    box-sizing: border-box; padding: 20px 24px; border-radius: 16px;
-                    border: 1px solid rgba(248,70,0,.35); background: rgba(248,70,0,.05);
-                    font-family: var(--font-google-sans);
-                  }
-                  .ca-created-kicker {
-                    margin: 0; font-size: 11px; font-weight: 700; letter-spacing: .1em;
-                    text-transform: uppercase; color: #f84600;
-                  }
-                  .ca-created-head { display: flex; align-items: center; gap: 10px; }
-                  .ca-created-name { margin: 0; color: #fff; font-size: 15px; font-weight: 600; }
-                  .ca-created-role { margin: 0; color: rgba(255,255,255,.55); font-size: 13.5px; line-height: 1.5; }
-                  .ca-created-actions { display: flex; align-items: center; gap: 14px; margin-top: 4px; }
-                  .ca-created-go {
-                    border-radius: 999px; padding: 9px 16px; background: #f84600;
-                    color: #fff; font: inherit; font-size: 14px; font-weight: 600;
-                    transition: background .18s, transform .18s;
-                  }
-                  .ca-created-go:hover { background: #ff5a1f; transform: translateY(-1px); }
-                  .ca-created-note { font-size: 13px; color: rgba(255,255,255,.35); }
-
-                  @media (max-width: 640px) {
-                    .ca-created { padding: 18px 20px; }
-                  }
+                  .ca-user-turn + .ca-assistant-turn, .ca-you-col + .ca-said { margin-top: 36px; }
                 `}</style>
               )}
 
               {tail.map((entry) => {
                 if (entry.kind === "you") {
                   return (
-                    <motion.p
+                    <motion.div
                       key={entry.id}
                       initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.35 }}
-                      className="ca-you"
+                      className="ca-you-col"
                     >
-                      {entry.text}
-                    </motion.p>
+                      {entry.replyTo && (
+                        <p className="ca-reply-quote">
+                          <ReplyQuoteIcon />
+                          <span>{entry.replyTo}</span>
+                        </p>
+                      )}
+                      <p className="ca-you">{entry.text}</p>
+                    </motion.div>
                   );
                 }
 
@@ -1496,26 +1492,13 @@ export function ChatScreen({
                   const agent = roster.find((a) => a.id === entry.agentId);
                   if (!agent) return null;
                   return (
-                    <motion.div
-                      key={entry.id}
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                      className="ca-created"
-                    >
-                      <p className="ca-created-kicker">Agent created</p>
-                      <div className="ca-created-head">
-                        <AgentOrb status={agent.status} size={10} accent={agent.accent} still />
-                        <p className="ca-created-name">{agent.name}</p>
-                      </div>
-                      <p className="ca-created-role">{agent.role}</p>
-                      <div className="ca-created-actions">
-                        <button type="button" className="ca-created-go" onClick={() => onOpenAgent?.(agent.id)}>
-                          Open Agent
-                        </button>
-                        <span className="ca-created-note">This conversation stays here.</span>
-                      </div>
-                    </motion.div>
+                    <div key={entry.id}>
+                      <AgentMade
+                        agent={agent}
+                        onOpen={() => onOpenAgent?.(agent.id)}
+                        onDismiss={() => removeTail(entry.id)}
+                      />
+                    </div>
                   );
                 }
 

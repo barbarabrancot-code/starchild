@@ -11,12 +11,14 @@ import {
   SearchIcon,
 } from "../icons";
 import { Reactable } from "../Reactable";
-import { ThinkingLine } from "../ThinkingLine";
+import { ActivityLine } from "../ActivityLine";
 import { AgentOrb } from "./AgentOrb";
 import { AgentOnboarding, type NewAgent } from "./AgentOnboarding";
 import { AgentPicker } from "./AgentPicker";
 import { RichText } from "./RichText";
 import { ConnectorChoice } from "./AgentChatCards";
+import { ConnectorAdded } from "./ConnectorAdded";
+import { OptionModal } from "../OptionModal";
 import { ACCENTS, FIRST_QUESTIONS, GREETING } from "./onboardingData";
 import { lastAgentLine, type Agent, type AgentTurn } from "./agentsData";
 import { type ConnectorId } from "./connectors";
@@ -192,7 +194,7 @@ function ReasoningRow({ label, lines }: { label: string; lines: string[] }) {
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
       >
-        <ThinkingLine label={label} />
+        <ActivityLine label={label} />
       </button>
       {open && (
         <div className="ag-reason-body">
@@ -226,19 +228,70 @@ function ThinkingRow({ agent }: { agent: Agent }) {
   );
 }
 
-export function Turn({ turn, onReply }: { turn: AgentTurn; onReply: (quote: string) => void }) {
+/** the same curved-arrow glyph ChatScreen's own reply preview uses, so a
+ *  quote reads as the same gesture wherever it shows up */
+function ReplyQuoteIcon() {
+  return (
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.4}
+      strokeLinecap="round" strokeLinejoin="round" className="size-3.5" aria-hidden="true">
+      <path d="M6.4 3.2 2.2 7.4l4.2 4.2" />
+      <path d="M2.2 7.4h6.2a5.4 5.4 0 0 1 5.4 5.4v.2" />
+    </svg>
+  );
+}
+
+export function Turn({
+  turn,
+  onReply,
+  /** whether this is the last turn in the thread — a reasoning row only ever
+   *  renders there; defaults true so a standalone demo (the library) still
+   *  shows it without needing to fake a whole surrounding thread */
+  isLast = true,
+}: {
+  turn: AgentTurn;
+  onReply: (quote: string) => void;
+  isLast?: boolean;
+}) {
   // Activity notices are not something said to you — they don't render here,
   // the way a system notice in a messenger doesn't sit in the message column.
   if (turn.kind === "activity") return null;
   if (turn.kind === "approval") return <ApprovalBlock {...turn} />;
   if (turn.kind === "summary") return <SummaryBlock {...turn} />;
-  if (turn.kind === "reasoning") return <ReasoningRow label={turn.label} lines={turn.lines} />;
+  if (turn.kind === "reasoning") {
+    // A status, not a permanent fixture — see the identical rule in
+    // SavedThread. Once the answer below it exists, the reasoning that came
+    // before it has nothing left to say.
+    if (!isLast) return null;
+    return <ReasoningRow label={turn.label} lines={turn.lines} />;
+  }
   if (turn.kind === "date") return <p className="ag-date">{turn.label}</p>;
   if (turn.kind === "connectorChoice") return <ConnectorChoice />;
+  if (turn.kind === "decision") {
+    return (
+      <OptionModal
+        title={turn.title}
+        subtitle={turn.subtitle}
+        options={turn.options}
+        picked={turn.picked}
+        onPick={() => {}}
+        onCustom={turn.picked ? undefined : () => {}}
+        onClose={() => {}}
+        placeholder="Type your own response"
+      />
+    );
+  }
+  if (turn.kind === "connectorAdded") return <ConnectorAdded id={turn.id} />;
 
   const mine = turn.kind === "you";
+  const replyTo = turn.kind === "you" ? turn.replyTo : undefined;
   return (
     <div className={`ag-msg-col${mine ? " ag-msg-col--mine" : ""}`}>
+      {replyTo && (
+        <p className="ag-reply-quote">
+          <ReplyQuoteIcon />
+          <span>{replyTo}</span>
+        </p>
+      )}
       <Reactable
         align={mine ? "right" : "left"}
         reaction={turn.kind === "you" ? turn.reaction : undefined}
@@ -247,7 +300,6 @@ export function Turn({ turn, onReply }: { turn: AgentTurn; onReply: (quote: stri
       >
         <div className={`ag-bubble ag-msg${mine ? " ag-msg--mine" : ""}`}><RichText text={turn.text} /></div>
       </Reactable>
-      {turn.at && <span className="ag-msg-time">{turn.at}</span>}
     </div>
   );
 }
@@ -472,8 +524,9 @@ export function AgentsWorkspace({
     if (!text || !agent) return;
     setDraft("");
 
-    const said: AgentTurn = { kind: "you", text };
+    const said: AgentTurn = { kind: "you", text, replyTo: replyTo ?? undefined };
     updateAgent(agent.id, (a) => ({ ...a, thread: [...a.thread, said] }));
+    setReplyTo(null);
     setThinking(true);
 
     if (!agent.onboarding) {
@@ -680,7 +733,7 @@ export function AgentsWorkspace({
           onScroll={handleTurnsScroll}
         >
           {agent.thread.map((turn, i) => (
-            <Turn key={i} turn={turn} onReply={setReplyTo} />
+            <Turn key={i} turn={turn} onReply={setReplyTo} isLast={i === agent.thread.length - 1} />
           ))}
 
           {thinking && <ThinkingRow key={`thinking-${agent.thread.length}`} agent={agent} />}
@@ -1046,7 +1099,7 @@ export function AgentsWorkspace({
           content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
           background: radial-gradient(46% 120% at 8% 50%, rgba(248,70,0,.07) 0%, rgba(248,70,0,0) 70%);
         }
-        .ag-head-name { font-size: 16px; font-weight: 600; color: #fff; }
+        .ag-head-name { font-size: 16px; font-weight: 500; color: #fff; }
 
         /* ---------- drawer ---------- */
 
@@ -1241,13 +1294,13 @@ export function AgentsWorkspace({
              the longest sentence in the thread */
           width: fit-content;
           max-width: 560px; padding: 11px 16px; border-radius: 16px 16px 16px 4px;
-          background: rgba(255,255,255,.05);
+          background: rgba(255,255,255,.1);
         }
 
         .ag-msg { font-size: 14.5px; line-height: 1.55; color: rgba(255,255,255,.9); }
         .ag-msg--mine {
           border-radius: 16px 16px 4px 16px;
-          background: rgba(248,70,0,.14);
+          background: rgba(248,70,0,.24);
         }
 
         /* wraps a bubble and its send time, so the time can sit on the same
@@ -1257,7 +1310,18 @@ export function AgentsWorkspace({
           align-items: flex-start; align-self: flex-start;
         }
         .ag-msg-col--mine { align-items: flex-end; align-self: flex-end; }
-        .ag-msg-time { font-size: 11px; padding: 0 4px; color: rgba(255,255,255,.32); }
+        /* The quoted line a reply points at — same arrow and muted tone as
+           the composer's own reply preview, so the gesture reads the same
+           whether it is still a draft or already sent. */
+        .ag-reply-quote {
+          display: flex; align-items: center; gap: 6px; margin: 0 0 2px;
+          max-width: 100%; font-family: var(--font-google-sans);
+          font-size: 12.5px; color: rgba(255,255,255,.4);
+        }
+        .ag-reply-quote svg { flex: none; color: rgba(255,255,255,.35); }
+        .ag-reply-quote span {
+          overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
 
         .ag-reason { display: flex; flex-direction: column; gap: 10px; max-width: 520px; align-self: flex-start; }
         .ag-reason-toggle {

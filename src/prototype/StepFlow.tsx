@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import type { Scenario } from "./data";
 import { Deliverable } from "./Deliverable";
-import { ThinkingLine } from "./ThinkingLine";
+import { ActivityLine } from "./ActivityLine";
 
 /**
  * What happens between pressing send and getting an answer.
@@ -156,7 +156,7 @@ export function StepFlow({
             exit={{ opacity: 0, transition: { duration: 0.25 } }}
             transition={{ duration: 0.35 }}
           >
-            <ThinkingLine label={run.stages[Math.min(stage, run.stages.length - 1)]} />
+            <ActivityLine label={run.stages[Math.min(stage, run.stages.length - 1)]} />
           </motion.div>
         )}
       </AnimatePresence>

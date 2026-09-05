@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { CheckIcon, SearchIcon } from "../icons";
-import { AppIcon } from "./AppIcon";
+import { ConnectorMark } from "./ConnectorMark";
 import { CATALOG, type ConnectorId } from "./connectors";
 import { useAgents } from "./store";
 
@@ -67,7 +67,7 @@ export function ConnectorPicker({
               className={`cp-cell${on ? " cp-cell--on" : ""}${connected ? "" : " cp-cell--new"}`}
             >
               <span className="cp-top">
-                <span className="cp-glyph"><AppIcon kind={c.kind} className="size-4" /></span>
+                <span className="cp-glyph"><ConnectorMark id={c.id} className="size-4" /></span>
                 {on && <CheckIcon className="cp-tick size-3.5" />}
               </span>
               <span className="cp-name">{c.name}</span>
