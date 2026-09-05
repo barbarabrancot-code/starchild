@@ -37,7 +37,7 @@ export function LibraryApp() {
             <Entry
               title="ChatScreen"
               path="src/prototype-b/ChatScreen.tsx"
-              desc="The signed-in conversation: composer, message turns, connector/agent hand-off cards. Full-height, so it's shown at its own scroll rather than fit to the page. Wider than this column — the sidebar wants its full expanded width, not the collapsed rail — so this one preview scrolls sideways rather than cropping."
+              desc="The main chat screen. It includes messages, the composer, and cards for connectors and agents. The preview is wider so the full sidebar fits."
             >
               <div className="lib-frame-scroll">
                 <div className="lib-frame" style={{ width: 1040, height: 640 }}>
@@ -49,7 +49,7 @@ export function LibraryApp() {
             <Entry
               title="AgentsWorkspace"
               path="src/prototype-b/agents/AgentsWorkspace.tsx"
-              desc="Roster, thread, and the edit drawer — the whole second product area. Click a row, right-click for the context menu, click a name to open the drawer."
+              desc="The Agents area: the list, conversation, and edit panel. Select a row to open it, right-click for more actions, or click a name to edit it."
             >
               <div className="lib-frame" style={{ height: 820, display: "flex", flexDirection: "column" }}>
                 <AgentsWorkspace />
@@ -59,19 +59,19 @@ export function LibraryApp() {
 
           <Section id="onboarding" title="Onboarding">
             <Entry
-              title="FirstMeeting: question 1 → question 2"
+              title="First meeting: questions 1 and 2"
               path="src/prototype-b/onboarding/FirstMeeting.tsx"
-              desc="The very first thing a new account sees, before there's a chat to have. Two questions, asked one at a time — what's on your mind, then how direct you want Starchild to be — answered by tapping a chip or typing. In the real flow the second replaces the first rather than stacking under it; shown stacked here only so both are visible at once."
+              desc="The first screen for new users. It asks what they need help with, then how direct Starchild should be. The product shows one question at a time; this library shows both."
             >
               <div className="lib-stack">
                 <div className="lib-sequence-step">
-                  <p className="lib-sequence-label">1 · What's on your mind</p>
+                  <p className="lib-sequence-label">1 · What do you need help with?</p>
                   <div className="lib-frame lib-frame--pad">
                     <FirstMeetingDemo />
                   </div>
                 </div>
                 <div className="lib-sequence-step">
-                  <p className="lib-sequence-label">2 · How direct you want Starchild to be</p>
+                  <p className="lib-sequence-label">2 · How direct should Starchild be?</p>
                   <div className="lib-frame lib-frame--pad">
                     <FirstMeetingStage2Demo />
                   </div>
@@ -80,15 +80,15 @@ export function LibraryApp() {
             </Entry>
 
             <Entry
-              title="Intro popovers: Conductor + Agents"
+              title="Intro popovers"
               path="src/prototype-b/onboarding/{ConductorIntroPopover,AgentsIntroPopover}.tsx"
-              desc="Two of the three quiet first-run notes — not a tour, just one thing worth knowing before it comes up, in the same card shape either way (a visual, a title, one line, Dismiss or the real action). Conductor's hangs off the Conductor Mode control in the composer; Agents' hangs off Agents in the sidebar and its CTA opens straight there instead of just dismissing. The real components always position themselves absolutely off that real anchor, which this page doesn't have, so — unlike everything else here — these two are redrawn by hand rather than mounted live."
+              desc="Short first-use tips for Conductor Mode and Agents. In the product, each appears beside its control. This library shows simple examples of both."
             >
               <div className="lib-intro-pair">
                 <div className="lib-intro-mock">
                   <div className="lib-intro-mock-visual" aria-hidden="true" />
                   <h3 className="lib-intro-mock-title">Meet Conductor Mode</h3>
-                  <p className="lib-intro-mock-body">Starchild chooses the right AI for each task, so you don&rsquo;t have to.</p>
+                  <p className="lib-intro-mock-body">Starchild picks the right AI for each task.</p>
                   <div className="lib-intro-mock-actions">
                     <span className="lib-intro-mock-dismiss">Dismiss</span>
                     <span className="lib-intro-mock-cta">Got it</span>
@@ -97,7 +97,7 @@ export function LibraryApp() {
                 <div className="lib-intro-mock">
                   <div className="lib-intro-mock-visual" aria-hidden="true" />
                   <h3 className="lib-intro-mock-title">Meet your Agents</h3>
-                  <p className="lib-intro-mock-body">Hand something over and it keeps going on its own — checking, running, and coming back when it matters.</p>
+                  <p className="lib-intro-mock-body">Give an agent a task. It keeps working and lets you know when it matters.</p>
                   <div className="lib-intro-mock-actions">
                     <span className="lib-intro-mock-dismiss">Dismiss</span>
                     <span className="lib-intro-mock-cta">Open Agents</span>
@@ -111,11 +111,11 @@ export function LibraryApp() {
             <Entry
               title="Reactable"
               path="src/prototype-b/Reactable.tsx"
-              desc="Wraps a message. Hover for reply / react / copy. The emoji trigger only shows on the left (Starchild's) side — reacting to your own message isn't offered. A seeded `reaction` (Starchild's own note on something you said) renders as a fixed chip glued to the bubble's corner."
+              desc="Adds actions to a message. Hover to reply, react, or copy. Reactions are available on Starchild messages and appear on the message bubble."
             >
               <div className="lib-stack">
-                <Reactable align="left" text="I'm watching HYPE, SOL, ETH and BTC for funding moves.">
-                  <div className="lib-bubble">I'm watching HYPE, SOL, ETH and BTC for funding moves.</div>
+                <Reactable align="left" text="I'm watching HYPE, SOL, ETH and BTC for important funding moves.">
+                  <div className="lib-bubble">I'm watching HYPE, SOL, ETH and BTC for important funding moves.</div>
                 </Reactable>
                 <Reactable align="right" text="Only alert me if it's a real move." reaction="👍">
                   <div className="lib-bubble lib-bubble--mine">Only alert me if it's a real move.</div>
@@ -126,21 +126,21 @@ export function LibraryApp() {
             <Entry
               title="ActivityLine"
               path="src/prototype-b/ActivityLine.tsx"
-              desc="A plain orange dot with a soft, steady halo, no animation. Shows what Starchild is doing right now — thinking, reading, checking, routing, taking action — for the latest active step only, and disappears the instant the result is ready. No completed activity stays in the chat history."
+              desc="Shows what Starchild is doing right now, such as reading or checking something. It disappears as soon as the result is ready."
             >
               <ActivityLine label="Reading through it…" />
             </Entry>
 
             <Entry
-              title="Agent creation from chat (AgentOffer → AgentMade)"
+              title="Create an agent from chat"
               path="src/prototype-b/agents/ChatHandoff.tsx"
-              desc="Two states of one sequence, not two components: Starchild notices a repeated ask and offers to make a real agent for it (dashed border, nothing exists yet); once you say yes, a solid receipt shows it now exists, with a door to it. The conversation never leaves the chat for either state."
+              desc="First, Starchild offers to create an agent for a repeated task. After confirmation, it shows that the agent is ready. The conversation stays open throughout."
             >
               <div className="lib-stack">
                 <div className="lib-sequence-step" style={{ width: 480 }}>
                   <p className="lib-sequence-label">1 · AgentOffer</p>
                   <AgentOffer
-                    copy="That's a few times now you've asked me to check João's emails. I can keep watching on my own and only bother you when a reply actually needs your attention. This conversation stays as it is either way."
+                    copy="You've asked me to check João's email a few times. I can watch it for you and only let you know when a reply needs your attention."
                     onCreate={() => {}}
                     onDismiss={() => {}}
                   />
@@ -153,9 +153,9 @@ export function LibraryApp() {
             </Entry>
 
             <Entry
-              title="OptionModal: asking → picked"
+              title="Option modal: ask and choose"
               path="src/prototype-b/OptionModal.tsx"
-              desc="A real decision, not an update — on screen the moment it's needed, never gated behind a click on a status line. Two states of the same component: click a row (or pass `picked`, for a decision read back out of history) and the list collapses to the one row that was chosen, with a checkmark. ConnectorChoice below is this same component, just called with its own five options."
+              desc="Use this when Starchild needs a decision. Choose an option or write your own answer. After a choice, it shows the selected option with a checkmark."
             >
               <div className="lib-sequence">
                 <div className="lib-sequence-step">
@@ -194,15 +194,15 @@ export function LibraryApp() {
             <Entry
               title="ConnectorChoice"
               path="src/prototype-b/agents/AgentChatCards.tsx"
-              desc="The moment before a connector gets added to an agent — a lettered choice asked inside the conversation, plus a free-text answer."
+              desc="Lets someone choose which connector to add to an agent, or write a different answer."
             >
               <ConnectorChoice />
             </Entry>
 
             <Entry
-              title="ConnectorAdded: add → added"
+              title="Connector: add and added"
               path="src/prototype-b/agents/ConnectorAdded.tsx"
-              desc="A connector landing, mid-conversation. Starts on a real, secondary-weight 'Add' — authorizing an account is the one part of this Starchild can't do on its own — and turns into the quiet green 'Added' once it's clicked."
+              desc="Shows a connector being added during a conversation. Select Add to connect the account; once connected, the card shows Added."
             >
               <div className="lib-stack">
                 <div className="lib-sequence-step">
@@ -219,7 +219,7 @@ export function LibraryApp() {
             <Entry
               title="SavedThread"
               path="src/prototype-b/SavedThread.tsx"
-              desc="A conversation being read back — restored, not replayed. Every turn kind lives here: plain bubbles, a tool connecting, a reasoning row, agent hand-off cards."
+              desc="Shows a saved conversation. It can include messages, connector cards, activity, and agent cards."
             >
               <div className="lib-frame lib-frame--pad" style={{ maxHeight: 480, overflowY: "auto" }}>
                 <SavedThread
@@ -235,7 +235,7 @@ export function LibraryApp() {
             <Entry
               title="ProductSidebar"
               path="src/prototype-b/ProductSidebar.tsx"
-              desc="The signed-in nav rail — collapses to icons-only and grows back on hover. Toggle below to see both states."
+              desc="The main sidebar. It can collapse to icons and expand again. Use the button below to view both states."
             >
               <SidebarDemo />
             </Entry>
@@ -243,16 +243,16 @@ export function LibraryApp() {
 
           <Section id="agent-components" title="Agent components">
             <Entry
-              title="Agent chat (Turn)"
+              title="Agent chat messages"
               path="src/prototype-b/agents/AgentsWorkspace.tsx"
-              desc="What a message actually looks like inside a dedicated agent's thread — bubble, timestamp, a reaction glued to the corner, a link rendered by RichText, a decision, a connector landing, and the date divider between sessions. One render function per AgentTurn kind (reasoning excluded here — see the note below and the ActivityLine entry above)."
+              desc="Examples of messages in an agent conversation: dates, messages, reactions, choices, connectors, and links."
             >
               <div className="lib-agturns">
                 <Turn turn={{ kind: "date", label: "Today 11:20" }} onReply={() => {}} />
                 <Turn
                   turn={{
                     kind: "agent",
-                    text: "I'm watching HYPE, SOL, ETH and BTC for funding moves — I'll only interrupt you when something actually moves out of the ordinary.",
+                    text: "I'm watching HYPE, SOL, ETH and BTC. I'll let you know only when something important changes.",
                     at: "11:20",
                   }}
                   onReply={() => {}}
@@ -293,7 +293,7 @@ export function LibraryApp() {
             <Entry
               title="AgentOrb"
               path="src/prototype-b/agents/AgentOrb.tsx"
-              desc="Status carried by form and motion, never by colour — colour is identity (the agent's accent). A ring waits, a wander works, stillness and grey pause."
+              desc="Shows an agent's status through shape and movement. The color identifies the agent; a ring means waiting and movement means working."
             >
               <div className="lib-row">
                 {STATUSES.map((s) => (
@@ -308,7 +308,7 @@ export function LibraryApp() {
             <Entry
               title="ConnectorMark"
               path="src/prototype-b/agents/ConnectorMark.tsx"
-              desc="A connector's real logo where one exists as a static asset (.svg, or .webp for the odd exported one), falling back to AppIcon's glyph the moment neither does — a failed image load moves to the next extension, then to the glyph, live. Gmail, Calendar, Drive, Notion, Slack, Telegram and Figma have real marks on file; GitHub doesn't yet, so it falls back right here."
+              desc="Shows the connector's logo when it is available. Otherwise, it uses the default icon. GitHub is shown here with the default icon."
             >
               <div className="lib-row">
                 {(["gmail", "gcal", "gdrive", "notion", "slack", "telegram", "github", "figma"] as const).map((id) => (
@@ -354,7 +354,7 @@ function FirstMeetingStage2Demo() {
     currentQuestion: {
       id: "demo-preference",
       stage: 1,
-      text: "One thing that helps me work better with you: do you want me to be more direct, or give you more room to think things through?",
+      text: "Should I be more direct, or give you more room to think?",
     },
     thinking: false,
     acceptsText: false,
@@ -430,9 +430,8 @@ function Header() {
     <header className="lib-header">
       <h1>Chat &amp; Agents component library</h1>
       <p>
-        Every demo on this page renders the real component from <code>src/prototype-b/</code> (variant B —
-        no Automations) — nothing here is a redrawn approximation. Scoped to Chat and Agents only; the
-        rest of the product (Landing, Onboarding, Sandbox) isn't catalogued here.
+        Examples of the real Chat and Agents components from <code>src/prototype-b/</code>. This library
+        covers Chat and Agents only.
       </p>
     </header>
   );
