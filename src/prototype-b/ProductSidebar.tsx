@@ -74,8 +74,15 @@ export function ProductSidebar({
   // (an area, a saved conversation, New chat) closes it the same way tapping
   // the backdrop does — on a phone the menu is a means to get somewhere, not
   // a panel that stays open beside the destination.
+  //
+  // MOBILE BREAKPOINT: 900px, everywhere in this file (`min-[900px]:` below,
+  // not Tailwind's own `lg:` at 1024px) — it has to match AgentsWorkspace's
+  // own `@media (max-width: 900px)` exactly, or there's a dead band between
+  // the two thresholds where the hamburger has already disappeared but the
+  // sidebar still hasn't got room to sit in-flow. ChatScreen's own hamburger
+  // uses the same 900px for the same reason.
   const mobileOverlay = mobileOpen ? (
-    <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true">
+    <div className="fixed inset-0 z-50 min-[900px]:hidden" role="dialog" aria-modal="true">
       <div className="absolute inset-0 bg-black/60" onClick={onCloseMobile} />
       <div className="absolute inset-y-0 left-0 flex w-[268px] max-w-[82vw] flex-col border-r border-white/[0.08] bg-[#0c0c0d]">
         <SidebarBody
@@ -111,7 +118,7 @@ export function ProductSidebar({
           change the toggle makes, not a panel floating on top of it — and
           everything beside it slides over to make room, the same as a click
           would. It settles back the instant the pointer leaves. */}
-      <div className="group/rail hidden w-[64px] shrink-0 overflow-hidden border-r border-white/[0.08] bg-[#0c0c0d] transition-[width] duration-150 ease-out hover:w-[268px] lg:block">
+      <div className="group/rail hidden w-[64px] shrink-0 overflow-hidden border-r border-white/[0.08] bg-[#0c0c0d] transition-[width] duration-150 ease-out hover:w-[268px] min-[900px]:block">
         <div className="relative h-full w-[268px]">
           {/* The rail: icons only, fading out as the hover grows the width in. */}
           <div className="absolute inset-0 flex w-[64px] flex-col items-center px-2 pt-5 pb-4 opacity-100 transition-opacity duration-150 group-hover/rail:opacity-0">
@@ -219,7 +226,7 @@ export function ProductSidebar({
 
   return (
     <>
-    <div className="hidden w-[268px] shrink-0 border-r border-white/[0.08] bg-[#0c0c0d] lg:block">
+    <div className="hidden w-[268px] shrink-0 border-r border-white/[0.08] bg-[#0c0c0d] min-[900px]:block">
       <SidebarBody
         areas={areas}
         area={area}

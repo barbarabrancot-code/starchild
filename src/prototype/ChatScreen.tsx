@@ -1200,16 +1200,22 @@ export function ChatScreen({
           // spend, and the view controls. No back arrow — this is the product,
           // not a detour from the site. The wordmark is the way out.
           //
-          // Below `lg` none of that fits, and the sidebar it would open has
+          // Below 900px none of that fits, and the sidebar it would open has
           // nowhere to live in-flow anyway (see ProductSidebar) — so the row
           // becomes the WhatsApp-shaped one instead: a hamburger to the menu,
           // the wordmark still centered, a plain "more" standing in for the
           // wallet/panel/dev-view cluster a phone has no room for.
+          //
+          // MOBILE BREAKPOINT: 900px (min-[900px]: below, not Tailwind's
+          // own lg: at 1024px) — has to match AgentsWorkspace's own
+          // @media (max-width: 900px) and ProductSidebar's min-[900px]:
+          // exactly, or there's a dead band where the hamburger has already
+          // disappeared but the sidebar still has nowhere to live in-flow.
           <header className="relative flex shrink-0 items-center px-4 py-3 sm:px-6 sm:py-4">
             <button
               type="button"
               onClick={() => onOpenMenu?.()}
-              className="relative flex size-9 items-center justify-center rounded-lg text-white/70 transition-colors hover:bg-white/[0.07] lg:hidden"
+              className="relative flex size-9 items-center justify-center rounded-lg text-white/70 transition-colors hover:bg-white/[0.07] min-[900px]:hidden"
               aria-label="Open menu"
             >
               <MenuIcon className="size-5" />
@@ -1225,7 +1231,7 @@ export function ChatScreen({
               STARCHILD
             </button>
 
-            <div className="ml-auto hidden items-center gap-3 lg:flex">
+            <div className="ml-auto hidden items-center gap-3 min-[900px]:flex">
             <span
               className="flex items-center gap-2 rounded-full bg-white/[0.07] px-3 py-1.5 text-[13px] font-medium text-white/85"
               style={{ fontFamily: "var(--font-google-sans)" }}
@@ -1253,7 +1259,7 @@ export function ChatScreen({
 
             <button
               type="button"
-              className="ml-auto flex size-9 items-center justify-center rounded-lg text-white/70 transition-colors hover:bg-white/[0.07] lg:hidden"
+              className="ml-auto flex size-9 items-center justify-center rounded-lg text-white/70 transition-colors hover:bg-white/[0.07] min-[900px]:hidden"
               aria-label="More"
             >
               <EllipsisIcon className="size-5" />
@@ -1558,19 +1564,25 @@ export function ChatScreen({
                      separate the voices, and that is as much as it needs. */
                   .ca-you-col {
                     display: flex; flex-direction: column; align-items: flex-end;
-                    align-self: flex-end; gap: 6px; max-width: 480px;
+                    align-self: flex-end; gap: 6px; max-width: 480px; min-width: 0;
                   }
                   /* The quoted line a reply points at — the same curved arrow and
                      muted tone as the composer's own reply preview, so the gesture
-                     reads the same whether it is still a draft or already sent. */
+                     reads the same whether it is still a draft or already sent.
+                     min-width: 0 down this chain (row and its own text span) is
+                     load-bearing: a flex item's default floor is its content's own
+                     min-content size, which for nowrap text is the text's full
+                     unwrapped width — without overriding that floor, the ellipsis
+                     below never gets a chance to run, and the quote just runs
+                     past the screen's edge on a narrow phone instead. */
                   .ca-reply-quote {
                     display: flex; align-items: center; gap: 6px; margin: 0;
-                    max-width: 100%; font-family: var(--font-google-sans);
+                    max-width: 100%; min-width: 0; font-family: var(--font-google-sans);
                     font-size: 12.5px; color: rgba(255,255,255,.4);
                   }
                   .ca-reply-quote svg { flex: none; color: rgba(255,255,255,.35); }
                   .ca-reply-quote span {
-                    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+                    min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
                   }
                   .ca-you {
                     align-self: flex-end; max-width: 480px; margin: 0;

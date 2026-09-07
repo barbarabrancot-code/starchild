@@ -360,8 +360,12 @@ export function AgentsWorkspace({
   const [pinnedIds, setPinnedIds] = useState<string[]>([]);
   /** the row a right-click opened, and where */
   const [rowMenu, setRowMenu] = useState<{ id: string; x: number; y: number } | null>(null);
-  /** everything true about the agent that is not part of the conversation */
-  const [drawer, setDrawer] = useState(false);
+  /** everything true about the agent that is not part of the conversation —
+   *  `?openDrawer=1` opens straight on it, the same idea as `?agents=empty`
+   *  above, for deep-linking a preview straight to the profile pane */
+  const [drawer, setDrawer] = useState(
+    () => typeof window !== "undefined" && new URLSearchParams(window.location.search).get("openDrawer") === "1",
+  );
   /** deletion needs an explicit second action; it is the only irreversible control here */
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [draft, setDraft] = useState("");
@@ -1382,21 +1386,32 @@ export function AgentsWorkspace({
         /* wraps a bubble and its send time, so the time can sit on the same
            side as the bubble it belongs to without widening the row itself */
         .ag-msg-col {
-          display: flex; flex-direction: column; gap: 4px; width: fit-content;
+          display: flex; flex-direction: column; gap: 4px; width: fit-content; min-width: 0;
           align-items: flex-start; align-self: flex-start;
         }
         .ag-msg-col--mine { align-items: flex-end; align-self: flex-end; }
         /* The quoted line a reply points at — same arrow and muted tone as
            the composer's own reply preview, so the gesture reads the same
-           whether it is still a draft or already sent. */
+           whether it is still a draft or already sent.
+           .ag-msg-col sizes itself with width: fit-content (on purpose —
+           see its own comment) so a short bubble doesn't stretch wide. But
+           fit-content carries its own built-in floor of "at least as wide as
+           my widest child's own min-content", and min-width: 0 cannot push a
+           box narrower than what its own width already computes to — so on a
+           long quote, max-width: 100% here was circular (100% of a parent
+           that was itself trying to grow to fit this exact child) and never
+           actually capped anything. An absolute cap does: it bounds this
+           row's own contribution to that fit-content calculation directly,
+           which is what lets the ellipsis below actually run instead of the
+           quote just pushing the whole column past the screen's edge. */
         .ag-reply-quote {
           display: flex; align-items: center; gap: 6px; margin: 0 0 2px;
-          max-width: 100%; font-family: var(--font-google-sans);
+          max-width: min(300px, 72vw); min-width: 0; font-family: var(--font-google-sans);
           font-size: 12.5px; color: rgba(255,255,255,.4);
         }
         .ag-reply-quote svg { flex: none; color: rgba(255,255,255,.35); }
         .ag-reply-quote span {
-          overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+          min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
         }
 
         .ag-reason { display: flex; flex-direction: column; gap: 10px; max-width: 520px; align-self: flex-start; }
@@ -1535,7 +1550,13 @@ export function AgentsWorkspace({
            picker), never both stacked. Whichever one mobileView names fills
            the whole screen; the other stops rendering. The hamburger and the
            back arrow are how you move between them and to the app's own menu,
-           the same way WhatsApp's own list/chat panes work on a phone. */
+           the same way WhatsApp's own list/chat panes work on a phone.
+
+           MOBILE BREAKPOINT: 900px — the number itself has to match
+           ProductSidebar's and ChatScreen's own min-[900px]: (Tailwind,
+           not the lg: at 1024px they'd otherwise reach for), or there's a
+           dead band where this hamburger has already appeared but the menu
+           it opens still doesn't have anywhere to live in-flow. */
         @media (max-width: 900px) {
           .ag-workspace { flex-direction: column; }
           .ag-menu, .ag-back { display: flex; }
@@ -1549,6 +1570,11 @@ export function AgentsWorkspace({
              tiny once it's a thumb doing the tapping, not a cursor. */
           .ag-menu, .ag-new { width: 40px; height: 40px; }
           .ag-menu svg, .ag-new svg { width: 24px; height: 24px; }
+          /* The name itself is still the door to the profile panel below — a
+             tap opens it the same as a click does on desktop, this just
+             stops saying so with a chevron on top of everything else the
+             header is already doing at this width. */
+          .ag-id-chev { display: none; }
           /* The agent's own panel stops being a column beside the thread and
              becomes its own full screen — the same "one pane at a time" rule
              the list and thread already follow, just for a third pane. The

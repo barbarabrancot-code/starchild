@@ -336,14 +336,15 @@ export function Reactable({
            The popup itself stops anchoring to that (now invisible, near-zero-
            width) button — on a bubble that runs close to the screen's own
            edge, that anchor could sit close enough to it that the popup ran
-           past the edge. Centered on the row instead, and capped to the
-           viewport's own width minus a margin, it never can. */
+           past the edge. Right-aligned to the row instead (the row itself
+           never renders past whatever margin the page already gives it, on
+           either side), it grows back into that space instead of past it. */
         @media (hover: none) {
           .rx-actions { opacity: 1; }
           .rx-action { display: none; }
           .rx-pop-anchor { position: static; }
           .rx-picker, .rx-menu {
-            left: 50%; right: auto; transform: translateX(-50%);
+            left: auto; right: 0; transform: none;
             max-width: min(280px, calc(100vw - 32px));
           }
         }

@@ -111,6 +111,21 @@ function startsSignedIn(): boolean {
   return new URLSearchParams(window.location.search).get("signedin") === "1";
 }
 
+/** `?area=agents` (or `connectors`) opens straight there — a deep link for
+ *  previews, the same idea as `?signedin=1` above. */
+function startingArea(): "chat" | "agents" | "connectors" {
+  if (typeof window === "undefined") return "chat";
+  const a = new URLSearchParams(window.location.search).get("area");
+  return a === "agents" || a === "connectors" ? a : "chat";
+}
+
+/** paired with `?area=agents` to land on a specific agent's thread rather
+ *  than the top of the roster */
+function startingFocusAgent(): string | undefined {
+  if (typeof window === "undefined") return undefined;
+  return new URLSearchParams(window.location.search).get("focusAgent") ?? undefined;
+}
+
 export function ConductorApp({
   line = BUILT_LINE,
   startInOnboarding = false,
@@ -139,9 +154,9 @@ export function ConductorApp({
   /** Which product area the chat screen sits in once signed in. Set when a task is
    *  picked, so someone who asked for something to be run lands among the agents
    *  rather than in a conversation about them. */
-  const [area, setArea] = useState<"chat" | "agents" | "connectors">("chat");
+  const [area, setArea] = useState<"chat" | "agents" | "connectors">(startingArea);
   /** an agent made from a conversation — Agents opens on it, not on the top of the roster */
-  const [focusAgent, setFocusAgent] = useState<string | undefined>();
+  const [focusAgent, setFocusAgent] = useState<string | undefined>(startingFocusAgent);
   /** a saved conversation opened from the sidebar while Chat was hidden behind
    *  Agents or Connectors */
   const [focusChatInChat, setFocusChatInChat] = useState<string | undefined>();
