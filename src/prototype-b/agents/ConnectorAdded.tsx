@@ -53,7 +53,7 @@ export function ConnectorAdded({
       <style>{`
         .conn-added {
           display: flex; align-items: center; gap: 12px;
-          width: 480px; box-sizing: border-box; padding: 11px 14px; border-radius: 13px;
+          width: min(480px, 100%); box-sizing: border-box; padding: 11px 14px; border-radius: 13px;
           border: 1px solid rgba(255,255,255,.09); background: rgba(255,255,255,.03);
           font-family: var(--font-google-sans);
         }

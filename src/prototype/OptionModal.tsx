@@ -113,7 +113,7 @@ export function OptionModal({
       <style>{`
         .om {
           display: flex; flex-direction: column; gap: 14px;
-          width: 480px; box-sizing: border-box; padding: 18px 18px 16px; border-radius: 18px;
+          width: min(480px, 100%); box-sizing: border-box; padding: 18px 18px 16px; border-radius: 18px;
           border: 1px solid rgba(255,255,255,.1); background: rgba(255,255,255,.03);
           font-family: var(--font-google-sans); color: #fff;
         }

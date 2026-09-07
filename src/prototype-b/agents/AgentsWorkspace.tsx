@@ -1352,7 +1352,7 @@ export function AgentsWorkspace({
 
 
         .ag-turns {
-          flex: 1; overflow-y: auto; padding: 24px;
+          flex: 1; overflow-x: hidden; overflow-y: auto; padding: 24px;
           display: flex; flex-direction: column; gap: 18px;
           /* A clipped bubble at the scroll edge reads as a stray coloured line,
              not as "there's more below" — fading it out says the same thing

@@ -1267,7 +1267,7 @@ export function ChatScreen({
           </header>
         )}
 
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-x-hidden overflow-y-auto">
           {/* A transcript counts as something on screen even though nothing was
               typed into this session — so it takes the conversation branch, not the
               empty-screen one. */}
