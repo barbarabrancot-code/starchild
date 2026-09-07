@@ -222,6 +222,44 @@ export function Reactable({
         </div>
       </div>
 
+      {/* Touch-only: ordinary document flow instead of position: absolute, so
+          it can only ever be as wide as the space already proven to fit
+          everything else here (the bubble, the reaction chip below). A
+          popup anchored to the now-gesture-only, invisible button kept
+          finding new ways to run past a real phone's own edge — centered,
+          then right-aligned to the row — even though the same math checked
+          out on paper each time; a normal flow child can't do that, because
+          it never leaves the column that already keeps everything else on
+          screen. Hidden by default, shown only where the gestures that open
+          it apply — see the @media (hover: none) block below. */}
+      {(pickerOpen || menuOpen) && (
+        <div className="rx-touch-panel">
+          {pickerOpen && canReact && (
+            <div className="rx-touch-emojis" role="menu">
+              {QUICK_REACTIONS.map((emoji) => (
+                <button
+                  key={emoji}
+                  type="button"
+                  className={`rx-picker-emoji${myReaction === emoji ? " rx-picker-emoji--on" : ""}`}
+                  onClick={() => pick(emoji)}
+                  aria-label={`React ${emoji}`}
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
+          )}
+          {menuOpen && text && (
+            <div className="rx-touch-menu" role="menu">
+              <button type="button" className="rx-menu-item" onClick={copy} role="menuitem">
+                <DuplicateIcon className="size-3.5" />
+                {copied ? "Copied" : "Copy"}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Under the message it belongs to — Starchild's own note on yours, or
           the one you just left on Starchild's. Never both at once: the two
           only ever apply to opposite sides. */}
@@ -328,25 +366,33 @@ export function Reactable({
           font-size: 12.5px; line-height: 1;
         }
 
-        /* No cursor to hover with, so the row's own reveal never fires — the
-           three gestures are the whole of the interaction here. The container
-           still needs to stay visible (not its default opacity: 0) so a
-           gesture-opened picker or menu, both of which live inside it, can be
-           seen; the trigger buttons themselves just have nothing to do.
-           The popup itself stops anchoring to that (now invisible, near-zero-
-           width) button — on a bubble that runs close to the screen's own
-           edge, that anchor could sit close enough to it that the popup ran
-           past the edge. Right-aligned to the row instead (the row itself
-           never renders past whatever margin the page already gives it, on
-           either side), it grows back into that space instead of past it. */
+        /* No cursor to hover with, so the row's own reveal never fires and the
+           trigger buttons have nothing to do — hidden in favor of the three
+           gestures above. The popups that anchor to them (position: absolute,
+           keyed off a button that no longer exists visually) step aside too,
+           for .rx-touch-panel below: a normal flow element in the same column
+           as everything else here, which is what actually keeps it on
+           screen on a real phone — anchoring math that checks out on paper
+           kept finding new ways not to, in a way a flow element structurally
+           cannot. */
         @media (hover: none) {
           .rx-actions { opacity: 1; }
           .rx-action { display: none; }
-          .rx-pop-anchor { position: static; }
-          .rx-picker, .rx-menu {
-            left: auto; right: 0; transform: none;
-            max-width: min(280px, calc(100vw - 32px));
+          .rx-picker, .rx-menu { display: none; }
+        }
+        .rx-touch-panel { display: none; }
+        @media (hover: none) {
+          .rx-touch-panel {
+            display: flex; margin-top: 8px; max-width: 100%;
           }
+        }
+        .rx-touch-emojis {
+          display: flex; gap: 2px; align-items: center; padding: 6px;
+          border-radius: 999px; border: 1px solid rgba(255,255,255,.1); background: #1a1a1c;
+        }
+        .rx-touch-menu {
+          display: flex; flex-direction: column; padding: 5px; border-radius: 12px;
+          min-width: 120px; border: 1px solid rgba(255,255,255,.1); background: #1a1a1c;
         }
       `}</style>
     </div>
