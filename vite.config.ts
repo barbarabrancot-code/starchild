@@ -16,6 +16,10 @@ export default defineConfig({
         // the page being taken forward — see src/landing-main.tsx
         landing: resolve(__dirname, "landing.html"),
         onboarding: resolve(__dirname, "onboarding.html"),
+        // a dedicated link that always shows the mobile layout, regardless of
+        // the actual window it's opened in — wraps onboarding.html in a
+        // phone-width frame; see onboarding-mobile.html for why an iframe
+        onboardingMobile: resolve(__dirname, "onboarding-mobile.html"),
         // dev-facing catalog of Chat/Agents components — see src/library-main.tsx
         library: resolve(__dirname, "library.html"),
       },

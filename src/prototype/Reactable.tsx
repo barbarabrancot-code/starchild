@@ -83,22 +83,37 @@ export function Reactable({
     window.setTimeout(() => setCopied(false), 1400);
   };
 
+  /**
+   * `?touchDemo=1` makes a mouse count as a finger for the gestures below —
+   * only for onboarding-mobile.html, which wraps the app in a phone-width
+   * frame for anyone testing without an actual touchscreen. Nowhere else:
+   * a real desktop visitor still gets the hover row, unaffected.
+   */
+  const forceTouch = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("touchDemo") === "1";
+
   /*
-   * A cursor gets the hover row; a finger gets the three gestures WhatsApp
-   * already taught everyone. All three read the same touch, so they live
-   * together rather than as separate handlers guessing at each other's state:
+   * A cursor gets the hover row; a finger (or, on the forced-touch demo, a
+   * mouse standing in for one) gets the three gestures WhatsApp already
+   * taught everyone. Pointer Events rather than Touch Events specifically —
+   * one API for mouse and touch alike means the same handlers serve both
+   * without a parallel mouse-only reimplementation, and `pointerType` is
+   * exactly the signal that decides whether a given pointer down here
+   * should mean anything at all. All three gestures read the same pointer,
+   * so they live together rather than as separate handlers guessing at each
+   * other's state:
    *
    *   hold still  → long press fires, opens the copy menu
    *   lift early  → a tap: opens the reaction picker (Starchild's side only)
-   *   drag right  → the bubble follows the finger; past the threshold, releasing
-   *                 replies, the same as the hover row's own reply arrow
+   *   drag right  → the bubble follows the pointer; past the threshold,
+   *                 releasing replies, the same as the hover row's own arrow
    *
    * Whichever one wins, it wins outright — a hold that turns into a drag stops
    * being a hold, and a drag that does not clear the threshold does nothing.
    */
   const [dragX, setDragX] = useState(0);
   const dragging = useRef(false);
-  const touchStart = useRef<{ x: number; y: number } | null>(null);
+  const pointerActive = useRef(false);
+  const pointerStart = useRef<{ x: number; y: number } | null>(null);
   const movedPastDeadzone = useRef(false);
   const longPressFired = useRef(false);
   const longPressTimer = useRef<number | null>(null);
@@ -110,10 +125,11 @@ export function Reactable({
     }
   };
 
-  const onTouchStart = (e: React.TouchEvent) => {
+  const onPointerDown = (e: React.PointerEvent) => {
+    if (e.pointerType === "mouse" && !forceTouch) return;
     if (!text && !onReply && !canReact) return;
-    const t = e.touches[0];
-    touchStart.current = { x: t.clientX, y: t.clientY };
+    pointerActive.current = true;
+    pointerStart.current = { x: e.clientX, y: e.clientY };
     dragging.current = false;
     movedPastDeadzone.current = false;
     longPressFired.current = false;
@@ -128,11 +144,10 @@ export function Reactable({
     }
   };
 
-  const onTouchMove = (e: React.TouchEvent) => {
-    if (!touchStart.current) return;
-    const t = e.touches[0];
-    const dx = t.clientX - touchStart.current.x;
-    const dy = t.clientY - touchStart.current.y;
+  const onPointerMove = (e: React.PointerEvent) => {
+    if (!pointerActive.current || !pointerStart.current) return;
+    const dx = e.clientX - pointerStart.current.x;
+    const dy = e.clientY - pointerStart.current.y;
     if (!movedPastDeadzone.current && Math.hypot(dx, dy) > MOVE_DEADZONE) {
       movedPastDeadzone.current = true;
       clearLongPress();
@@ -144,7 +159,8 @@ export function Reactable({
     }
   };
 
-  const onTouchEnd = () => {
+  const onPointerUp = () => {
+    if (!pointerActive.current) return;
     clearLongPress();
     if (dragging.current) {
       if (dragX >= SWIPE_REPLY_THRESHOLD) onReply?.();
@@ -155,18 +171,19 @@ export function Reactable({
       setPickerOpen((v) => !v);
       setMenuOpen(false);
     }
-    touchStart.current = null;
+    pointerActive.current = false;
+    pointerStart.current = null;
   };
 
   return (
-    <div className={`rx-wrap rx-wrap--${align}`}>
+    <div className={`rx-wrap rx-wrap--${align}${forceTouch ? " rx-force-touch" : ""}`}>
       <div
         ref={rowRef}
         className="rx-row"
-        onTouchStart={onTouchStart}
-        onTouchMove={onTouchMove}
-        onTouchEnd={onTouchEnd}
-        onTouchCancel={onTouchEnd}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerUp}
       >
         {onReply && (
           <span className="rx-swipe-hint" style={{ opacity: Math.min(dragX / SWIPE_REPLY_THRESHOLD, 1) }}>
@@ -368,11 +385,16 @@ export function Reactable({
            gesture-opened picker or menu, both of which live inside it, can be
            seen; the trigger buttons themselves just have nothing to do —
            where the popup actually lands is entirely down to the inline
-           right positionPopup() computes, not anything here. */
+           right positionPopup() computes, not anything here. .rx-force-touch
+           repeats the same two rules for onboarding-mobile.html's demo,
+           where the device genuinely has hover (a mouse) but the page wants
+           it to look and behave like it doesn't. */
         @media (hover: none) {
           .rx-actions { opacity: 1; }
           .rx-action { display: none; }
         }
+        .rx-force-touch .rx-actions { opacity: 1; }
+        .rx-force-touch .rx-action { display: none; }
       `}</style>
     </div>
   );
