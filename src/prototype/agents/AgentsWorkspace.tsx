@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from "motion/react";
 import {
   PlusIcon,
   ArrowUpIcon,
+  MicIcon,
   ChevronDownIcon,
   PencilIcon,
   DuplicateIcon,
@@ -857,6 +858,9 @@ export function AgentsWorkspace({
             </div>
           )}
           <div className="ag-composer-row">
+            <button type="button" className="ag-attach" aria-label="Add attachment">
+              <PlusIcon className="size-4.5" />
+            </button>
             <input
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
@@ -864,8 +868,11 @@ export function AgentsWorkspace({
               placeholder={`Message ${agent.name}…`}
               className="ag-input"
             />
+            {/* send() already no-ops on an empty draft, so the mic state
+                (nothing typed yet) is safe to wire to the same handler —
+                there's just nothing for it to do until there's text. */}
             <button type="button" className="ag-send" aria-label="Send" onClick={send}>
-              <ArrowUpIcon className="size-4" />
+              {draft.trim() ? <ArrowUpIcon className="size-4" /> : <MicIcon className="size-4" />}
             </button>
           </div>
         </div>
@@ -1521,12 +1528,19 @@ export function AgentsWorkspace({
         .ag-quote button:hover { color: #fff; }
 
         .ag-composer-row {
-          display: flex; align-items: center; gap: 10px;
-          padding: 8px 8px 8px 18px; border-radius: 999px;
+          display: flex; align-items: center; gap: 6px;
+          padding: 8px; border-radius: 999px;
           border: 1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.04);
           transition: border-color .2s ease;
         }
         .ag-composer-row:focus-within { border-color: rgba(255,255,255,.3); }
+        .ag-attach {
+          flex: none; display: flex; align-items: center; justify-content: center;
+          width: 34px; height: 34px; border: 0; border-radius: 999px; cursor: pointer;
+          background: none; color: rgba(255,255,255,.45);
+          transition: background-color .15s ease, color .15s ease;
+        }
+        .ag-attach:hover { background: rgba(255,255,255,.07); color: #fff; }
         .ag-input {
           flex: 1; min-width: 0; border: 0; background: none; outline: none;
           font-family: inherit; font-size: 14.5px; color: #fff;

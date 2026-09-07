@@ -329,9 +329,13 @@ export function LibraryApp() {
               <div className="lib-mobile-frame-row">
                 {(
                   [
-                    { label: "1 · List", params: "area=agents" },
-                    { label: "2 · Thread", params: "area=agents&focusAgent=funding-watcher" },
-                    { label: "3 · Profile", params: "area=agents&focusAgent=funding-watcher&openDrawer=1" },
+                    // The iframe has a mouse available even though it is only
+                    // 300px wide. `touchDemo` deliberately makes that mouse
+                    // behave like a finger, so message actions are gestures —
+                    // never the desktop hover toolbar — in these phone previews.
+                    { label: "1 · List", params: "area=agents&touchDemo=1" },
+                    { label: "2 · Thread", params: "area=agents&focusAgent=funding-watcher&touchDemo=1" },
+                    { label: "3 · Profile", params: "area=agents&focusAgent=funding-watcher&openDrawer=1&touchDemo=1" },
                   ] as const
                 ).map((frame) => (
                   <div key={frame.label} className="lib-mobile-frame-cell">

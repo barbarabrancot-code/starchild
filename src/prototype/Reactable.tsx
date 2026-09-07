@@ -218,7 +218,20 @@ export function Reactable({
                 <SmileIcon className="size-4" />
               </button>
               {pickerOpen && (
-                <div className={`rx-picker rx-picker--${align}`} role="menu" style={{ left: "auto", right: popupRight }}>
+                <div
+                  className={`rx-picker rx-picker--${align}`}
+                  role="menu"
+                  style={{ left: "auto", right: popupRight }}
+                  // A tap here also bubbles up to .rx-row's own pointer
+                  // handlers underneath, which — for a message that can also
+                  // be reacted to — toggle pickerOpen right back off before
+                  // the browser gets to fire this button's click. The picker
+                  // unmounts out from under the tap, so pick() never runs and
+                  // the reaction never lands. Stopped here, before it bubbles
+                  // that far.
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onPointerUp={(e) => e.stopPropagation()}
+                >
                   {QUICK_REACTIONS.map((emoji) => (
                     <button
                       key={emoji}
@@ -253,7 +266,16 @@ export function Reactable({
                 <EllipsisIcon className="size-4" />
               </button>
               {menuOpen && (
-                <div className={`rx-menu rx-menu--${align}`} role="menu" style={{ left: "auto", right: popupRight }}>
+                <div
+                  className={`rx-menu rx-menu--${align}`}
+                  role="menu"
+                  style={{ left: "auto", right: popupRight }}
+                  // Same reason as .rx-picker above — stop the tap from also
+                  // reaching .rx-row and toggling this menu closed before
+                  // Copy's own click fires.
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onPointerUp={(e) => e.stopPropagation()}
+                >
                   <button type="button" className="rx-menu-item" onClick={copy} role="menuitem">
                     <DuplicateIcon className="size-3.5" />
                     {copied ? "Copied" : "Copy"}

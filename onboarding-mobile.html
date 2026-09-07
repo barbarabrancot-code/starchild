@@ -8,19 +8,20 @@
       html, body { min-height: 100%; margin: 0; background: #050506; }
       body {
         display: flex; align-items: center; justify-content: center;
-        min-height: 100vh; padding: 16px; box-sizing: border-box;
+        min-height: 100vh;
       }
       /*
         A real device shows this filling its own screen edge to edge — the
         frame around it only exists for whoever opens this link on something
         wider than a phone, so the mobile layout is what's on screen instead
-        of the desktop one squeezed into a narrow column. Capped to the
-        actual viewport on both axes so it can never itself force a scrollbar
-        on a small phone.
+        of the desktop one squeezed into a narrow column. Its desktop size is
+        exactly 390 × 800px. On a shorter viewport it scales from its height
+        (48.75vh = 390 / 800), so the ratio is never distorted.
       */
       .phone-frame {
-        width: min(390px, 100vw - 32px);
-        height: min(800px, 100vh - 32px);
+        box-sizing: border-box;
+        width: min(390px, 48.75vh, calc(100vw - 32px));
+        aspect-ratio: 390 / 800;
         border-radius: 36px;
         overflow: hidden;
         border: 1px solid rgba(255,255,255,.12);
@@ -28,7 +29,6 @@
         background: #050506;
       }
       @media (max-width: 422px) {
-        body { padding: 0; }
         .phone-frame { width: 100vw; height: 100vh; border-radius: 0; border: 0; box-shadow: none; }
       }
       iframe { width: 100%; height: 100%; border: 0; display: block; }
