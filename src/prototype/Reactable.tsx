@@ -47,6 +47,29 @@ export function Reactable({
   const canReact = align === "left";
   const shownReaction = reaction ?? myReaction ?? undefined;
 
+  /**
+   * Two rounds of pure-CSS anchoring (centered, then right-aligned to the
+   * row) each checked out on paper and still ran past a real phone's own
+   * margin — a `width: fit-content`/flex-hug row is exactly as wide as its
+   * content, which is not the same thing as "however much room the screen
+   * actually has." Measuring the row's real on-screen box and clamping
+   * against the real viewport width is the one version of this that can't
+   * be wrong by construction, because it isn't predicting the layout, it's
+   * reading it back after the browser has already done it.
+   */
+  const rowRef = useRef<HTMLDivElement>(null);
+  const [popupRight, setPopupRight] = useState(0);
+  const POPUP_WIDTH_ESTIMATE = 280;
+  const POPUP_MARGIN = 12;
+  const positionPopup = () => {
+    const row = rowRef.current;
+    if (!row) { setPopupRight(0); return; }
+    const rect = row.getBoundingClientRect();
+    let desiredRight = Math.min(rect.right, window.innerWidth - POPUP_MARGIN);
+    desiredRight = Math.max(desiredRight, POPUP_MARGIN + POPUP_WIDTH_ESTIMATE);
+    setPopupRight(rect.right - desiredRight);
+  };
+
   const pick = (emoji: string) => {
     setMyReaction((cur) => (cur === emoji ? null : emoji));
     setPickerOpen(false);
@@ -98,6 +121,7 @@ export function Reactable({
     if (text) {
       longPressTimer.current = window.setTimeout(() => {
         longPressFired.current = true;
+        positionPopup();
         setMenuOpen(true);
         setPickerOpen(false);
       }, LONG_PRESS_MS);
@@ -127,6 +151,7 @@ export function Reactable({
       dragging.current = false;
       setDragX(0);
     } else if (!longPressFired.current && !movedPastDeadzone.current && canReact) {
+      positionPopup();
       setPickerOpen((v) => !v);
       setMenuOpen(false);
     }
@@ -136,6 +161,7 @@ export function Reactable({
   return (
     <div className={`rx-wrap rx-wrap--${align}`}>
       <div
+        ref={rowRef}
         className="rx-row"
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
@@ -167,7 +193,7 @@ export function Reactable({
             <div className="rx-pop-anchor">
               <button
                 type="button"
-                onClick={() => { setPickerOpen((v) => !v); setMenuOpen(false); }}
+                onClick={() => { positionPopup(); setPickerOpen((v) => !v); setMenuOpen(false); }}
                 className={`rx-action${pickerOpen ? " rx-action--on" : ""}`}
                 aria-label="React"
                 aria-expanded={pickerOpen}
@@ -175,7 +201,7 @@ export function Reactable({
                 <SmileIcon className="size-4" />
               </button>
               {pickerOpen && (
-                <div className={`rx-picker rx-picker--${align}`} role="menu">
+                <div className={`rx-picker rx-picker--${align}`} role="menu" style={{ left: "auto", right: popupRight }}>
                   {QUICK_REACTIONS.map((emoji) => (
                     <button
                       key={emoji}
@@ -202,7 +228,7 @@ export function Reactable({
             <div className="rx-pop-anchor">
               <button
                 type="button"
-                onClick={() => { setMenuOpen((v) => !v); setPickerOpen(false); }}
+                onClick={() => { positionPopup(); setMenuOpen((v) => !v); setPickerOpen(false); }}
                 className={`rx-action${menuOpen ? " rx-action--on" : ""}`}
                 aria-label="More"
                 aria-expanded={menuOpen}
@@ -210,7 +236,7 @@ export function Reactable({
                 <EllipsisIcon className="size-4" />
               </button>
               {menuOpen && (
-                <div className={`rx-menu rx-menu--${align}`} role="menu">
+                <div className={`rx-menu rx-menu--${align}`} role="menu" style={{ left: "auto", right: popupRight }}>
                   <button type="button" className="rx-menu-item" onClick={copy} role="menuitem">
                     <DuplicateIcon className="size-3.5" />
                     {copied ? "Copied" : "Copy"}
@@ -221,44 +247,6 @@ export function Reactable({
           )}
         </div>
       </div>
-
-      {/* Touch-only: ordinary document flow instead of position: absolute, so
-          it can only ever be as wide as the space already proven to fit
-          everything else here (the bubble, the reaction chip below). A
-          popup anchored to the now-gesture-only, invisible button kept
-          finding new ways to run past a real phone's own edge — centered,
-          then right-aligned to the row — even though the same math checked
-          out on paper each time; a normal flow child can't do that, because
-          it never leaves the column that already keeps everything else on
-          screen. Hidden by default, shown only where the gestures that open
-          it apply — see the @media (hover: none) block below. */}
-      {(pickerOpen || menuOpen) && (
-        <div className="rx-touch-panel">
-          {pickerOpen && canReact && (
-            <div className="rx-touch-emojis" role="menu">
-              {QUICK_REACTIONS.map((emoji) => (
-                <button
-                  key={emoji}
-                  type="button"
-                  className={`rx-picker-emoji${myReaction === emoji ? " rx-picker-emoji--on" : ""}`}
-                  onClick={() => pick(emoji)}
-                  aria-label={`React ${emoji}`}
-                >
-                  {emoji}
-                </button>
-              ))}
-            </div>
-          )}
-          {menuOpen && text && (
-            <div className="rx-touch-menu" role="menu">
-              <button type="button" className="rx-menu-item" onClick={copy} role="menuitem">
-                <DuplicateIcon className="size-3.5" />
-                {copied ? "Copied" : "Copy"}
-              </button>
-            </div>
-          )}
-        </div>
-      )}
 
       {/* Under the message it belongs to — Starchild's own note on yours, or
           the one you just left on Starchild's. Never both at once: the two
@@ -309,7 +297,10 @@ export function Reactable({
         .rx-row:hover .rx-actions,
         .rx-actions:focus-within { opacity: 1; }
 
-        .rx-pop-anchor { position: relative; display: flex; }
+        /* Not itself a positioning context — see the note on .rx-picker,
+           .rx-menu below for why the popup they wrap needs .rx-row for
+           that instead. */
+        .rx-pop-anchor { position: static; display: flex; }
 
         .rx-action {
           display: flex; align-items: center; justify-content: center;
@@ -320,11 +311,16 @@ export function Reactable({
         .rx-action:hover, .rx-action--on { color: rgba(255,255,255,.85); background: rgba(255,255,255,.07); }
         .rx-action:focus-visible { outline: 2px solid rgba(248,70,0,.7); outline-offset: 1px; }
 
+        /* Positioned relative to .rx-row (not .rx-pop-anchor, which stays
+           position: static below on purpose — see the note there) because
+           the JS that sets each one's right inline measures the row's own
+           box, and the two have to agree on what "right" is measured from. */
         .rx-picker, .rx-menu {
           position: absolute; bottom: calc(100% + 6px); z-index: 20;
           display: flex; padding: 6px; border-radius: 999px;
           border: 1px solid rgba(255,255,255,.1); background: #1a1a1c;
           box-shadow: 0 8px 24px rgba(0,0,0,.35);
+          max-width: min(280px, calc(100vw - 24px));
         }
         .rx-picker--left, .rx-menu--left { left: 0; }
         .rx-picker--right, .rx-menu--right { right: 0; }
@@ -366,33 +362,16 @@ export function Reactable({
           font-size: 12.5px; line-height: 1;
         }
 
-        /* No cursor to hover with, so the row's own reveal never fires and the
-           trigger buttons have nothing to do — hidden in favor of the three
-           gestures above. The popups that anchor to them (position: absolute,
-           keyed off a button that no longer exists visually) step aside too,
-           for .rx-touch-panel below: a normal flow element in the same column
-           as everything else here, which is what actually keeps it on
-           screen on a real phone — anchoring math that checks out on paper
-           kept finding new ways not to, in a way a flow element structurally
-           cannot. */
+        /* No cursor to hover with, so the row's own reveal never fires — the
+           three gestures are the whole of the interaction here. The container
+           still needs to stay visible (not its default opacity: 0) so a
+           gesture-opened picker or menu, both of which live inside it, can be
+           seen; the trigger buttons themselves just have nothing to do —
+           where the popup actually lands is entirely down to the inline
+           right positionPopup() computes, not anything here. */
         @media (hover: none) {
           .rx-actions { opacity: 1; }
           .rx-action { display: none; }
-          .rx-picker, .rx-menu { display: none; }
-        }
-        .rx-touch-panel { display: none; }
-        @media (hover: none) {
-          .rx-touch-panel {
-            display: flex; margin-top: 8px; max-width: 100%;
-          }
-        }
-        .rx-touch-emojis {
-          display: flex; gap: 2px; align-items: center; padding: 6px;
-          border-radius: 999px; border: 1px solid rgba(255,255,255,.1); background: #1a1a1c;
-        }
-        .rx-touch-menu {
-          display: flex; flex-direction: column; padding: 5px; border-radius: 12px;
-          min-width: 120px; border: 1px solid rgba(255,255,255,.1); background: #1a1a1c;
         }
       `}</style>
     </div>
