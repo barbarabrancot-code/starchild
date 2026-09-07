@@ -27,11 +27,12 @@ import {
   PlusIcon,
   MicIcon,
   ArrowUpIcon,
-  ChevronDownIcon,
   WalletIcon,
   PanelIcon,
   BracketsIcon,
   CloseIcon,
+  MenuIcon,
+  EllipsisIcon,
 } from "./icons";
 
 /**
@@ -255,6 +256,9 @@ export function ChatScreen({
   onFocusedChat,
   railed = false,
   onToggleRail,
+  onOpenMenu,
+  mobileMenuOpen = false,
+  onCloseMobileMenu,
   skipMeeting = false,
   onGuestWork,
   extraConversations = [],
@@ -294,6 +298,13 @@ export function ChatScreen({
   /** the nav sidebar is down to icons — owned by the app, since two screens share it */
   railed?: boolean;
   onToggleRail?: () => void;
+  /** Below `lg` the sidebar lives off-screen behind a hamburger instead of
+   *  in-flow — see ProductSidebar's own mobile overlay. Owned by the app shell
+   *  (not local state here) because the same hamburger/overlay pair is shared
+   *  with the Agents/Jobs pages. */
+  onOpenMenu?: () => void;
+  mobileMenuOpen?: boolean;
+  onCloseMobileMenu?: () => void;
   /** which product area the shell is showing — the sidebar switch reads it */
   area?: "chat" | "agents" | "connectors" | "jobs";
   onSwitchArea?: (next: "chat" | "agents" | "connectors" | "jobs") => void;
@@ -1047,9 +1058,6 @@ export function ChatScreen({
               style={{ fontFamily: "var(--font-google-sans)" }}
             >
               Conductor Mode
-              <ChevronDownIcon
-                className={`size-3 ${intro === "conductor" ? "text-[#f84600]/70" : "text-white/35"}`}
-              />
             </button>
 
             {intro === "conductor" && !guest && (
@@ -1093,6 +1101,8 @@ export function ChatScreen({
           onSwitchArea={onSwitchArea}
           collapsed={railed}
           onToggleCollapsed={onToggleRail}
+          mobileOpen={mobileMenuOpen}
+          onCloseMobile={onCloseMobileMenu}
           onNewChat={newChat}
           conversations={[...extraConversations, ...SAVED]}
           openConversation={reading?.id}
@@ -1189,7 +1199,23 @@ export function ChatScreen({
           // The signed-in top bar: the wordmark, what the account has left to
           // spend, and the view controls. No back arrow — this is the product,
           // not a detour from the site. The wordmark is the way out.
-          <header className="relative flex shrink-0 items-center justify-end gap-3 px-6 py-4">
+          //
+          // Below `lg` none of that fits, and the sidebar it would open has
+          // nowhere to live in-flow anyway (see ProductSidebar) — so the row
+          // becomes the WhatsApp-shaped one instead: a hamburger to the menu,
+          // the wordmark still centered, a plain "more" standing in for the
+          // wallet/panel/dev-view cluster a phone has no room for.
+          <header className="relative flex shrink-0 items-center px-4 py-3 sm:px-6 sm:py-4">
+            <button
+              type="button"
+              onClick={() => onOpenMenu?.()}
+              className="relative flex size-9 items-center justify-center rounded-lg text-white/70 transition-colors hover:bg-white/[0.07] lg:hidden"
+              aria-label="Open menu"
+            >
+              <MenuIcon className="size-5" />
+              <span className="absolute top-1.5 right-1.5 size-2 rounded-full bg-red-500" />
+            </button>
+
             <button
               type="button"
               onClick={onBack}
@@ -1199,6 +1225,7 @@ export function ChatScreen({
               STARCHILD
             </button>
 
+            <div className="ml-auto hidden items-center gap-3 lg:flex">
             <span
               className="flex items-center gap-2 rounded-full bg-white/[0.07] px-3 py-1.5 text-[13px] font-medium text-white/85"
               style={{ fontFamily: "var(--font-google-sans)" }}
@@ -1222,6 +1249,15 @@ export function ChatScreen({
               <BracketsIcon className="size-[18px]" />
             </button>
             <span className="size-2.5 rounded-full bg-emerald-400" title="Connected" />
+            </div>
+
+            <button
+              type="button"
+              className="ml-auto flex size-9 items-center justify-center rounded-lg text-white/70 transition-colors hover:bg-white/[0.07] lg:hidden"
+              aria-label="More"
+            >
+              <EllipsisIcon className="size-5" />
+            </button>
           </header>
         )}
 

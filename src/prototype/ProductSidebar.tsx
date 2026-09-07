@@ -29,6 +29,8 @@ export function ProductSidebar({
   openConversation,
   collapsed = false,
   onToggleCollapsed,
+  mobileOpen = false,
+  onCloseMobile,
 }: {
   onNewChat: () => void;
   /** First-run note, keyed by the sidebar label it hangs off. The key is a label
@@ -50,6 +52,12 @@ export function ProductSidebar({
   /** down to a rail of icons — see the note on the collapsed branch below */
   collapsed?: boolean;
   onToggleCollapsed?: () => void;
+  /** Below `lg` the rail and the full sidebar are both hidden entirely — there is
+   *  no room for either. This is that width's own door: a hamburger elsewhere on
+   *  the screen sets this true and the same sidebar body slides in as an overlay
+   *  instead of living in-flow. */
+  mobileOpen?: boolean;
+  onCloseMobile?: () => void;
 }) {
   // Jobs sits in the same array as Agents/Connectors on purpose: it is a
   // place with the same standing as the rest, reached the same way, not a
@@ -65,6 +73,31 @@ export function ProductSidebar({
     return 0;
   });
 
+  // The mobile door: a full-screen backdrop plus the same SidebarBody content
+  // used everywhere else, sliding in from the left. Picking anything in it
+  // (an area, a saved conversation, New chat) closes it the same way tapping
+  // the backdrop does — on a phone the menu is a means to get somewhere, not
+  // a panel that stays open beside the destination.
+  const mobileOverlay = mobileOpen ? (
+    <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true">
+      <div className="absolute inset-0 bg-black/60" onClick={onCloseMobile} />
+      <div className="absolute inset-y-0 left-0 flex w-[268px] max-w-[82vw] flex-col border-r border-white/[0.08] bg-[#0c0c0d]">
+        <SidebarBody
+          areas={areas}
+          area={area}
+          onSwitchArea={(next) => { onSwitchArea?.(next); onCloseMobile?.(); }}
+          intro={intro}
+          accountName={accountName}
+          orderedConversations={orderedConversations}
+          onOpenConversation={(chat) => { onOpenConversation?.(chat); onCloseMobile?.(); }}
+          openConversation={openConversation}
+          onNewChat={() => { onNewChat(); onCloseMobile?.(); }}
+          onToggleCollapsed={onCloseMobile}
+        />
+      </div>
+    </div>
+  ) : null;
+
   /*
     Collapsed, this is a rail of icons and nothing else.
 
@@ -77,10 +110,11 @@ export function ProductSidebar({
   */
   if (collapsed) {
     return (
-      // Hovering grows the rail's real width back to 268px — the same layout
-      // change the toggle makes, not a panel floating on top of it — and
-      // everything beside it slides over to make room, the same as a click
-      // would. It settles back the instant the pointer leaves.
+      <>
+      {/* Hovering grows the rail's real width back to 268px — the same layout
+          change the toggle makes, not a panel floating on top of it — and
+          everything beside it slides over to make room, the same as a click
+          would. It settles back the instant the pointer leaves. */}
       <div className="group/rail hidden w-[64px] shrink-0 overflow-hidden border-r border-white/[0.08] bg-[#0c0c0d] transition-[width] duration-150 ease-out hover:w-[268px] lg:block">
         <div className="relative h-full w-[268px]">
           {/* The rail: icons only, fading out as the hover grows the width in. */}
@@ -182,10 +216,13 @@ export function ProductSidebar({
           </div>
         </div>
       </div>
+      {mobileOverlay}
+      </>
     );
   }
 
   return (
+    <>
     <div className="hidden w-[268px] shrink-0 border-r border-white/[0.08] bg-[#0c0c0d] lg:block">
       <SidebarBody
         areas={areas}
@@ -200,6 +237,8 @@ export function ProductSidebar({
         onToggleCollapsed={onToggleCollapsed}
       />
     </div>
+    {mobileOverlay}
+    </>
   );
 }
 

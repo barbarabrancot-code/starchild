@@ -57,6 +57,67 @@ export function LibraryApp() {
             </Entry>
           </Section>
 
+          <Section id="mobile" title="Mobile">
+            <Entry
+              title="Agents: WhatsApp-style list ↔ thread"
+              path="src/prototype-b/agents/AgentsWorkspace.tsx"
+              desc="Below 900px the roster and an open thread used to stack, with the roster scrolling sideways. Now there is only room for one pane at a time, the same way a phone messaging app's own two panes collapse into one — this is the real, live app in a phone-width frame, not a redraw: open the menu (☰) and tap Agents to see it."
+            >
+              <div className="lib-mobile-frame-wrap">
+                <iframe
+                  className="lib-mobile-frame"
+                  src={new URL("./app-b.html?signedin=1", window.location.href).href}
+                  title="Starchild — mobile preview"
+                />
+              </div>
+              <ul className="lib-mobile-notes">
+                <li>
+                  <strong>List ↔ thread, never both.</strong> Tapping a row, editing or duplicating an agent,
+                  starting a new one, or picking one from search all switch to the thread pane; a back arrow at
+                  the top of the thread returns to the list. Every one of those paths sets the same piece of
+                  state, so there is exactly one place that decides which pane is showing.
+                </li>
+                <li>
+                  <strong>Hamburger, top-left of the list.</strong> Below <code>lg</code> the sidebar had nowhere
+                  to live in-flow at all — it was simply <code>hidden</code>, rail and full width both. The
+                  hamburger opens it as a slide-in overlay over a backdrop instead; the same overlay is now
+                  reachable from the main Chat screen's own header too.
+                </li>
+                <li>
+                  <strong>The agent's own panel goes full screen.</strong> What is a 316px side column on desktop
+                  becomes the whole screen below 900px, with a back arrow standing in for the column's ✕.
+                </li>
+                <li>
+                  <strong>Bigger touch targets.</strong> The hamburger and + grow from a 30px button to a 40px tap
+                  area with a 24px icon — sized for a cursor, the original 30px read as tiny under a thumb.
+                </li>
+                <li>
+                  <strong>The agent's name never wraps.</strong> It truncates with an ellipsis instead of pushing
+                  the header to two lines.
+                </li>
+              </ul>
+            </Entry>
+
+            <Entry
+              title="Messages: hold to copy, tap to react, drag to reply"
+              path="src/prototype-b/Reactable.tsx"
+              desc="The hover row that reveals React/Reply/Copy on a cursor has nothing to hover with on a touchscreen. In its place: the same three gestures a phone messaging app already taught everyone."
+            >
+              <ul className="lib-mobile-notes">
+                <li><strong>Hold a message</strong> to open the copy menu — replacing the “…” button, which only ever showed on hover.</li>
+                <li><strong>Tap a Starchild message</strong> to open the reaction picker. Reacting to your own words is still not offered, the same as on desktop.</li>
+                <li><strong>Drag a message right</strong> to reply — the bubble follows the finger and a reply icon fades in behind it; releasing past a threshold replies, the same as the hover row's own arrow always did.</li>
+                <li>
+                  <strong>Nothing runs off the edge.</strong> The reaction/copy popup used to anchor to the
+                  hover button; on a bubble that runs close to the screen's own edge, gesture-triggering it that
+                  way ran the popup past the edge. It is centered on the message row and capped to the viewport
+                  width instead. The reply hint had the same problem hanging off the bubble's own edge — it now
+                  sits inside the row's own bounds, which already respect the page's margin.
+                </li>
+              </ul>
+            </Entry>
+          </Section>
+
           <Section id="onboarding" title="Onboarding">
             <Entry
               title="First meeting: questions 1 and 2"
@@ -380,6 +441,7 @@ function SidebarDemo() {
 
 const NAV_SECTIONS = [
   { id: "screens", label: "Screens" },
+  { id: "mobile", label: "Mobile" },
   { id: "onboarding", label: "Onboarding" },
   { id: "chat-components", label: "Chat components" },
   { id: "agent-components", label: "Agent components" },
@@ -525,6 +587,35 @@ function Style() {
       .lib-frame-scroll { overflow-x: auto; }
 
       .lib-stack { display: flex; flex-direction: column; gap: 14px; }
+
+      /* An iframe rather than the component mounted in-page: the breakpoints
+         this section is about key off the real viewport, not a container's
+         width, so a div sized to a phone would never actually switch layout.
+         Loading the real, live page in a phone-width frame does — this is the
+         one place in the library where "the real component" means a whole
+         real page instead of one import. */
+      .lib-mobile-frame-wrap { display: flex; justify-content: center; }
+      .lib-mobile-frame {
+        width: 390px; height: 760px; border: 1px solid rgba(255,255,255,.08);
+        border-radius: 28px; background: #0a0a0a;
+      }
+      .lib-mobile-notes {
+        margin: 20px 0 0; padding: 0; list-style: none;
+        display: flex; flex-direction: column; gap: 10px;
+      }
+      .lib-mobile-notes li {
+        padding-left: 16px; position: relative;
+        font-size: 13.5px; line-height: 1.6; color: rgba(255,255,255,.55);
+      }
+      .lib-mobile-notes li::before {
+        content: ""; position: absolute; left: 0; top: 9px;
+        width: 5px; height: 5px; border-radius: 999px; background: rgba(248,70,0,.6);
+      }
+      .lib-mobile-notes strong { color: rgba(255,255,255,.85); font-weight: 600; }
+      .lib-mobile-notes code {
+        font-size: 12px; color: rgba(255,255,255,.7); background: rgba(255,255,255,.06);
+        padding: 1px 5px; border-radius: 4px;
+      }
 
       /* Different states of one sequence, shown side by side rather than as
          separate catalog entries — the point being made is the progression,

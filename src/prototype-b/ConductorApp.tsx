@@ -154,6 +154,10 @@ export function ConductorApp({
    */
   const [railed, setRailed] = useState(false);
   useEffect(() => { setRailed(area === "agents"); }, [area]);
+  // Below `lg` the sidebar has nowhere to live in-flow (see ProductSidebar) —
+  // this is the mobile door instead, opened by the hamburger the Agents list
+  // shows in its own header.
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [skills, setSkills] = useState<MarketplaceSkill[]>(MARKETPLACE_SEED);
 
   function switchVariant(next: number) {
@@ -390,6 +394,8 @@ export function ConductorApp({
             onSwitchArea={setArea}
             collapsed={railed}
             onToggleCollapsed={() => setRailed((v) => !v)}
+            mobileOpen={mobileMenuOpen}
+            onCloseMobile={() => setMobileMenuOpen(false)}
             // leaving for a new conversation is leaving the area
             onNewChat={() => setArea("chat")}
             // The Chat list this sidebar shows itself, rather than only ever
@@ -400,7 +406,7 @@ export function ConductorApp({
             onOpenConversation={(chat) => { setFocusChatInChat(chat.id); setArea("chat"); }}
           />
           {area === "agents" ? (
-            <AgentsWorkspace focusId={focusAgent} />
+            <AgentsWorkspace focusId={focusAgent} onOpenMenu={() => setMobileMenuOpen(true)} />
           ) : (
             <ConnectorsPage />
           )}
@@ -447,6 +453,9 @@ export function ConductorApp({
           extraConversations={guestChats}
           railed={railed}
           onToggleRail={() => setRailed((v) => !v)}
+          onOpenMenu={() => setMobileMenuOpen(true)}
+          mobileMenuOpen={mobileMenuOpen}
+          onCloseMobileMenu={() => setMobileMenuOpen(false)}
         />
       </div>
       )}

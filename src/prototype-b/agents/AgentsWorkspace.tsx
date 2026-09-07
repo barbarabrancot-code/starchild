@@ -9,6 +9,8 @@ import {
   TrashIcon,
   PinIcon,
   SearchIcon,
+  MenuIcon,
+  ArrowLeftIcon,
 } from "../icons";
 import { Reactable } from "../Reactable";
 import { ActivityLine } from "../ActivityLine";
@@ -307,8 +309,13 @@ export function Turn({
 export function AgentsWorkspace({
   /** which agent to open on — set when one was just created from a conversation */
   focusId,
+  /** the hamburger in the mobile list view — opens the product sidebar (Chat,
+   *  Agents, Connectors…) that this area's own screen doesn't otherwise show
+   *  room for on a narrow phone */
+  onOpenMenu,
 }: {
   focusId?: string;
+  onOpenMenu?: () => void;
 } = {}) {
   /**
    * The roster is state so setup has somewhere to put a new agent. It starts
@@ -339,8 +346,18 @@ export function AgentsWorkspace({
   const [picking, setPicking] = useState(false);
   /** filters the roster by name — the list itself, not a separate picker */
   const [rosterQuery, setRosterQuery] = useState("");
-  const startPicking = () => setPicking(true);
+  const startPicking = () => { setPicking(true); setMobileView("thread"); };
   const [activeId, setActiveId] = useState<string>(focusId ?? "");
+  /**
+   * On a narrow screen there is only room for one of these at a time — the
+   * list or the open thread, the same way WhatsApp's own two panes collapse
+   * into one on a phone. Desktop ignores this entirely (CSS only switches on
+   * it under the same breakpoint the rest of the mobile layout uses); this is
+   * just which one a phone is currently looking at.
+   */
+  const [mobileView, setMobileView] = useState<"list" | "thread">(
+    focusId || making || (!onboarded && roster.length === 0) ? "thread" : "list",
+  );
   /** rows kept at the top of the roster, most recently pinned first — a display
    *  order, not a fact about the agent, so it lives here rather than on `Agent`. */
   const [pinnedIds, setPinnedIds] = useState<string[]>([]);
@@ -420,6 +437,7 @@ export function AgentsWorkspace({
     const next = roster.find((candidate) => candidate.id !== agent.id);
     removeAgent(agent.id);
     setActiveId(next?.id ?? "");
+    if (!next) setMobileView("list");
     setDrawer(false);
     setConfirmingDelete(false);
     setReplyTo(null);
@@ -440,6 +458,7 @@ export function AgentsWorkspace({
     };
     addAgent(copy);
     setActiveId(copy.id);
+    setMobileView("thread");
   };
 
   const togglePin = (id: string) =>
@@ -475,6 +494,7 @@ export function AgentsWorkspace({
     };
     addAgent(agent);
     setActiveId(agent.id);
+    setMobileView("thread");
     setAsked(0);
     setDrawer(false);
     setOnboarded(true);
@@ -511,6 +531,7 @@ export function AgentsWorkspace({
     };
     addAgent(agent);
     setActiveId(agent.id);
+    setMobileView("thread");
     setDrawer(false);
   };
 
@@ -579,11 +600,14 @@ export function AgentsWorkspace({
    * each other — into wallpaper.
    */
   return (
-    <div className="ag-workspace">
+    <div className="ag-workspace" data-mobile-view={mobileView}>
       {/* the roster — who is working for you, and which of them needs something */}
       <aside className="ag-list">
         <div className="ag-list-head">
           <div className="ag-list-head-top">
+            <button type="button" className="ag-menu" aria-label="Open menu" onClick={() => onOpenMenu?.()}>
+              <MenuIcon className="size-4" />
+            </button>
             <button type="button" className="ag-new" aria-label="Find or create an agent" onClick={startPicking}>
               <PlusIcon className="size-4" />
             </button>
@@ -622,7 +646,7 @@ export function AgentsWorkspace({
               agent={a}
               active={a.id === agent.id}
               pinned={pinnedIds.includes(a.id)}
-              onSelect={() => setActiveId(a.id)}
+              onSelect={() => { setActiveId(a.id); setMobileView("thread"); }}
               onContextMenu={(e) => {
                 e.preventDefault();
                 setRowMenu({ id: a.id, x: e.clientX, y: e.clientY });
@@ -655,12 +679,15 @@ export function AgentsWorkspace({
             x={rowMenu.x}
             y={rowMenu.y}
             pinned={pinnedIds.includes(row.id)}
-            onEdit={() => { setActiveId(row.id); setDrawer(true); setRowMenu(null); }}
+            onEdit={() => { setActiveId(row.id); setMobileView("thread"); setDrawer(true); setRowMenu(null); }}
             onDuplicate={() => { duplicateAgent(row); setRowMenu(null); }}
             onDelete={() => {
               const next = roster.find((candidate) => candidate.id !== row.id);
               removeAgent(row.id);
-              if (activeId === row.id) setActiveId(next?.id ?? "");
+              if (activeId === row.id) {
+                setActiveId(next?.id ?? "");
+                if (!next) setMobileView("list");
+              }
               setPinnedIds((prev) => prev.filter((id) => id !== row.id));
               setRowMenu(null);
             }}
@@ -674,9 +701,10 @@ export function AgentsWorkspace({
           stays put, so whichever way this ends — an existing agent or a new one —
           the answer lands where the person was already looking. */}
       {picking && !setup && (
+        <div className="ag-pane ag-pane-contents">
         <AgentPicker
           roster={roster}
-          onPick={(id) => { setActiveId(id); setPicking(false); }}
+          onPick={(id) => { setActiveId(id); setMobileView("thread"); setPicking(false); }}
           // A real, blank agent, added to the roster immediately rather than
           // held as a draft — filling in what it does happens the same way
           // editing any agent does, from the door its name already is.
@@ -686,12 +714,14 @@ export function AgentsWorkspace({
           }}
           onClose={() => setPicking(false)}
         />
+        </div>
       )}
 
       {/* Setup replaces the thread and leaves the roster standing: the layout gets
           learned before there is anything in it, so the first agent appears
           somewhere already familiar. */}
       {setup && (
+        <div className="ag-pane ag-pane-contents">
         <AgentOnboarding
           // Same test as `setup`, and for the same reason: the concept intro is for
           // someone who has never had an agent, and a roster is proof they have.
@@ -699,17 +729,26 @@ export function AgentsWorkspace({
           onCancel={() => { setMaking(false); setOnboarded(true); }}
           onDone={created}
         />
+        </div>
       )}
 
       {/* the agent itself: who it is, what it can touch, and everything it has done */}
       {!setup && !picking && agent && (
-      <section className="ag-thread">
+      <section className="ag-thread ag-pane">
         {/* The schedule, the state and the tools are facts about the agent, not
             about the conversation — sat up here permanently they were a panel you
             had to read past every time to reach the thread. The header keeps only
             the thing that answers "who am I talking to"; the rest is a click away,
             behind the name. */}
         <header className="ag-head">
+          <button
+            type="button"
+            className="ag-back"
+            aria-label="Back to agents"
+            onClick={() => setMobileView("list")}
+          >
+            <ArrowLeftIcon className="size-4" />
+          </button>
           <button
             type="button"
             className={`ag-id${drawer ? " ag-id--open" : ""}`}
@@ -840,13 +879,21 @@ export function AgentsWorkspace({
           <motion.aside
             key="drawer"
             initial={{ width: 0, opacity: 0 }}
-            animate={{ width: 316, opacity: 1 }}
+            animate={{ width: "min(316px, 88vw)", opacity: 1 }}
             exit={{ width: 0, opacity: 0 }}
             transition={{ duration: 0.34, ease: [0.16, 1, 0.3, 1] }}
             className="ag-drawer"
           >
             <div className="ag-drawer-in">
               <div className="ag-drawer-top">
+                <button
+                  type="button"
+                  className="ag-drawer-back"
+                  onClick={() => { setDrawer(false); setConfirmingDelete(false); }}
+                  aria-label="Back to conversation"
+                >
+                  <ArrowLeftIcon className="size-4" />
+                </button>
                 <p className="ag-drawer-kicker">Agent</p>
                 <button
                   type="button"
@@ -977,6 +1024,13 @@ export function AgentsWorkspace({
           padding: 14px 16px 12px;
         }
         .ag-list-head-top { display: flex; justify-content: flex-end; }
+        .ag-menu {
+          display: none; flex: none; align-items: center; justify-content: center;
+          width: 30px; height: 30px; border: 0; border-radius: 999px; cursor: pointer;
+          background: none; color: rgba(255,255,255,.45);
+          transition: background-color .15s ease, color .15s ease;
+        }
+        .ag-menu:hover { background: rgba(255,255,255,.07); color: #fff; }
         .ag-search {
           display: flex; align-items: center; gap: 8px;
           padding: 6px 11px; border-radius: 9px;
@@ -1073,6 +1127,12 @@ export function AgentsWorkspace({
         /* ---------- thread ---------- */
 
         .ag-thread { display: flex; flex-direction: column; flex: 1; min-width: 0; min-height: 0; background: #000; }
+        /* Marks whichever element is standing in the thread's slot — the real
+           thread, setup, or the picker — so the mobile media query below can
+           hide "whatever is on the right" as one group without knowing which
+           of the three it is. Carries no display of its own, so it never
+           fights each element's real layout above the breakpoint. */
+        .ag-pane-contents { display: contents; }
 
         /* The selected agent is awake, and this is the whole of how that is said:
            a soft warmth behind the name, going nowhere. No animation — presence is
@@ -1082,24 +1142,34 @@ export function AgentsWorkspace({
           display: flex; align-items: center; gap: 12px; padding: 12px 24px;
           border-bottom: 1px solid rgba(255,255,255,.08);
         }
+        .ag-back {
+          display: none; flex: none; align-items: center; justify-content: center;
+          width: 30px; height: 30px; margin-left: -6px; border: 0; border-radius: 999px; cursor: pointer;
+          background: none; color: rgba(255,255,255,.55);
+          transition: background-color .15s ease, color .15s ease;
+        }
+        .ag-back:hover { background: rgba(255,255,255,.07); color: #fff; }
         /* the name is the door to everything else, so it has to read as pressable
            without becoming a button-shaped thing sat in a header */
         .ag-id {
-          display: flex; align-items: center; gap: 10px; cursor: pointer;
+          display: flex; align-items: center; gap: 10px; cursor: pointer; min-width: 0;
           margin-left: -9px; padding: 6px 12px 6px 9px; border: 0; border-radius: 999px;
           background: none; font-family: inherit;
           transition: background-color .16s ease;
         }
         .ag-id:hover, .ag-id--open { background: rgba(255,255,255,.06); }
         .ag-id:focus-visible { outline: 2px solid rgba(248,70,0,.7); outline-offset: 2px; }
-        .ag-id-chev { color: rgba(255,255,255,.28); transition: transform .24s ease, color .16s ease; }
+        .ag-id-chev { flex: none; color: rgba(255,255,255,.28); transition: transform .24s ease, color .16s ease; }
         .ag-id:hover .ag-id-chev { color: rgba(255,255,255,.55); }
         .ag-id--open .ag-id-chev { transform: rotate(180deg); color: rgba(255,255,255,.55); }
         .ag-head::before {
           content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
           background: radial-gradient(46% 120% at 8% 50%, rgba(248,70,0,.07) 0%, rgba(248,70,0,0) 70%);
         }
-        .ag-head-name { font-size: 16px; font-weight: 500; color: #fff; }
+        .ag-head-name {
+          font-size: 16px; font-weight: 500; color: #fff; min-width: 0;
+          white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
 
         /* ---------- drawer ---------- */
 
@@ -1152,14 +1222,23 @@ export function AgentsWorkspace({
           border-left: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.015);
         }
         .ag-drawer-in {
-          width: 316px; height: 100%; overflow-y: auto;
+          width: min(316px, 88vw); height: 100%; overflow-y: auto;
           padding: 14px 20px 30px; display: flex; flex-direction: column; gap: 30px;
         }
-        .ag-drawer-top { display: flex; align-items: center; justify-content: space-between; }
+        .ag-drawer-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
         .ag-drawer-kicker {
           margin: 0; font-size: 11px; font-weight: 600; letter-spacing: .16em;
           text-transform: uppercase; color: rgba(255,255,255,.28);
         }
+        /* Only ever shown on the mobile takeover below — the desktop column
+           has the ✕ for that, the same as it always did. */
+        .ag-drawer-back {
+          display: none; flex: none; align-items: center; justify-content: center;
+          width: 30px; height: 30px; margin-left: -8px; border: 0; border-radius: 999px; cursor: pointer;
+          background: none; color: rgba(255,255,255,.55);
+          transition: background-color .15s ease, color .15s ease;
+        }
+        .ag-drawer-back:hover { background: rgba(255,255,255,.07); color: #fff; }
         .ag-drawer-x {
           border: 0; background: none; cursor: pointer; padding: 2px 4px;
           font-family: inherit; font-size: 13px; color: rgba(255,255,255,.35);
@@ -1454,14 +1533,37 @@ export function AgentsWorkspace({
           .ag-send:hover { transform: none; }
         }
 
-        /* Below this the roster and the thread stop fitting side by side. The
-           roster wins the top of the screen — knowing who needs you matters more
-           than reading one thread. */
+        /* Below this there is only room for one pane at a time — the roster or
+           the open thread (or whatever is standing in for it: setup, the
+           picker), never both stacked. Whichever one mobileView names fills
+           the whole screen; the other stops rendering. The hamburger and the
+           back arrow are how you move between them and to the app's own menu,
+           the same way WhatsApp's own list/chat panes work on a phone. */
         @media (max-width: 900px) {
           .ag-workspace { flex-direction: column; }
-          .ag-list { width: auto; border-right: 0; border-bottom: 1px solid rgba(255,255,255,.08); }
-          .ag-rows { flex-direction: row; overflow-x: auto; padding-bottom: 8px; }
-          .ag-row { width: 240px; flex: none; }
+          .ag-menu, .ag-back { display: flex; }
+          .ag-list { width: auto; border-right: 0; }
+          .ag-workspace[data-mobile-view="list"] .ag-pane { display: none; }
+          .ag-workspace[data-mobile-view="thread"] .ag-list { display: none; }
+          /* The hamburger pins to the left margin — the + stays on the right,
+             same as before — rather than the two sitting grouped together. */
+          .ag-list-head-top { justify-content: space-between; }
+          /* Bigger touch targets on a phone — the 30px desktop size reads as
+             tiny once it's a thumb doing the tapping, not a cursor. */
+          .ag-menu, .ag-new { width: 40px; height: 40px; }
+          .ag-menu svg, .ag-new svg { width: 24px; height: 24px; }
+          /* The agent's own panel stops being a column beside the thread and
+             becomes its own full screen — the same "one pane at a time" rule
+             the list and thread already follow, just for a third pane. The
+             back arrow is how you leave it; the ✕ (a column's own close)
+             steps aside for it. */
+          .ag-drawer {
+            position: fixed; inset: 0; z-index: 40; width: 100% !important;
+            border-left: 0; background: #0a0a0a;
+          }
+          .ag-drawer-in { width: 100%; }
+          .ag-drawer-back { display: flex; }
+          .ag-drawer-x { display: none; }
         }
       `}</style>
     </div>

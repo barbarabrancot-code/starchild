@@ -1,7 +1,15 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { SmileIcon, EllipsisIcon, DuplicateIcon } from "./icons";
 
 const QUICK_REACTIONS = ["👍", "👎", "❤️", "😂", "🎉", "😮"];
+
+/** touch-only gesture tuning — a phone gets WhatsApp's own three moves
+ *  instead of the hover row a cursor gets: hold to copy, tap to react,
+ *  drag right to reply. */
+const LONG_PRESS_MS = 480;
+const MOVE_DEADZONE = 8;
+const SWIPE_REPLY_THRESHOLD = 56;
+const SWIPE_REPLY_MAX = 84;
 
 /**
  * Reply to a particular message, react to it, or copy it — and see what
@@ -52,13 +60,108 @@ export function Reactable({
     window.setTimeout(() => setCopied(false), 1400);
   };
 
+  /*
+   * A cursor gets the hover row; a finger gets the three gestures WhatsApp
+   * already taught everyone. All three read the same touch, so they live
+   * together rather than as separate handlers guessing at each other's state:
+   *
+   *   hold still  → long press fires, opens the copy menu
+   *   lift early  → a tap: opens the reaction picker (Starchild's side only)
+   *   drag right  → the bubble follows the finger; past the threshold, releasing
+   *                 replies, the same as the hover row's own reply arrow
+   *
+   * Whichever one wins, it wins outright — a hold that turns into a drag stops
+   * being a hold, and a drag that does not clear the threshold does nothing.
+   */
+  const [dragX, setDragX] = useState(0);
+  const dragging = useRef(false);
+  const touchStart = useRef<{ x: number; y: number } | null>(null);
+  const movedPastDeadzone = useRef(false);
+  const longPressFired = useRef(false);
+  const longPressTimer = useRef<number | null>(null);
+
+  const clearLongPress = () => {
+    if (longPressTimer.current !== null) {
+      window.clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  };
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    if (!text && !onReply && !canReact) return;
+    const t = e.touches[0];
+    touchStart.current = { x: t.clientX, y: t.clientY };
+    dragging.current = false;
+    movedPastDeadzone.current = false;
+    longPressFired.current = false;
+    clearLongPress();
+    if (text) {
+      longPressTimer.current = window.setTimeout(() => {
+        longPressFired.current = true;
+        setMenuOpen(true);
+        setPickerOpen(false);
+      }, LONG_PRESS_MS);
+    }
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    if (!touchStart.current) return;
+    const t = e.touches[0];
+    const dx = t.clientX - touchStart.current.x;
+    const dy = t.clientY - touchStart.current.y;
+    if (!movedPastDeadzone.current && Math.hypot(dx, dy) > MOVE_DEADZONE) {
+      movedPastDeadzone.current = true;
+      clearLongPress();
+    }
+    if (!movedPastDeadzone.current) return;
+    if (onReply && dx > 0 && dx > Math.abs(dy)) {
+      dragging.current = true;
+      setDragX(Math.min(dx, SWIPE_REPLY_MAX));
+    }
+  };
+
+  const onTouchEnd = () => {
+    clearLongPress();
+    if (dragging.current) {
+      if (dragX >= SWIPE_REPLY_THRESHOLD) onReply?.();
+      dragging.current = false;
+      setDragX(0);
+    } else if (!longPressFired.current && !movedPastDeadzone.current && canReact) {
+      setPickerOpen((v) => !v);
+      setMenuOpen(false);
+    }
+    touchStart.current = null;
+  };
+
   return (
     <div className={`rx-wrap rx-wrap--${align}`}>
-      <div className="rx-row">
-        <div className="rx-body">{children}</div>
+      <div
+        className="rx-row"
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+        onTouchCancel={onTouchEnd}
+      >
+        {onReply && (
+          <span className="rx-swipe-hint" style={{ opacity: Math.min(dragX / SWIPE_REPLY_THRESHOLD, 1) }}>
+            <ReplyIcon />
+          </span>
+        )}
+        <div className="rx-body-wrap">
+          <div
+            className="rx-body"
+            style={{
+              transform: dragX ? `translateX(${dragX}px)` : undefined,
+              transition: dragging.current ? "none" : "transform .25s cubic-bezier(.16,1,.3,1)",
+            }}
+          >
+            {children}
+          </div>
+        </div>
 
         {/* Hidden until hover, and on the outside of the bubble so it never covers
-            a word. */}
+            a word. On a touch device these buttons step aside entirely for the
+            hold/tap/drag gestures above — see the @media (hover: none) block. */}
         <div className="rx-actions">
           {canReact && (
             <div className="rx-pop-anchor">
@@ -143,9 +246,22 @@ export function Reactable({
         .rx-wrap--right { align-items: flex-end; }
         .rx-wrap--left { align-items: flex-start; }
 
-        .rx-row { display: flex; align-items: center; gap: 6px; max-width: 100%; }
+        .rx-row { position: relative; display: flex; align-items: center; gap: 6px; max-width: 100%; }
         .rx-wrap--right .rx-row { flex-direction: row-reverse; }
+        .rx-body-wrap { position: relative; min-width: 0; }
         .rx-body { min-width: 0; }
+        /* Sits in the gap a rightward drag opens up behind the bubble — always
+           in the DOM so it can fade in with the drag rather than appear
+           abruptly at the threshold. Anchored to the row itself (which never
+           renders outside whatever margin the page around it already gives
+           it) rather than hung off the bubble's own edge, so it can only ever
+           appear inside that margin, never past it. */
+        .rx-swipe-hint {
+          position: absolute; left: 4px; top: 50%; transform: translateY(-50%); z-index: -1;
+          display: flex; align-items: center; justify-content: center;
+          width: 22px; height: 22px; color: rgba(255,255,255,.4);
+          pointer-events: none;
+        }
 
         .rx-actions {
           flex: none;
@@ -212,10 +328,24 @@ export function Reactable({
           font-size: 12.5px; line-height: 1;
         }
 
-        /* No hover to reveal it on, so the control stays put rather than never
-           appearing. */
+        /* No cursor to hover with, so the row's own reveal never fires — the
+           three gestures are the whole of the interaction here. The container
+           still needs to stay visible (not its default opacity: 0) so a
+           gesture-opened picker or menu, both of which live inside it, can be
+           seen; the trigger buttons themselves just have nothing to do.
+           The popup itself stops anchoring to that (now invisible, near-zero-
+           width) button — on a bubble that runs close to the screen's own
+           edge, that anchor could sit close enough to it that the popup ran
+           past the edge. Centered on the row instead, and capped to the
+           viewport's own width minus a margin, it never can. */
         @media (hover: none) {
           .rx-actions { opacity: 1; }
+          .rx-action { display: none; }
+          .rx-pop-anchor { position: static; }
+          .rx-picker, .rx-menu {
+            left: 50%; right: auto; transform: translateX(-50%);
+            max-width: min(280px, calc(100vw - 32px));
+          }
         }
       `}</style>
     </div>
