@@ -322,7 +322,15 @@ export function LibraryApp() {
             </Entry>
 
             <Entry
-              title="Mobile: list, thread, and profile"
+              title="New agent greeting"
+              path="src/prototype-b/agents/{AgentsWorkspace,onboardingData}.tsx"
+              desc="A new agent pauses for three seconds with a pulsing orb, then opens the conversation with its first two messages. Replay the loading state to review the transition."
+            >
+              <NewAgentGreetingDemo />
+            </Entry>
+
+            <Entry
+              title="Mobile: list, chat, and profile"
               path="src/prototype-b/agents/AgentsWorkspace.tsx"
               desc="Below 900px there is only room for one pane at a time — these are the real, live app in phone-width frames, not a redraw, each deep-linked straight to the screen it's labeled for."
             >
@@ -388,6 +396,39 @@ export function LibraryApp() {
 function AgentMadeDemo() {
   const { roster } = useAgents();
   return <AgentMade agent={roster[0]} onOpen={() => {}} onDismiss={() => {}} />;
+}
+
+function NewAgentGreetingDemo() {
+  const [ready, setReady] = useState(false);
+  const [run, setRun] = useState(0);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setReady(true), 3000);
+    return () => window.clearTimeout(timer);
+  }, [run]);
+
+  const replay = () => {
+    setReady(false);
+    setRun((value) => value + 1);
+  };
+
+  return (
+    <div className="lib-new-agent-greeting">
+      <div className="lib-new-agent-greeting-thread">
+        {ready ? (
+          <div className="lib-agturns">
+            <Turn turn={{ kind: "agent", text: "Hey — I’m your new agent. Good to meet you." }} onReply={() => {}} />
+            <Turn turn={{ kind: "agent", text: "What do you want me to take care of?" }} onReply={() => {}} />
+          </div>
+        ) : (
+          <div className="lib-new-agent-greeting-loading" aria-label="Agent preparing its greeting">
+            <AgentOrb status="working" size={14} halo accent="#f84600" />
+          </div>
+        )}
+      </div>
+      {ready && <button type="button" className="lib-new-agent-replay" onClick={replay}>Replay loading</button>}
+    </div>
+  );
 }
 
 function FirstMeetingDemo() {
@@ -646,6 +687,25 @@ function Style() {
          see the Screens section above) for .ag-bubble/.ag-msg-col/etc.; this
          just gives Turn's output the same dark backdrop and gap it has there. */
       .lib-agturns { display: flex; flex-direction: column; gap: 18px; padding: 4px; }
+      .lib-new-agent-greeting { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; }
+      .lib-new-agent-greeting-thread {
+        display: flex; width: min(390px, 100%); min-height: 120px; align-items: center;
+        border: 1px solid rgba(255,255,255,.08); border-radius: 14px; background: #0a0a0b;
+      }
+      .lib-new-agent-greeting-loading { display: flex; align-items: center; padding: 24px; }
+      .lib-new-agent-greeting-loading .ao-beat { animation: lib-greeting-pulse 1s ease-in-out infinite; }
+      @keyframes lib-greeting-pulse {
+        0%, 100% { transform: scale(1); opacity: .72; }
+        50% { transform: scale(1.24); opacity: 1; }
+      }
+      .lib-new-agent-replay {
+        padding: 7px 11px; border: 1px solid rgba(255,255,255,.14); border-radius: 8px;
+        background: rgba(255,255,255,.05); color: rgba(255,255,255,.72); font: inherit; font-size: 12px; cursor: pointer;
+      }
+      .lib-new-agent-replay:hover { background: rgba(255,255,255,.09); color: #fff; }
+      @media (prefers-reduced-motion: reduce) {
+        .lib-new-agent-greeting-loading .ao-beat { animation: none; }
+      }
       .lib-row { display: flex; flex-wrap: wrap; gap: 24px; }
 
       .lib-bubble {

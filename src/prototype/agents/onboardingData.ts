@@ -74,7 +74,7 @@ export const FIRST_QUESTIONS = [
   "And should I ask you before I act on anything?",
 ];
 
-export const GREETING = (who: string) => [
-  `Hey ${who}. Good to meet you.`,
-  "What do you want me on first?",
+export const GREETING = [
+  "Hey — I’m your new agent. Good to meet you.",
+  "What do you want me to take care of?",
 ];

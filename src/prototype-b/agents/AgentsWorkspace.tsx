@@ -217,16 +217,17 @@ function ReasoningRow({ label, lines }: { label: string; lines: string[] }) {
  * own; the name only shows up once the wait has actually run long enough to
  * ask for an explanation.
  */
-function ThinkingRow({ agent }: { agent: Agent }) {
+function ThinkingRow({ agent, opening = false }: { agent: Agent; opening?: boolean }) {
   const [showLabel, setShowLabel] = useState(false);
   useEffect(() => {
+    if (opening) return;
     const t = window.setTimeout(() => setShowLabel(true), 1800);
     return () => window.clearTimeout(t);
-  }, []);
+  }, [opening]);
   return (
-    <div className="ag-thinking">
+    <div className={`ag-thinking${opening ? " ag-thinking--opening" : ""}`}>
       <AgentOrb status="working" size={12} halo accent={agent.accent} />
-      {showLabel && <span className="ag-thinking-label">{agent.name} is working on this.</span>}
+      {!opening && showLabel && <span className="ag-thinking-label">{agent.name} is working on this.</span>}
     </div>
   );
 }
@@ -375,9 +376,13 @@ export function AgentsWorkspace({
   const [draft, setDraft] = useState("");
   /** between sending and the reply actually landing in the thread */
   const [thinking, setThinking] = useState(false);
+  /** a newly created agent takes a beat before its first hello, so it feels
+      like a new conversation beginning rather than a prefilled template */
+  const [openingAgentIds, setOpeningAgentIds] = useState<string[]>([]);
   useEffect(() => { setThinking(false); }, [activeId]);
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const agent = roster.find((a) => a.id === activeId) ?? roster[0];
+  const greetingPending = agent ? openingAgentIds.includes(agent.id) : false;
   useEffect(() => { setConfirmingDelete(false); }, [agent?.id]);
 
   const turnsRef = useRef<HTMLDivElement>(null);
@@ -476,6 +481,17 @@ export function AgentsWorkspace({
     ? orderedRoster.filter((a) => a.name.toLowerCase().includes(rosterQuery.trim().toLowerCase()))
     : orderedRoster;
 
+  const beginGreeting = (newAgent: Agent) => {
+    setOpeningAgentIds((ids) => [...ids, newAgent.id]);
+    window.setTimeout(() => {
+      updateAgent(newAgent.id, (current) => ({
+        ...current,
+        thread: [...current.thread, ...GREETING.map((text) => ({ kind: "agent", text }) as const)],
+      }));
+      setOpeningAgentIds((ids) => ids.filter((id) => id !== newAgent.id));
+    }, 3000);
+  };
+
   /**
    * Every agent starts the same way: named, empty-handed, and talking. A colour
    * and a set of tools are not things anyone can answer well before the job has
@@ -495,13 +511,14 @@ export function AgentsWorkspace({
       accent,
       onboarding: true,
       tools,
-      thread: GREETING("Bárbara").map((text) => ({ kind: "agent", text }) as const),
+      thread: [],
     };
     addAgent(agent);
     setActiveId(agent.id);
     setMobileView("thread");
     setAsked(0);
     setDrawer(false);
+    beginGreeting(agent);
     setOnboarded(true);
     try { window.localStorage.setItem("starchild.agents.onboarded", "1"); } catch { /* private mode */ }
   };
@@ -514,7 +531,7 @@ export function AgentsWorkspace({
   /**
    * The other way an agent starts existing, as against `birth`, which walks
    * through a scripted three-question conversation. This one exists the
-   * moment it's visible: a blank thread and a name, added to the roster
+   * moment it's visible: an opening greeting and a name, added to the roster
    * straight away rather than held as a draft — the drawer beside it is
    * already the same form that edits any agent, so there is no separate
    * "finish creating" step, only a blank agent you start filling in.
@@ -531,13 +548,16 @@ export function AgentsWorkspace({
       preview: "Say what you want it on",
       lastActive: "just now",
       accent: ACCENTS.ember.hex,
+      onboarding: true,
       tools: [],
       thread: [],
     };
     addAgent(agent);
     setActiveId(agent.id);
     setMobileView("thread");
+    setAsked(0);
     setDrawer(false);
+    beginGreeting(agent);
   };
 
   /**
@@ -547,7 +567,7 @@ export function AgentsWorkspace({
    */
   const send = () => {
     const text = draft.trim();
-    if (!text || !agent) return;
+    if (!text || !agent || greetingPending) return;
     setDraft("");
 
     const said: AgentTurn = { kind: "you", text, replyTo: replyTo ?? undefined };
@@ -780,6 +800,7 @@ export function AgentsWorkspace({
             <Turn key={i} turn={turn} onReply={setReplyTo} isLast={i === agent.thread.length - 1} />
           ))}
 
+          {greetingPending && <ThinkingRow key={`greeting-${agent.id}`} agent={agent} opening />}
           {thinking && <ThinkingRow key={`thinking-${agent.thread.length}`} agent={agent} />}
 
           {/* An agent that has come back with something has asked a question, and
@@ -861,7 +882,7 @@ export function AgentsWorkspace({
             </div>
           )}
           <div className="ag-composer-row">
-            <button type="button" className="ag-attach" aria-label="Add attachment">
+            <button type="button" className="ag-attach" aria-label="Add attachment" disabled={greetingPending}>
               <PlusIcon className="size-4.5" />
             </button>
             <input
@@ -870,11 +891,12 @@ export function AgentsWorkspace({
               onKeyDown={(e) => { if (e.key === "Enter") send(); }}
               placeholder={`Message ${agent.name}…`}
               className="ag-input"
+              disabled={greetingPending}
             />
             {/* send() already no-ops on an empty draft, so the mic state
                 (nothing typed yet) is safe to wire to the same handler —
                 there's just nothing for it to do until there's text. */}
-            <button type="button" className="ag-send" aria-label="Send" onClick={send}>
+            <button type="button" className="ag-send" aria-label="Send" onClick={send} disabled={greetingPending}>
               {draft.trim() ? <ArrowUpIcon className="size-4" /> : <MicIcon className="size-4" />}
             </button>
           </div>
@@ -1333,6 +1355,7 @@ export function AgentsWorkspace({
         /* Aligned with the agent's own words above them, not centred and not
            right-aligned: they are answers to the thing it just said. */
         .ag-thinking { display: flex; align-items: center; gap: 10px; align-self: flex-start; }
+        .ag-thinking--opening .ao-beat { animation: ag-opening-pulse 1s ease-in-out infinite; }
         .ag-thinking-label {
           font-size: 13px; color: rgba(255,255,255,.4);
           animation: ag-thinking-in .35s cubic-bezier(.16,1,.3,1);
@@ -1340,6 +1363,13 @@ export function AgentsWorkspace({
         @keyframes ag-thinking-in {
           from { opacity: 0; transform: translateY(3px); }
           to { opacity: 1; transform: none; }
+        }
+        @keyframes ag-opening-pulse {
+          0%, 100% { transform: scale(1); opacity: .72; }
+          50% { transform: scale(1.24); opacity: 1; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .ag-thinking--opening .ao-beat { animation: none; }
         }
 
         .ag-answers { display: flex; flex-wrap: wrap; gap: 7px; padding: 2px 0 4px; }
@@ -1544,6 +1574,7 @@ export function AgentsWorkspace({
           transition: background-color .15s ease, color .15s ease;
         }
         .ag-attach:hover { background: rgba(255,255,255,.07); color: #fff; }
+        .ag-attach:disabled, .ag-input:disabled, .ag-send:disabled { cursor: wait; opacity: .45; }
         .ag-input {
           flex: 1; min-width: 0; border: 0; background: none; outline: none;
           font-family: inherit; font-size: 14.5px; color: #fff;
