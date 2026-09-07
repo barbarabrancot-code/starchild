@@ -111,6 +111,21 @@ function startsSignedIn(): boolean {
   return new URLSearchParams(window.location.search).get("signedin") === "1";
 }
 
+/** `?area=agents` (or `connectors`) opens straight there — a deep link for
+ *  previews, the same idea as `?signedin=1` above. */
+function startingArea(): "chat" | "agents" | "connectors" {
+  if (typeof window === "undefined") return "chat";
+  const a = new URLSearchParams(window.location.search).get("area");
+  return a === "agents" || a === "connectors" ? a : "chat";
+}
+
+/** paired with `?area=agents` to land on a specific agent's thread rather
+ *  than the top of the roster */
+function startingFocusAgent(): string | undefined {
+  if (typeof window === "undefined") return undefined;
+  return new URLSearchParams(window.location.search).get("focusAgent") ?? undefined;
+}
+
 export function ConductorApp({
   line = BUILT_LINE,
   startInOnboarding = false,
@@ -139,9 +154,9 @@ export function ConductorApp({
   /** Which product area the chat screen sits in once signed in. Set when a task is
    *  picked, so someone who asked for something to be run lands among the agents
    *  rather than in a conversation about them. */
-  const [area, setArea] = useState<"chat" | "agents" | "connectors">("chat");
+  const [area, setArea] = useState<"chat" | "agents" | "connectors">(startingArea);
   /** an agent made from a conversation — Agents opens on it, not on the top of the roster */
-  const [focusAgent, setFocusAgent] = useState<string | undefined>();
+  const [focusAgent, setFocusAgent] = useState<string | undefined>(startingFocusAgent);
   /** a saved conversation opened from the sidebar while Chat was hidden behind
    *  Agents or Connectors */
   const [focusChatInChat, setFocusChatInChat] = useState<string | undefined>();
@@ -154,6 +169,10 @@ export function ConductorApp({
    */
   const [railed, setRailed] = useState(false);
   useEffect(() => { setRailed(area === "agents"); }, [area]);
+  // Below `lg` the sidebar has nowhere to live in-flow (see ProductSidebar) —
+  // this is the mobile door instead, opened by the hamburger the Agents list
+  // shows in its own header.
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [skills, setSkills] = useState<MarketplaceSkill[]>(MARKETPLACE_SEED);
 
   function switchVariant(next: number) {
@@ -390,6 +409,8 @@ export function ConductorApp({
             onSwitchArea={setArea}
             collapsed={railed}
             onToggleCollapsed={() => setRailed((v) => !v)}
+            mobileOpen={mobileMenuOpen}
+            onCloseMobile={() => setMobileMenuOpen(false)}
             // leaving for a new conversation is leaving the area
             onNewChat={() => setArea("chat")}
             // The Chat list this sidebar shows itself, rather than only ever
@@ -400,7 +421,7 @@ export function ConductorApp({
             onOpenConversation={(chat) => { setFocusChatInChat(chat.id); setArea("chat"); }}
           />
           {area === "agents" ? (
-            <AgentsWorkspace focusId={focusAgent} />
+            <AgentsWorkspace focusId={focusAgent} onOpenMenu={() => setMobileMenuOpen(true)} />
           ) : (
             <ConnectorsPage />
           )}
@@ -447,6 +468,9 @@ export function ConductorApp({
           extraConversations={guestChats}
           railed={railed}
           onToggleRail={() => setRailed((v) => !v)}
+          onOpenMenu={() => setMobileMenuOpen(true)}
+          mobileMenuOpen={mobileMenuOpen}
+          onCloseMobileMenu={() => setMobileMenuOpen(false)}
         />
       </div>
       )}

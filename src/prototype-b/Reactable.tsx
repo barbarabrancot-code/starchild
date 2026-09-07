@@ -1,14 +1,27 @@
+import { useRef, useState } from "react";
+import { SmileIcon, EllipsisIcon, DuplicateIcon } from "./icons";
+
+const QUICK_REACTIONS = ["👍", "👎", "❤️", "😂", "🎉", "😮"];
+
+/** touch-only gesture tuning — a phone gets WhatsApp's own three moves
+ *  instead of the hover row a cursor gets: hold to copy, tap to react,
+ *  drag right to reply. */
+const LONG_PRESS_MS = 480;
+const MOVE_DEADZONE = 8;
+const SWIPE_REPLY_THRESHOLD = 56;
+const SWIPE_REPLY_MAX = 84;
+
 /**
- * Reply to a particular message, and see what Starchild left on it.
+ * Reply to a particular message, react to it, or copy it — and see what
+ * Starchild left on a message of yours.
  *
- * Reacting is not a control here — nobody picks a reaction for their own
- * message, and reacting to Starchild's own words would just be a note to
- * self. So the only reaction that ever shows is one Starchild already left,
- * seeded by whoever is narrating the conversation, on the message it is
- * about. What stays interactive is reply: pointing at a line you mean is
- * still yours to do, on either side of the conversation.
+ * The one asymmetry that survives: reacting to your own message is still not
+ * offered (there is nothing to say about your own words that isn't already
+ * said by having sent them), so the emoji trigger only shows on Starchild's
+ * side. Reply and copy work on either side — pointing at a line, or lifting
+ * it out verbatim, are both things you'd want to do regardless of who said it.
  *
- * The reply control stays out of the way until the message is hovered,
+ * Every control here stays out of the way until the message is hovered,
  * because a chat with a toolbar on every turn is not a chat.
  */
 export function Reactable({
@@ -16,55 +29,317 @@ export function Reactable({
   onReply,
   /** what Starchild left on this message, if anything — not everything gets one */
   reaction,
+  /** the raw text, for Copy — omit it and the "more" menu doesn't appear */
+  text,
   children,
 }: {
   align?: "left" | "right";
   onReply?: () => void;
   reaction?: string;
+  text?: string;
   children: React.ReactNode;
 }) {
+  const [myReaction, setMyReaction] = useState<string | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const canReact = align === "left";
+  const shownReaction = reaction ?? myReaction ?? undefined;
+
+  /**
+   * Two rounds of pure-CSS anchoring (centered, then right-aligned to the
+   * row) each checked out on paper and still ran past a real phone's own
+   * margin — a `width: fit-content`/flex-hug row is exactly as wide as its
+   * content, which is not the same thing as "however much room the screen
+   * actually has." Measuring the row's real on-screen box and clamping
+   * against the real viewport width is the one version of this that can't
+   * be wrong by construction, because it isn't predicting the layout, it's
+   * reading it back after the browser has already done it.
+   */
+  const rowRef = useRef<HTMLDivElement>(null);
+  const [popupRight, setPopupRight] = useState(0);
+  const POPUP_WIDTH_ESTIMATE = 280;
+  const POPUP_MARGIN = 12;
+  const positionPopup = () => {
+    const row = rowRef.current;
+    if (!row) { setPopupRight(0); return; }
+    const rect = row.getBoundingClientRect();
+    let desiredRight = Math.min(rect.right, window.innerWidth - POPUP_MARGIN);
+    desiredRight = Math.max(desiredRight, POPUP_MARGIN + POPUP_WIDTH_ESTIMATE);
+    setPopupRight(rect.right - desiredRight);
+  };
+
+  const pick = (emoji: string) => {
+    setMyReaction((cur) => (cur === emoji ? null : emoji));
+    setPickerOpen(false);
+  };
+
+  const copy = () => {
+    if (!text) return;
+    navigator.clipboard?.writeText(text).catch(() => {});
+    setCopied(true);
+    setMenuOpen(false);
+    window.setTimeout(() => setCopied(false), 1400);
+  };
+
+  /**
+   * `?touchDemo=1` makes a mouse count as a finger for the gestures below —
+   * only for onboarding-mobile.html, which wraps the app in a phone-width
+   * frame for anyone testing without an actual touchscreen. Nowhere else:
+   * a real desktop visitor still gets the hover row, unaffected.
+   */
+  const forceTouch = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("touchDemo") === "1";
+
+  /*
+   * A cursor gets the hover row; a finger (or, on the forced-touch demo, a
+   * mouse standing in for one) gets the three gestures WhatsApp already
+   * taught everyone. Pointer Events rather than Touch Events specifically —
+   * one API for mouse and touch alike means the same handlers serve both
+   * without a parallel mouse-only reimplementation, and `pointerType` is
+   * exactly the signal that decides whether a given pointer down here
+   * should mean anything at all. All three gestures read the same pointer,
+   * so they live together rather than as separate handlers guessing at each
+   * other's state:
+   *
+   *   hold still  → long press fires, opens the copy menu
+   *   lift early  → a tap: opens the reaction picker (Starchild's side only)
+   *   drag right  → the bubble follows the pointer; past the threshold,
+   *                 releasing replies, the same as the hover row's own arrow
+   *
+   * Whichever one wins, it wins outright — a hold that turns into a drag stops
+   * being a hold, and a drag that does not clear the threshold does nothing.
+   */
+  const [dragX, setDragX] = useState(0);
+  const dragging = useRef(false);
+  const pointerActive = useRef(false);
+  const pointerStart = useRef<{ x: number; y: number } | null>(null);
+  const movedPastDeadzone = useRef(false);
+  const longPressFired = useRef(false);
+  const longPressTimer = useRef<number | null>(null);
+
+  const clearLongPress = () => {
+    if (longPressTimer.current !== null) {
+      window.clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  };
+
+  const onPointerDown = (e: React.PointerEvent) => {
+    if (e.pointerType === "mouse" && !forceTouch) return;
+    if (!text && !onReply && !canReact) return;
+    pointerActive.current = true;
+    pointerStart.current = { x: e.clientX, y: e.clientY };
+    dragging.current = false;
+    movedPastDeadzone.current = false;
+    longPressFired.current = false;
+    clearLongPress();
+    if (text) {
+      longPressTimer.current = window.setTimeout(() => {
+        longPressFired.current = true;
+        positionPopup();
+        setMenuOpen(true);
+        setPickerOpen(false);
+      }, LONG_PRESS_MS);
+    }
+  };
+
+  const onPointerMove = (e: React.PointerEvent) => {
+    if (!pointerActive.current || !pointerStart.current) return;
+    const dx = e.clientX - pointerStart.current.x;
+    const dy = e.clientY - pointerStart.current.y;
+    if (!movedPastDeadzone.current && Math.hypot(dx, dy) > MOVE_DEADZONE) {
+      movedPastDeadzone.current = true;
+      clearLongPress();
+    }
+    if (!movedPastDeadzone.current) return;
+    if (onReply && dx > 0 && dx > Math.abs(dy)) {
+      dragging.current = true;
+      setDragX(Math.min(dx, SWIPE_REPLY_MAX));
+    }
+  };
+
+  const onPointerUp = () => {
+    if (!pointerActive.current) return;
+    clearLongPress();
+    if (dragging.current) {
+      if (dragX >= SWIPE_REPLY_THRESHOLD) onReply?.();
+      dragging.current = false;
+      setDragX(0);
+    } else if (!longPressFired.current && !movedPastDeadzone.current && canReact) {
+      positionPopup();
+      setPickerOpen((v) => !v);
+      setMenuOpen(false);
+    }
+    pointerActive.current = false;
+    pointerStart.current = null;
+  };
+
   return (
-    <div className={`rx-wrap rx-wrap--${align}`}>
-      <div className="rx-row">
-        <div className="rx-body">{children}</div>
+    <div className={`rx-wrap rx-wrap--${align}${forceTouch ? " rx-force-touch" : ""}`}>
+      <div
+        ref={rowRef}
+        className="rx-row"
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerUp}
+      >
+        {onReply && (
+          <span className="rx-swipe-hint" style={{ opacity: Math.min(dragX / SWIPE_REPLY_THRESHOLD, 1) }}>
+            <ReplyIcon />
+          </span>
+        )}
+        <div className="rx-body-wrap">
+          <div
+            className="rx-body"
+            style={{
+              transform: dragX ? `translateX(${dragX}px)` : undefined,
+              transition: dragging.current ? "none" : "transform .25s cubic-bezier(.16,1,.3,1)",
+            }}
+          >
+            {children}
+          </div>
+        </div>
 
         {/* Hidden until hover, and on the outside of the bubble so it never covers
-            a word. */}
-        {onReply && (
-          <div className="rx-actions">
+            a word. On a touch device these buttons step aside entirely for the
+            hold/tap/drag gestures above — see the @media (hover: none) block. */}
+        <div className="rx-actions">
+          {canReact && (
+            <div className="rx-pop-anchor">
+              <button
+                type="button"
+                onClick={() => { positionPopup(); setPickerOpen((v) => !v); setMenuOpen(false); }}
+                className={`rx-action${pickerOpen ? " rx-action--on" : ""}`}
+                aria-label="React"
+                aria-expanded={pickerOpen}
+              >
+                <SmileIcon className="size-4" />
+              </button>
+              {pickerOpen && (
+                <div
+                  className={`rx-picker rx-picker--${align}`}
+                  role="menu"
+                  style={{ left: "auto", right: popupRight }}
+                  // A tap here also bubbles up to .rx-row's own pointer
+                  // handlers underneath, which — for a message that can also
+                  // be reacted to — toggle pickerOpen right back off before
+                  // the browser gets to fire this button's click. The picker
+                  // unmounts out from under the tap, so pick() never runs and
+                  // the reaction never lands. Stopped here, before it bubbles
+                  // that far.
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onPointerUp={(e) => e.stopPropagation()}
+                >
+                  {QUICK_REACTIONS.map((emoji) => (
+                    <button
+                      key={emoji}
+                      type="button"
+                      className={`rx-picker-emoji${myReaction === emoji ? " rx-picker-emoji--on" : ""}`}
+                      onClick={() => pick(emoji)}
+                      aria-label={`React ${emoji}`}
+                    >
+                      {emoji}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {onReply && (
             <button type="button" onClick={onReply} className="rx-action" aria-label="Reply to this">
               <ReplyIcon />
             </button>
-          </div>
-        )}
+          )}
+
+          {text && (
+            <div className="rx-pop-anchor">
+              <button
+                type="button"
+                onClick={() => { positionPopup(); setMenuOpen((v) => !v); setPickerOpen(false); }}
+                className={`rx-action${menuOpen ? " rx-action--on" : ""}`}
+                aria-label="More"
+                aria-expanded={menuOpen}
+              >
+                <EllipsisIcon className="size-4" />
+              </button>
+              {menuOpen && (
+                <div
+                  className={`rx-menu rx-menu--${align}`}
+                  role="menu"
+                  style={{ left: "auto", right: popupRight }}
+                  // Same reason as .rx-picker above — stop the tap from also
+                  // reaching .rx-row and toggling this menu closed before
+                  // Copy's own click fires.
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onPointerUp={(e) => e.stopPropagation()}
+                >
+                  <button type="button" className="rx-menu-item" onClick={copy} role="menuitem">
+                    <DuplicateIcon className="size-3.5" />
+                    {copied ? "Copied" : "Copy"}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* What Starchild left, under the message it belongs to. Not a button —
-          it is not yours to take back. */}
-      {reaction && (
+      {/* Under the message it belongs to — Starchild's own note on yours, or
+          the one you just left on Starchild's. Never both at once: the two
+          only ever apply to opposite sides. */}
+      {shownReaction && (
         <div className="rx-reactions">
-          <span className="rx-chip" aria-label={`Starchild reacted ${reaction}`}>
-            {reaction}
-          </span>
+          <button
+            type="button"
+            className="rx-chip"
+            aria-label={reaction ? `Starchild reacted ${shownReaction}` : `You reacted ${shownReaction}`}
+            // Only your own reaction is yours to take back; Starchild's stays,
+            // the same as it always did.
+            onClick={reaction ? undefined : () => setMyReaction(null)}
+            style={reaction ? { cursor: "default" } : undefined}
+          >
+            {shownReaction}
+          </button>
         </div>
       )}
 
       <style>{`
-        .rx-wrap { display: flex; flex-direction: column; gap: 6px; }
+        .rx-wrap { display: flex; flex-direction: column; }
         .rx-wrap--right { align-items: flex-end; }
         .rx-wrap--left { align-items: flex-start; }
 
-        .rx-row { display: flex; align-items: center; gap: 6px; max-width: 100%; }
+        .rx-row { position: relative; display: flex; align-items: center; gap: 6px; max-width: 100%; }
         .rx-wrap--right .rx-row { flex-direction: row-reverse; }
+        .rx-body-wrap { position: relative; min-width: 0; }
         .rx-body { min-width: 0; }
+        /* Sits in the gap a rightward drag opens up behind the bubble — always
+           in the DOM so it can fade in with the drag rather than appear
+           abruptly at the threshold. Anchored to the row itself (which never
+           renders outside whatever margin the page around it already gives
+           it) rather than hung off the bubble's own edge, so it can only ever
+           appear inside that margin, never past it. */
+        .rx-swipe-hint {
+          position: absolute; left: 4px; top: 50%; transform: translateY(-50%); z-index: -1;
+          display: flex; align-items: center; justify-content: center;
+          width: 22px; height: 22px; color: rgba(255,255,255,.4);
+          pointer-events: none;
+        }
 
         .rx-actions {
           flex: none;
-          display: flex; align-items: center;
+          display: flex; align-items: center; gap: 2px;
           opacity: 0; transition: opacity .18s ease;
         }
         .rx-row:hover .rx-actions,
         .rx-actions:focus-within { opacity: 1; }
+
+        /* Not itself a positioning context — see the note on .rx-picker,
+           .rx-menu below for why the popup they wrap needs .rx-row for
+           that instead. */
+        .rx-pop-anchor { position: static; display: flex; }
 
         .rx-action {
           display: flex; align-items: center; justify-content: center;
@@ -72,23 +347,76 @@ export function Reactable({
           background: none; color: rgba(255,255,255,.35);
           transition: color .15s ease, background-color .15s ease;
         }
-        .rx-action:hover { color: rgba(255,255,255,.85); background: rgba(255,255,255,.07); }
+        .rx-action:hover, .rx-action--on { color: rgba(255,255,255,.85); background: rgba(255,255,255,.07); }
         .rx-action:focus-visible { outline: 2px solid rgba(248,70,0,.7); outline-offset: 1px; }
 
-        .rx-reactions { display: flex; flex-wrap: wrap; gap: 4px; }
+        /* Positioned relative to .rx-row (not .rx-pop-anchor, which stays
+           position: static below on purpose — see the note there) because
+           the JS that sets each one's right inline measures the row's own
+           box, and the two have to agree on what "right" is measured from. */
+        .rx-picker, .rx-menu {
+          position: absolute; bottom: calc(100% + 6px); z-index: 20;
+          display: flex; padding: 6px; border-radius: 999px;
+          border: 1px solid rgba(255,255,255,.1); background: #1a1a1c;
+          box-shadow: 0 8px 24px rgba(0,0,0,.35);
+          max-width: min(280px, calc(100vw - 24px));
+        }
+        .rx-picker--left, .rx-menu--left { left: 0; }
+        .rx-picker--right, .rx-menu--right { right: 0; }
+
+        .rx-picker { gap: 2px; align-items: center; }
+        .rx-picker-emoji {
+          display: flex; align-items: center; justify-content: center;
+          width: 30px; height: 30px; border-radius: 999px; border: 0; cursor: pointer;
+          background: none; font-size: 16px; line-height: 1;
+          transition: background-color .15s ease, transform .1s ease;
+        }
+        .rx-picker-emoji:hover { background: rgba(255,255,255,.09); transform: scale(1.1); }
+        .rx-picker-emoji--on { background: rgba(248,70,0,.16); }
+
+        .rx-menu { flex-direction: column; padding: 5px; border-radius: 12px; min-width: 120px; }
+        .rx-menu-item {
+          display: flex; align-items: center; gap: 8px;
+          padding: 7px 10px; border-radius: 8px; border: 0; cursor: pointer;
+          background: none; font-family: inherit; font-size: 13px; text-align: left;
+          color: rgba(255,255,255,.75);
+        }
+        .rx-menu-item:hover { background: rgba(255,255,255,.07); color: #fff; }
+
+        /* Glued to the bubble it's about, not floating below it: pulled up so it
+           sits half on the corner, the way a reaction badge does everywhere else
+           this shape exists. Negative margin rather than absolute positioning —
+           it still pushes anything after it (a timestamp, say) down properly,
+           it just overlaps the thing before it instead of stacking under it. */
+        .rx-reactions {
+          display: flex; flex-wrap: wrap; gap: 4px;
+          margin-top: -11px; padding: 0 10px; position: relative; z-index: 2;
+        }
+        .rx-wrap--right .rx-reactions { justify-content: flex-end; }
         .rx-chip {
           display: inline-flex; align-items: center; justify-content: center;
-          height: 24px; min-width: 30px; padding: 0 8px;
-          border-radius: 999px;
-          border: 1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.06);
-          font-size: 13px; line-height: 1;
+          height: 22px; min-width: 28px; padding: 0 7px; border: 1px solid rgba(255,255,255,.14);
+          border-radius: 999px; background: #202022;
+          box-shadow: 0 2px 6px rgba(0,0,0,.35);
+          font-size: 12.5px; line-height: 1;
         }
 
-        /* No hover to reveal it on, so the control stays put rather than never
-           appearing. */
+        /* No cursor to hover with, so the row's own reveal never fires — the
+           three gestures are the whole of the interaction here. The container
+           still needs to stay visible (not its default opacity: 0) so a
+           gesture-opened picker or menu, both of which live inside it, can be
+           seen; the trigger buttons themselves just have nothing to do —
+           where the popup actually lands is entirely down to the inline
+           right positionPopup() computes, not anything here. .rx-force-touch
+           repeats the same two rules for onboarding-mobile.html's demo,
+           where the device genuinely has hover (a mouse) but the page wants
+           it to look and behave like it doesn't. */
         @media (hover: none) {
           .rx-actions { opacity: 1; }
+          .rx-action { display: none; }
         }
+        .rx-force-touch .rx-actions { opacity: 1; }
+        .rx-force-touch .rx-action { display: none; }
       `}</style>
     </div>
   );

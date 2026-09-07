@@ -13,7 +13,7 @@ import { ConductorIntroPopover } from "./onboarding/ConductorIntroPopover";
 import { ConnectFirst } from "./agents/ChatHandoff";
 import { readControl, type Control } from "./agents/agentControl";
 import { readTaskControl, type TaskControl } from "./agents/taskControl";
-import { ActiveTaskCard } from "./agents/ActiveTaskCard";
+import { StatusLine } from "./StatusLine";
 import type { ActiveTask } from "./agents/activeTasks";
 import { readRequest, sameAsk, tickersIn, type Request } from "./agents/readRequest";
 import { useAgents } from "./agents/store";
@@ -22,16 +22,18 @@ import type { ConnectorId } from "./agents/connectors";
 import { SAVED, type SavedChat } from "./savedChats";
 import { SavedThread } from "./SavedThread";
 import { AgentsIntroPopover } from "./onboarding/AgentsIntroPopover";
+import { MobileIntroTour } from "./onboarding/MobileIntroTour";
 import {
   ArrowLeftIcon,
   PlusIcon,
   MicIcon,
   ArrowUpIcon,
-  ChevronDownIcon,
   WalletIcon,
   PanelIcon,
   BracketsIcon,
   CloseIcon,
+  MenuIcon,
+  EllipsisIcon,
 } from "./icons";
 
 /**
@@ -47,40 +49,75 @@ import {
  * it with per-scenario copy in ../data once the design is settled; until then,
  * nothing should be read into the words.
  */
-function PlaceholderAnswer() {
+/** the same curved-arrow glyph Reactable's own reply button uses, so a quote
+ *  reads as the same gesture wherever it shows up */
+function ReplyQuoteIcon() {
   return (
-    <div className="ca-answer">
-      <p>Here's where I'd start.</p>
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth={1.4}
+      strokeLinecap="round" strokeLinejoin="round" className="size-3.5" aria-hidden="true">
+      <path d="M6.4 3.2 2.2 7.4l4.2 4.2" />
+      <path d="M2.2 7.4h6.2a5.4 5.4 0 0 1 5.4 5.4v.2" />
+    </svg>
+  );
+}
 
-      <p>
-        Three things are actually holding this up, and the rest is noise until they're
-        settled. I've put them in the order that unblocks the most with the least effort —
-        the first one changes what the other two even look like.
-      </p>
+/**
+ * Three sends, not one paragraph wearing a bullet list — the lead, the actual
+ * substance, and the question at the end read as three separate thoughts when
+ * someone says them out loud, so they arrive as three bubbles, each reactable
+ * and reply-able on its own the way any other turn is.
+ */
+function PlaceholderAnswer({ onReply }: { onReply: (quote: string) => void }) {
+  const lead = "Here's where I'd start.";
+  const closing =
+    "Want me to turn this into something you can work through, or go deeper on any one of them?";
 
-      <ul>
-        <li>
-          <strong>The thing you keep putting off.</strong> It's small, it's overdue, and
-          it's quietly making two other decisions harder than they need to be.
-        </li>
-        <li>
-          <strong>The one with a real deadline.</strong> Worth an hour this week rather
-          than a scramble next week; the shape of it is already clear enough to start.
-        </li>
-        <li>
-          <strong>Everything else.</strong> None of it needs you today, and deciding that
-          on purpose is what stops it sitting in the back of your head.
-        </li>
-      </ul>
+  return (
+    <div className="ca-answer-group">
+      <Reactable onReply={() => onReply(lead)} text={lead}>
+        <div className="ca-answer">
+          <p>{lead}</p>
+        </div>
+      </Reactable>
 
-      <p>
-        Want me to turn this into something you can work through, or go deeper on any one
-        of them?
-      </p>
+      <Reactable onReply={() => onReply("Starchild's answer")}>
+        <div className="ca-answer">
+          <p>
+            Three things are actually holding this up, and the rest is noise until they're
+            settled. I've put them in the order that unblocks the most with the least effort —
+            the first one changes what the other two even look like.
+          </p>
+
+          <ul>
+            <li>
+              <strong>The thing you keep putting off.</strong> It's small, it's overdue, and
+              it's quietly making two other decisions harder than they need to be.
+            </li>
+            <li>
+              <strong>The one with a real deadline.</strong> Worth an hour this week rather
+              than a scramble next week; the shape of it is already clear enough to start.
+            </li>
+            <li>
+              <strong>Everything else.</strong> None of it needs you today, and deciding that
+              on purpose is what stops it sitting in the back of your head.
+            </li>
+          </ul>
+        </div>
+      </Reactable>
+
+      <Reactable onReply={() => onReply(closing)} text={closing}>
+        <div className="ca-answer">
+          <p>{closing}</p>
+        </div>
+      </Reactable>
 
       <style>{`
+        .ca-answer-group { display: flex; flex-direction: column; gap: 10px; }
+
         .ca-answer {
           display: flex; flex-direction: column; gap: 16px;
+          max-width: 640px; padding: 14px 18px; border-radius: 18px 18px 18px 4px;
+          background: rgba(255,255,255,.05);
           font-family: var(--font-google-sans);
           font-size: 15px; line-height: 1.65; color: rgba(255,255,255,.78);
         }
@@ -124,6 +161,8 @@ function AutomationsIntroAnswer() {
       <style>{`
         .ca-answer {
           display: flex; flex-direction: column; gap: 16px;
+          max-width: 640px; padding: 14px 18px; border-radius: 18px 18px 18px 4px;
+          background: rgba(255,255,255,.05);
           font-family: var(--font-google-sans);
           font-size: 15px; line-height: 1.65; color: rgba(255,255,255,.78);
         }
@@ -191,7 +230,7 @@ const TRADING_ASKED_BEFORE = [
  * reported in — the difference rule 4 exists to keep visible.
  */
 type TailBody =
-  | { kind: "you"; text: string }
+  | { kind: "you"; text: string; replyTo?: string }
   | { kind: "said"; text: string }
   | { kind: "taskCard"; taskId: string }
   | { kind: "taskHandled"; taskId: string }
@@ -212,13 +251,15 @@ export function ChatScreen({
   area = "chat",
   onSwitchArea,
   onOpenAgent,
-  onOpenJob,
   focusTaskId,
   onFocusedTask,
   focusChatId,
   onFocusedChat,
   railed = false,
   onToggleRail,
+  onOpenMenu,
+  mobileMenuOpen = false,
+  onCloseMobileMenu,
   skipMeeting = false,
   onGuestWork,
   extraConversations = [],
@@ -258,6 +299,13 @@ export function ChatScreen({
   /** the nav sidebar is down to icons — owned by the app, since two screens share it */
   railed?: boolean;
   onToggleRail?: () => void;
+  /** Below `lg` the sidebar lives off-screen behind a hamburger instead of
+   *  in-flow — see ProductSidebar's own mobile overlay. Owned by the app shell
+   *  (not local state here) because the same hamburger/overlay pair is shared
+   *  with the Agents/Jobs pages. */
+  onOpenMenu?: () => void;
+  mobileMenuOpen?: boolean;
+  onCloseMobileMenu?: () => void;
   /** which product area the shell is showing — the sidebar switch reads it */
   area?: "chat" | "agents" | "connectors" | "jobs";
   onSwitchArea?: (next: "chat" | "agents" | "connectors" | "jobs") => void;
@@ -755,7 +803,8 @@ export function ChatScreen({
       if (control.kind === "none") return false;
       setValue("");
       setEditing(null);
-      pushTail({ kind: "you", text: trimmed });
+      pushTail({ kind: "you", text: trimmed, replyTo: replyTo ?? undefined });
+      setReplyTo(null);
       window.setTimeout(() => applyControl(control), 520);
       return true;
     };
@@ -765,7 +814,8 @@ export function ChatScreen({
       if (taskControl.kind === "none") return false;
       setValue("");
       setEditingTask(null);
-      pushTail({ kind: "you", text: trimmed });
+      pushTail({ kind: "you", text: trimmed, replyTo: replyTo ?? undefined });
+      setReplyTo(null);
       window.setTimeout(() => applyTaskControl(taskControl), 520);
       return true;
     };
@@ -788,6 +838,7 @@ export function ChatScreen({
     setReading(null);
     // the composer outlives the send now, so it has to be emptied by hand
     setValue("");
+    setReplyTo(null);
     // On a task card the user only supplies the missing detail ("BTC"), so the
     // standing context is what actually routes the work — their reply alone wouldn't.
     const full = activeTask ? `${activeTask.basePrompt} ${trimmed}` : trimmed;
@@ -920,9 +971,12 @@ export function ChatScreen({
             transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
             className="overflow-hidden"
           >
-            <div className="mb-3 flex items-start gap-2.5 border-l-2 border-[#f84600] pl-3">
+            <div className="mb-3 flex items-center gap-2 rounded-full bg-white/[0.06] px-3 py-2">
+              <span className="shrink-0 text-white/45">
+                <ReplyQuoteIcon />
+              </span>
               <p
-                className="min-w-0 flex-1 truncate text-[13px] text-white/45"
+                className="min-w-0 flex-1 truncate text-[13px] text-white/55"
                 style={{ fontFamily: "var(--font-google-sans)" }}
               >
                 {replyTo}
@@ -1005,24 +1059,11 @@ export function ChatScreen({
               style={{ fontFamily: "var(--font-google-sans)" }}
             >
               Conductor Mode
-              <ChevronDownIcon
-                className={`size-3 ${intro === "conductor" ? "text-[#f84600]/70" : "text-white/35"}`}
-              />
             </button>
 
             {intro === "conductor" && !guest && (
-              <ConductorIntroPopover onClose={() => setIntro("agents")} />
-            )}
-            {intro === "agents" && !guest && (
-              <div className="lg:hidden">
-                <AgentsIntroPopover
-                  placement="above-right"
-                  onOpen={() => {
-                    setIntro(null);
-                    onSwitchArea?.("agents");
-                  }}
-                  onClose={() => setIntro(null)}
-                />
+              <div className="hidden min-[900px]:block">
+                <ConductorIntroPopover onClose={() => setIntro("agents")} />
               </div>
             )}
           </div>
@@ -1051,6 +1092,8 @@ export function ChatScreen({
           onSwitchArea={onSwitchArea}
           collapsed={railed}
           onToggleCollapsed={onToggleRail}
+          mobileOpen={mobileMenuOpen}
+          onCloseMobile={onCloseMobileMenu}
           onNewChat={newChat}
           conversations={[...extraConversations, ...SAVED]}
           openConversation={reading?.id}
@@ -1074,6 +1117,16 @@ export function ChatScreen({
               : undefined
           }
         />
+      )}
+
+      {intro && !guest && (
+        <div className="min-[900px]:hidden">
+          <MobileIntroTour
+            step={intro}
+            onNext={() => setIntro("agents")}
+            onClose={() => setIntro(null)}
+          />
+        </div>
       )}
 
       {gate && (
@@ -1147,7 +1200,29 @@ export function ChatScreen({
           // The signed-in top bar: the wordmark, what the account has left to
           // spend, and the view controls. No back arrow — this is the product,
           // not a detour from the site. The wordmark is the way out.
-          <header className="relative flex shrink-0 items-center justify-end gap-3 px-6 py-4">
+          //
+          // Below 900px none of that fits, and the sidebar it would open has
+          // nowhere to live in-flow anyway (see ProductSidebar) — so the row
+          // becomes the WhatsApp-shaped one instead: a hamburger to the menu,
+          // the wordmark still centered, a plain "more" standing in for the
+          // wallet/panel/dev-view cluster a phone has no room for.
+          //
+          // MOBILE BREAKPOINT: 900px (min-[900px]: below, not Tailwind's
+          // own lg: at 1024px) — has to match AgentsWorkspace's own
+          // @media (max-width: 900px) and ProductSidebar's min-[900px]:
+          // exactly, or there's a dead band where the hamburger has already
+          // disappeared but the sidebar still has nowhere to live in-flow.
+          <header className="relative flex shrink-0 items-center px-4 py-3 sm:px-6 sm:py-4">
+            <button
+              type="button"
+              onClick={() => onOpenMenu?.()}
+              className="relative flex size-9 items-center justify-center rounded-lg text-white/70 transition-colors hover:bg-white/[0.07] min-[900px]:hidden"
+              aria-label="Open menu"
+            >
+              <MenuIcon className="size-5" />
+              <span className="absolute top-1.5 right-1.5 size-2 rounded-full bg-red-500" />
+            </button>
+
             <button
               type="button"
               onClick={onBack}
@@ -1157,6 +1232,7 @@ export function ChatScreen({
               STARCHILD
             </button>
 
+            <div className="ml-auto hidden items-center gap-3 min-[900px]:flex">
             <span
               className="flex items-center gap-2 rounded-full bg-white/[0.07] px-3 py-1.5 text-[13px] font-medium text-white/85"
               style={{ fontFamily: "var(--font-google-sans)" }}
@@ -1180,10 +1256,19 @@ export function ChatScreen({
               <BracketsIcon className="size-[18px]" />
             </button>
             <span className="size-2.5 rounded-full bg-emerald-400" title="Connected" />
+            </div>
+
+            <button
+              type="button"
+              className="ml-auto flex size-9 items-center justify-center rounded-lg text-white/70 transition-colors hover:bg-white/[0.07] min-[900px]:hidden"
+              aria-label="More"
+            >
+              <EllipsisIcon className="size-5" />
+            </button>
           </header>
         )}
 
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-x-hidden overflow-y-auto">
           {/* A transcript counts as something on screen even though nothing was
               typed into this session — so it takes the conversation branch, not the
               empty-screen one. */}
@@ -1278,16 +1363,6 @@ export function ChatScreen({
                   >
                     Let's get to work
                   </h1>
-                  {/* Subtle on purpose — a caption under the heading, not a second
-                      one. The model this names (answer, act, or keep something
-                      running) is the same one the rest of the screen argues for;
-                      this just says it once, in passing, rather than teaching it. */}
-                  <p
-                    className="mt-2 text-[13.5px] text-white/35"
-                    style={{ fontFamily: "var(--font-google-sans)" }}
-                  >
-                    Chat with your Chief Agent. Ask anything. It can answer, act, or keep things running.
-                  </p>
                 </motion.div>
               )}
 
@@ -1349,7 +1424,7 @@ export function ChatScreen({
 
               {!reading && (
               <div className="ca-user-turn">
-                <Reactable align="right" onReply={() => setReplyTo(message)}>
+                <Reactable align="right" text={message ?? undefined} onReply={() => setReplyTo(message)}>
                   <div
                     className="max-w-full rounded-2xl rounded-tr-sm bg-white/[0.07] px-4 py-2.5 text-[14.5px] text-white/90"
                     style={{ fontFamily: "var(--font-google-sans)" }}
@@ -1404,9 +1479,7 @@ export function ChatScreen({
                     >
                       {/* No reaction seeded on the placeholder answer — Starchild does
                           not react to its own words either. Reply still works. */}
-                      <Reactable onReply={() => setReplyTo("Starchild's answer")}>
-                        <PlaceholderAnswer />
-                      </Reactable>
+                      <PlaceholderAnswer onReply={setReplyTo} />
                     </motion.div>
                   )}
                 </StepFlow>
@@ -1490,6 +1563,28 @@ export function ChatScreen({
                      amendment about an agent is not a different kind of thing
                      from the question that came before it. Alignment and weight
                      separate the voices, and that is as much as it needs. */
+                  .ca-you-col {
+                    display: flex; flex-direction: column; align-items: flex-end;
+                    align-self: flex-end; gap: 6px; max-width: 480px; min-width: 0;
+                  }
+                  /* The quoted line a reply points at — the same curved arrow and
+                     muted tone as the composer's own reply preview, so the gesture
+                     reads the same whether it is still a draft or already sent.
+                     min-width: 0 down this chain (row and its own text span) is
+                     load-bearing: a flex item's default floor is its content's own
+                     min-content size, which for nowrap text is the text's full
+                     unwrapped width — without overriding that floor, the ellipsis
+                     below never gets a chance to run, and the quote just runs
+                     past the screen's edge on a narrow phone instead. */
+                  .ca-reply-quote {
+                    display: flex; align-items: center; gap: 6px; margin: 0;
+                    max-width: 100%; min-width: 0; font-family: var(--font-google-sans);
+                    font-size: 12.5px; color: rgba(255,255,255,.4);
+                  }
+                  .ca-reply-quote svg { flex: none; color: rgba(255,255,255,.35); }
+                  .ca-reply-quote span {
+                    min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+                  }
                   .ca-you {
                     align-self: flex-end; max-width: 480px; margin: 0;
                     padding: 10px 15px; border-radius: 16px 16px 4px 16px;
@@ -1502,7 +1597,7 @@ export function ChatScreen({
                     font-family: var(--font-google-sans);
                     font-size: 15px; line-height: 1.6; color: #fff !important;
                   }
-                  .ca-user-turn + .ca-assistant-turn, .ca-you + .ca-said { margin-top: 36px; }
+                  .ca-user-turn + .ca-assistant-turn, .ca-you-col + .ca-said { margin-top: 36px; }
                   .ca-offer {
                     display: flex; flex-direction: column; gap: 20px; width: 100%;
                     box-sizing: border-box; padding: 24px 26px; border-radius: 18px;
@@ -1521,30 +1616,11 @@ export function ChatScreen({
                   .ca-offer-go:hover { background: rgba(248,70,0,.28); transform: translateY(-1px); }
                   .ca-offer-quiet { color: rgba(255,255,255,.35); font: inherit; font-size: 14px; font-weight: 600; }
                   .ca-offer-quiet:hover { color: rgba(255,255,255,.7); }
-                  .ca-handled {
-                    display: flex; flex-direction: column; gap: 20px; width: 100%;
-                    box-sizing: border-box; padding: 24px 26px; border-radius: 18px;
-                    background: #151515; font-family: var(--font-google-sans);
-                  }
-                  .ca-handled-title { margin: 0; color: #fff; font-size: 14px; line-height: 1.55; }
-                  .ca-handled-actions { display: flex; align-items: center; gap: 30px; }
-                  .ca-handled-go {
-                    border-radius: 999px; padding: 9px 16px; background: rgba(248,70,0,.18);
-                    color: #f84600; font: inherit; font-size: 14px; font-weight: 600;
-                    transition: background .18s, transform .18s;
-                  }
-                  .ca-handled-go:hover { background: rgba(248,70,0,.28); transform: translateY(-1px); }
-                  .ca-handled-quiet { color: rgba(255,255,255,.35); font: inherit; font-size: 14px; font-weight: 600; }
-                  .ca-handled-quiet:hover { color: rgba(255,255,255,.7); }
                   @media (max-width: 640px) {
                     .ca-offer { gap: 20px; padding: 22px; }
                     .ca-offer-copy { font-size: 14px; }
                     .ca-offer-actions { gap: 22px; }
                     .ca-offer-go, .ca-offer-quiet { font-size: 14px; }
-                    .ca-handled { gap: 20px; padding: 22px; }
-                    .ca-handled-title { font-size: 14px; }
-                    .ca-handled-actions { gap: 22px; }
-                    .ca-handled-go, .ca-handled-quiet { font-size: 14px; }
                   }
                 `}</style>
               )}
@@ -1552,15 +1628,21 @@ export function ChatScreen({
               {tail.map((entry) => {
                 if (entry.kind === "you") {
                   return (
-                    <motion.p
+                    <motion.div
                       key={entry.id}
                       initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.35 }}
-                      className="ca-you"
+                      className="ca-you-col"
                     >
-                      {entry.text}
-                    </motion.p>
+                      {entry.replyTo && (
+                        <p className="ca-reply-quote">
+                          <ReplyQuoteIcon />
+                          <span>{entry.replyTo}</span>
+                        </p>
+                      )}
+                      <p className="ca-you">{entry.text}</p>
+                    </motion.div>
                   );
                 }
 
@@ -1581,60 +1663,40 @@ export function ChatScreen({
                 const subject = activeTasks.find((t) => t.id === entry.taskId);
                 if (!subject) return null;
 
+                // taskHandled/taskCard (a task was created or amended) and
+                // taskUpdate (a finding) are both awareness, not a decision —
+                // a status line and nothing else. A finding that actually
+                // needs a decision arrives as its own kind of turn instead
+                // (see the "decision" pattern), with the modal already on
+                // screen rather than waiting behind a click.
                 if (entry.kind === "taskHandled" || entry.kind === "taskCard") {
+                  const handledText = `Handled. I'll keep watching ${subject.title.replace(/^Watching\s+/i, "")} and update you here when something meaningful changes.`;
                   return (
                     <motion.div
                       key={entry.id}
                       initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                      className="ca-handled"
+                      className="flex flex-col items-start gap-2"
                     >
-                      <p className="ca-handled-title">
-                        Handled. I&apos;ll keep watching {subject.title.replace(/^Watching\s+/i, "")} and update you here when something meaningful changes.
-                      </p>
-                      <div className="ca-handled-actions">
-                        <button type="button" className="ca-handled-go" onClick={() => onOpenJob?.(subject.id)}>
-                          Check it out
-                        </button>
-                        <button
-                          type="button"
-                          className="ca-handled-quiet"
-                          onClick={() => setTail((items) => items.filter((item) => item.id !== entry.id))}
-                        >
-                          Dismiss
-                        </button>
-                      </div>
+                      <Reactable text={handledText} onReply={() => setReplyTo(handledText)}>
+                        <div className="ca-answer">
+                          <p>{handledText}</p>
+                        </div>
+                      </Reactable>
+                      <StatusLine label={subject.title} />
                     </motion.div>
                   );
                 }
 
-                // taskUpdate — the sentence and the card are two different
-                // things: the sentence is what happened, the card (with "View
-                // details" now live, since armTaskFinding wrote `activity` onto
-                // the task) is where it lives afterward.
                 return (
-                  <div key={entry.id} className="flex flex-col gap-3">
-                    <p className="ca-said">{entry.found}</p>
-                    <ActiveTaskCard
-                      task={subject}
-                      onEdit={() => {
-                        setEditingTask(subject);
-                        setLastTaskId(subject.id);
-                        inputRef.current?.focus();
-                      }}
-                      onPause={() =>
-                        applyTaskControl({
-                          kind: "pause",
-                          task: subject,
-                          say: `Paused. I'll stop watching ${subject.title.replace(/^Watching\s+/i, "")} until you say otherwise.`,
-                        })
-                      }
-                      onKeepWatching={() =>
-                        applyTaskControl({ kind: "resume", task: subject, say: "Still watching. I'll tell you if it moves again." })
-                      }
-                      onViewJob={() => onOpenJob?.(subject.id)}
-                    />
+                  <div key={entry.id} className="flex flex-col items-start gap-2">
+                    <Reactable text={entry.found} onReply={() => setReplyTo(entry.found)}>
+                      <div className="ca-answer">
+                        <p>{entry.found}</p>
+                      </div>
+                    </Reactable>
+                    <StatusLine label="Signal forming" />
                   </div>
                 );
               })}

@@ -74,10 +74,37 @@ export type AgentTurn =
    *  `at`, when set, is the send time shown under the bubble; omitted on a
    *  handful of turns is fine, the same way a messenger drops it on messages
    *  sent seconds apart. */
-  | { kind: "you"; text: string; reaction?: string; at?: string }
+  | { kind: "you"; text: string; reaction?: string; at?: string; replyTo?: string }
   | { kind: "agent"; text: string; at?: string }
   /** what it did, in the words someone would use about their own inbox */
   | { kind: "activity"; when: string; lines: string[] }
+  /**
+   * What it worked out before answering — the status line itself, not a
+   * generic "show reasoning" label, so the collapsed row already says the one
+   * true thing rather than announcing that something is hidden behind it.
+   * `lines` is folded away until clicked open. Same idea as the main chat's
+   * own reasoning turn — see SavedThread.
+   */
+  | { kind: "reasoning"; label: string; lines: string[] }
+  /** when a new day or a fresh session starts in the thread — a divider, not
+   *  a message, so it reads as the calendar marking time rather than either
+   *  side saying something */
+  | { kind: "date"; label: string }
+  /** the moment before a connector gets added — see ConnectorChoice */
+  | { kind: "connectorChoice" }
+  /** a real decision, on screen the moment it's needed — `picked`, when set,
+   *  is already decided, read back out of history rather than waiting for a
+   *  click that already happened. Same component the main chat's own
+   *  `decision` SavedTurn uses. */
+  | {
+      kind: "decision";
+      title: string;
+      subtitle?: string;
+      options: { letter: string; label: string; desc?: string }[];
+      picked?: string;
+    }
+  /** a connector actually landing, mid-thread — see ConnectorAdded */
+  | { kind: "connectorAdded"; id: ConnectorId }
   /** the one thing that stops and asks */
   | { kind: "approval"; text: string; detail: string; confirm: string }
   /** the lightweight "you're all set" that closes the first conversation */
@@ -277,6 +304,17 @@ export const AGENTS: Agent[] = [
     lastChecked: "last checked funding rates 2 hours ago",
     tools: [],
     thread: [
+      // Where this agent actually started — a week and a half before today's
+      // activity, so the thread reads as one it has been in the whole time,
+      // not something that began the same morning as its latest update.
+      { kind: "date", label: "Tue, Aug 25 15:34" },
+      {
+        kind: "agent",
+        text: "I'm all set up — watching funding on HYPE, SOL, ETH and BTC from here.",
+        at: "15:34",
+      },
+      { kind: "you", text: "Perfect, thanks." },
+      { kind: "date", label: "Today 11:20" },
       {
         kind: "agent",
         text: "I'm watching HYPE, SOL, ETH and BTC for funding moves — I'll only interrupt you when something actually moves out of the ordinary.",
@@ -311,8 +349,9 @@ export const AGENTS: Agent[] = [
     preview: "Reading 9 sources on the pricing question",
     lastActive: "15:52",
     accent: "#8a5f95", // "Plum"
-    tools: ["notion", "gdrive"],
+    tools: ["notion", "gdrive", "gcal"],
     thread: [
+      { kind: "date", label: "Today 15:10" },
       { kind: "agent", text: "I'm digging into how the AI tools people actually pay for are priced — I'll come back with the pattern, not a table of everyone.", at: "15:10" },
       { kind: "you", text: "Make sure you cover what Anthropic and OpenAI do specifically." },
       { kind: "agent", text: "Will do — I'll call those two out on their own rather than folding them into the average.", at: "15:11" },
@@ -321,6 +360,40 @@ export const AGENTS: Agent[] = [
         when: "Now",
         lines: ["Read 9 sources", "Pulled pricing from 14 products", "Writing it up in Notion"],
       },
+      // The same "add a connector" moment the main chat's own demo points at —
+      // asked and answered here, in the agent's own thread, since that's
+      // where the connector actually ends up. Shown as history now, not a
+      // live pending choice — the `decision` turns render already picked
+      // (see OptionModal's `picked`), and the rest of the sequence is what
+      // actually happened once the pick landed.
+      { kind: "you", text: "Can you add a connector to this agent?" },
+      { kind: "agent", text: "Sure. Which one do you want to plug in?" },
+      {
+        kind: "decision",
+        title: "Which connector should I add?",
+        subtitle: "Once you choose, I'll add it here on this agent.",
+        options: [
+          { letter: "A", label: "GitHub", desc: "PRs, issues, repos" },
+          { letter: "B", label: "Figma", desc: "Design files and comments" },
+          { letter: "C", label: "Google Workspace", desc: "Docs, Drive, Gmail, Calendar" },
+          { letter: "D", label: "Slack", desc: "Channels and DMs" },
+          { letter: "E", label: "Other" },
+        ],
+        picked: "C",
+      },
+      { kind: "agent", text: "Google Workspace — I'll start with your calendar, so I know when to bring findings to you." },
+      {
+        kind: "decision",
+        title: "Add the Google Calendar connector?",
+        options: [
+          { letter: "A", label: "Yes, add it" },
+          { letter: "B", label: "Not now" },
+        ],
+        picked: "A",
+      },
+      { kind: "agent", text: "Adding Google Calendar now — a card should appear below for you to authorize the Google account." },
+      { kind: "connectorAdded", id: "gcal" },
+      { kind: "agent", text: "Google Calendar connected. Want me to look at your agenda today?" },
     ],
   },
   {
@@ -332,10 +405,11 @@ export const AGENTS: Agent[] = [
     resting: "Project Assistant is waiting for Monday.",
     preview: "Next run Monday, 9:00",
     lastActive: "Friday",
-    accent: "#d08a1c", // "Amber"
+    accent: "#ffbe0b", // "Amber"
     cadence: "Every Monday at 9:00",
     tools: ["gmail", "gcal", "notion"],
     thread: [
+      { kind: "date", label: "Today 09:00" },
       { kind: "agent", text: "Every Monday I'll go through the calendar and the docs and give you the honest version of where the project actually is.", at: "09:00" },
       { kind: "you", text: "Post it to Slack too, not just here.", reaction: "✅" },
       { kind: "agent", text: "Will do — I'll post the Monday summary to Slack from now on.", at: "09:01" },
@@ -368,6 +442,7 @@ export const AGENTS: Agent[] = [
     lastChecked: "last checked 7 minutes ago",
     tools: [],
     thread: [
+      { kind: "date", label: "Today 14:10" },
       { kind: "agent", text: "I'm watching fares to Tokyo — I'll only interrupt you when one is genuinely worth booking.", at: "14:10" },
       { kind: "you", text: "Only economy, and only if it's under $900.", reaction: "👍" },
       { kind: "agent", text: "Got it — economy only, and I'll only flag it once it drops under $900.", at: "14:11" },
@@ -390,6 +465,16 @@ export const AGENTS: Agent[] = [
     lastChecked: "last checked this morning",
     tools: ["gmail"],
     thread: [
+      // How this agent actually got its Gmail access — the same exchange as
+      // the "Check my mail" saved chat in the main conversation, replicated
+      // here because it happened in this thread, not there. Everything below
+      // it is what started once the connection actually existed.
+      { kind: "date", label: "Today 07:52" },
+      { kind: "agent", text: "Hey! What can I help you with today?", at: "07:52" },
+      { kind: "you", text: "can you check my mail" },
+      { kind: "agent", text: "I'll help you check your mail." },
+      { kind: "agent", text: "Want me to trigger the Gmail connection now?" },
+      { kind: "you", text: "Yes, connect my Gmail", at: "07:53" },
       { kind: "agent", text: "I'm going through your inbox each morning — I'll draft replies to anything routine and leave the rest for you.", at: "08:00" },
       { kind: "you", text: "Don't touch anything that looks personal.", reaction: "👍" },
       { kind: "agent", text: "Understood — anything that reads as personal I'll leave for you, untouched.", at: "08:02" },

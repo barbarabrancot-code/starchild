@@ -7,7 +7,7 @@ import { OrbFace, type Mood } from "./OrbFace";
 import { PresenceOrb, type OrbState } from "../../presence/PresenceOrb";
 import { CharacterOrb } from "./CharacterOrb";
 import { usePointerLean } from "../../presence/usePointerLean";
-import { ThinkingLine } from "../../ThinkingLine";
+import { ActivityLine } from "../../ActivityLine";
 import { replyTo } from "../e/heroReplies";
 import { SiteHeaderF } from "./SiteHeaderF";
 import heroGradientAsset from "../../../../assets/gradiente hero.svg";
@@ -330,7 +330,7 @@ export function HeroScreenF({
 
                 {thinking && (
                   <div className="hf-turn">
-                    <ThinkingLine label={thinking} />
+                    <ActivityLine label={thinking} />
                   </div>
                 )}
 

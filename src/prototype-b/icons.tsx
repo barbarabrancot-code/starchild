@@ -386,3 +386,19 @@ export function PinIcon({ className }: IconProps) {
     </svg>
   );
 }
+
+export function ExternalLinkIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 -960 960 960" fill="currentColor" className={className ?? "size-3.5"}>
+      <path d="M180-120q-24 0-42-18t-18-42v-600q0-24 18-42t42-18h279v60H180v600h600v-279h60v279q0 24-18 42t-42 18H180Zm202-219-42-43 398-398H519v-60h321v321h-60v-218L382-339Z" />
+    </svg>
+  );
+}
+
+export function SmileIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 -960 960 960" fill="currentColor" className={className ?? "size-3.5"}>
+      <path d="M626-533q23 0 38.5-15.5T680-587q0-23-15.5-38.5T626-641q-23 0-38.5 15.5T572-587q0 23 15.5 38.5T626-533Zm-292 0q23 0 38.5-15.5T388-587q0-23-15.5-38.5T334-641q-23 0-38.5 15.5T280-587q0 23 15.5 38.5T334-533Zm267.5 236.5Q657-332 682-393H278q26 61 81 96.5T480-261q66 0 121.5-35.5ZM324-111.5Q251-143 197-197t-85.5-127Q80-397 80-480t31.5-156Q143-709 197-763t127-85.5Q397-880 480-880t156 31.5Q709-817 763-763t85.5 127Q880-563 880-480t-31.5 156Q817-251 763-197t-127 85.5Q563-80 480-80t-156-31.5ZM480-480Zm241 241q99-99 99-241t-99-241q-99-99-241-99t-241 99q-99 99-99 241t99 241q99 99 241 99t241-99Z" />
+    </svg>
+  );
+}

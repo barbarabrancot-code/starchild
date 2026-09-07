@@ -122,14 +122,14 @@ export function AgentOrb({
           background: radial-gradient(circle, color-mix(in srgb, var(--accent) 30%, transparent) 0%, transparent 68%);
         }
 
-        .ao-root--working .ao-core { box-shadow: 0 0 9px rgba(248,70,0,.65); }
+        .ao-root--working .ao-core { box-shadow: 0 0 9px color-mix(in srgb, var(--accent) 65%, transparent); }
 
         /* asking, not doing: a ring reads as unfinished in a way a brighter dot
            never would, and it needs no extra colour to say so */
         .ao-root--waiting .ao-core {
           background: transparent;
           border: 2px solid var(--accent);
-          box-shadow: 0 0 9px rgba(248,70,0,.5);
+          box-shadow: 0 0 9px color-mix(in srgb, var(--accent) 50%, transparent);
         }
 
         .ao-root--scheduled .ao-core { background: color-mix(in srgb, var(--accent) 55%, transparent); }

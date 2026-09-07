@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Starchild — Welcome (Mobile)</title>
+    <style>
+      html, body { min-height: 100%; margin: 0; background: #050506; }
+      body {
+        display: flex; align-items: center; justify-content: center;
+        min-height: 100vh;
+      }
+      /*
+        A real device shows this filling its own screen edge to edge — the
+        frame around it only exists for whoever opens this link on something
+        wider than a phone, so the mobile layout is what's on screen instead
+        of the desktop one squeezed into a narrow column. Its desktop size is
+        exactly 390 × 800px. On a shorter viewport it scales from its height
+        (48.75vh = 390 / 800), so the ratio is never distorted.
+      */
+      .phone-frame {
+        box-sizing: border-box;
+        width: min(390px, 48.75vh, calc(100vw - 32px));
+        aspect-ratio: 390 / 800;
+        border-radius: 36px;
+        overflow: hidden;
+        border: 1px solid rgba(255,255,255,.12);
+        box-shadow: 0 30px 80px rgba(0,0,0,.6);
+        background: #050506;
+      }
+      @media (max-width: 422px) {
+        .phone-frame { width: 100vw; height: 100vh; border-radius: 0; border: 0; box-shadow: none; }
+      }
+      iframe { width: 100%; height: 100%; border: 0; display: block; }
+    </style>
+  </head>
+  <body>
+    <div class="phone-frame">
+      <!-- touchDemo=1: the interaction inside is meant to be tried by mouse
+           here (nobody testing this frame on a desktop has a finger to use),
+           so Reactable treats a mouse pointer the same as a touch one only
+           on this specific page — see Reactable.tsx's own forceTouch. -->
+      <iframe src="./onboarding.html?touchDemo=1" title="Starchild — Welcome, mobile"></iframe>
+    </div>
+  </body>
+</html>

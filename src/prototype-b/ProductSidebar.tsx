@@ -7,6 +7,7 @@ import {
   BriefcaseIcon,
   EllipsisIcon,
   SearchIcon,
+  TrophyIcon,
   type IconComponent,
 } from "./icons";
 
@@ -27,6 +28,8 @@ export function ProductSidebar({
   openConversation,
   collapsed = false,
   onToggleCollapsed,
+  mobileOpen = false,
+  onCloseMobile,
 }: {
   onNewChat: () => void;
   /** First-run note, keyed by the sidebar label it hangs off. The key is a label
@@ -48,6 +51,12 @@ export function ProductSidebar({
   /** down to a rail of icons — see the note on the collapsed branch below */
   collapsed?: boolean;
   onToggleCollapsed?: () => void;
+  /** Below `lg` the rail and the full sidebar are both hidden entirely — there is
+   *  no room for either. This is that width's own door: a hamburger elsewhere on
+   *  the screen sets this true and the same sidebar body slides in as an overlay
+   *  instead of living in-flow. */
+  mobileOpen?: boolean;
+  onCloseMobile?: () => void;
 }) {
   const areas: Area[] = (["agents", "connectors"] as const).map((id) => ({
     id,
@@ -59,6 +68,38 @@ export function ProductSidebar({
     if (b.id === "hype-analysis") return 1;
     return 0;
   });
+
+  // The mobile door: a full-screen backdrop plus the same SidebarBody content
+  // used everywhere else, sliding in from the left. Picking anything in it
+  // (an area, a saved conversation, New chat) closes it the same way tapping
+  // the backdrop does — on a phone the menu is a means to get somewhere, not
+  // a panel that stays open beside the destination.
+  //
+  // MOBILE BREAKPOINT: 900px, everywhere in this file (`min-[900px]:` below,
+  // not Tailwind's own `lg:` at 1024px) — it has to match AgentsWorkspace's
+  // own `@media (max-width: 900px)` exactly, or there's a dead band between
+  // the two thresholds where the hamburger has already disappeared but the
+  // sidebar still hasn't got room to sit in-flow. ChatScreen's own hamburger
+  // uses the same 900px for the same reason.
+  const mobileOverlay = mobileOpen ? (
+    <div className="fixed inset-0 z-50 min-[900px]:hidden" role="dialog" aria-modal="true">
+      <div className="absolute inset-0 bg-black/60" onClick={onCloseMobile} />
+      <div className="absolute inset-y-0 left-0 flex w-[268px] max-w-[82vw] flex-col border-r border-white/[0.08] bg-[#0c0c0d]">
+        <SidebarBody
+          areas={areas}
+          area={area}
+          onSwitchArea={(next) => { onSwitchArea?.(next); onCloseMobile?.(); }}
+          intro={intro}
+          accountName={accountName}
+          orderedConversations={orderedConversations}
+          onOpenConversation={(chat) => { onOpenConversation?.(chat); onCloseMobile?.(); }}
+          openConversation={openConversation}
+          onNewChat={() => { onNewChat(); onCloseMobile?.(); }}
+          onToggleCollapsed={onCloseMobile}
+        />
+      </div>
+    </div>
+  ) : null;
 
   /*
     Collapsed, this is a rail of icons and nothing else.
@@ -72,11 +113,12 @@ export function ProductSidebar({
   */
   if (collapsed) {
     return (
-      // Hovering grows the rail's real width back to 268px — the same layout
-      // change the toggle makes, not a panel floating on top of it — and
-      // everything beside it slides over to make room, the same as a click
-      // would. It settles back the instant the pointer leaves.
-      <div className="group/rail hidden w-[64px] shrink-0 overflow-hidden border-r border-white/[0.08] bg-[#0c0c0d] transition-[width] duration-150 ease-out hover:w-[268px] lg:block">
+      <>
+      {/* Hovering grows the rail's real width back to 268px — the same layout
+          change the toggle makes, not a panel floating on top of it — and
+          everything beside it slides over to make room, the same as a click
+          would. It settles back the instant the pointer leaves. */}
+      <div className="group/rail hidden w-[64px] shrink-0 overflow-hidden border-r border-white/[0.08] bg-[#0c0c0d] transition-[width] duration-150 ease-out hover:w-[268px] min-[900px]:block">
         <div className="relative h-full w-[268px]">
           {/* The rail: icons only, fading out as the hover grows the width in. */}
           <div className="absolute inset-0 flex w-[64px] flex-col items-center px-2 pt-5 pb-4 opacity-100 transition-opacity duration-150 group-hover/rail:opacity-0">
@@ -107,7 +149,9 @@ export function ProductSidebar({
                   <button
                     key={id}
                     type="button"
-                    onClick={() => onSwitchArea?.(id)}
+                    // Connectors stays in the rail, but the screen behind it is
+                    // switched off for now — this is a placeholder, not a door.
+                    onClick={() => { if (id !== "connectors") onSwitchArea?.(id); }}
                     aria-current={on ? "page" : undefined}
                     aria-label={label}
                     title={label}
@@ -119,6 +163,16 @@ export function ProductSidebar({
                   </button>
                 );
               })}
+
+              <button
+                type="button"
+                className="relative flex size-10 items-center justify-center rounded-lg text-white/45 transition-colors hover:bg-white/[0.05] hover:text-white"
+                aria-label="Quests"
+                title="Quests"
+              >
+                <TrophyIcon className="size-[18px]" />
+                <span className="absolute top-2 right-2 size-1.5 rounded-full bg-red-500" />
+              </button>
 
               <button
                 type="button"
@@ -165,11 +219,14 @@ export function ProductSidebar({
           </div>
         </div>
       </div>
+      {mobileOverlay}
+      </>
     );
   }
 
   return (
-    <div className="hidden w-[268px] shrink-0 border-r border-white/[0.08] bg-[#0c0c0d] lg:block">
+    <>
+    <div className="hidden w-[268px] shrink-0 border-r border-white/[0.08] bg-[#0c0c0d] min-[900px]:block">
       <SidebarBody
         areas={areas}
         area={area}
@@ -183,6 +240,8 @@ export function ProductSidebar({
         onToggleCollapsed={onToggleCollapsed}
       />
     </div>
+    {mobileOverlay}
+    </>
   );
 }
 
@@ -248,7 +307,9 @@ function SidebarBody({
             <div key={id} className="relative">
               <button
                 type="button"
-                onClick={() => onSwitchArea?.(id)}
+                // Connectors stays in the rail, but the screen behind it is
+                // switched off for now — this is a placeholder, not a door.
+                onClick={() => { if (id !== "connectors") onSwitchArea?.(id); }}
                 aria-current={on ? "page" : undefined}
                 className={`flex w-full items-center gap-3 rounded-lg px-2.5 py-2.5 text-left text-[14px] transition-colors duration-200 ${
                   lit
@@ -269,6 +330,18 @@ function SidebarBody({
             </div>
           );
         })}
+
+        <button
+          type="button"
+          className="flex w-full items-center gap-3 rounded-lg px-2.5 py-2.5 text-left text-[14px] text-white/50 transition-colors duration-200 hover:bg-white/[0.05] hover:text-white"
+          style={{ fontFamily: "var(--font-google-sans)" }}
+        >
+          <span className="relative shrink-0 text-white/40">
+            <TrophyIcon className="size-[18px]" />
+            <span className="absolute -top-0.5 -right-0.5 size-1.5 rounded-full bg-red-500" />
+          </span>
+          Quests
+        </button>
 
         <button
           type="button"

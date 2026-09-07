@@ -4,7 +4,7 @@ import { Container } from "../../Container";
 import { PlusIcon, ChatBubbleIcon, BriefcaseIcon, PuzzleIcon, SearchIcon, ArrowUpIcon } from "../../icons";
 import { AgentOrb } from "../../agents/AgentOrb";
 import { AGENTS, lastAgentLine } from "../../agents/agentsData";
-import { AppIcon } from "../../agents/AppIcon";
+import { ConnectorMark } from "../../agents/ConnectorMark";
 import { BY_ID, INITIAL_CONNECTIONS } from "../../agents/connectors";
 import { STILL, reveal } from "./still";
 
@@ -124,7 +124,7 @@ function Connectors() {
           return (
             <div key={c.id} className="ar-tool">
               <span className="ar-tool-icon">
-                <AppIcon kind={tool.kind} className="size-[15px]" />
+                <ConnectorMark id={c.id} className="size-[15px]" />
               </span>
               <span className="ar-row-body">
                 <span className="ar-row-name">{tool.name}</span>

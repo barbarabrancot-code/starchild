@@ -1,11 +1,46 @@
+import { useState } from "react";
 import { motion } from "motion/react";
-import { AppIcon } from "./agents/AppIcon";
+import { ConnectorMark } from "./agents/ConnectorMark";
 import { BY_ID } from "./agents/connectors";
 import { Reactable } from "./Reactable";
 import type { SavedChat } from "./savedChats";
 import { useAgents } from "./agents/store";
-import { AgentLive, AgentUpdate, ExternalAlert } from "./agents/AgentChatCards";
-import { ActiveTaskCard } from "./agents/ActiveTaskCard";
+import { ExternalAlert, ConnectorChoice } from "./agents/AgentChatCards";
+import { ConnectorAdded } from "./agents/ConnectorAdded";
+import { ActivityLine } from "./ActivityLine";
+import { StatusLine } from "./StatusLine";
+import { OptionModal } from "./OptionModal";
+
+/**
+ * What got worked out, not said — closed by default, the same small orange
+ * dot as a live thinking line, except this one doesn't move on its own: it
+ * is not thinking right now, it is a folded note from when it was. The label
+ * is the real status line ("Checking your Gmail connection now."), not a
+ * generic "show reasoning" — the row already says the one true thing;
+ * opening it is the reader's choice, not something the transcript volunteers.
+ */
+function ReasoningRow({ label, lines }: { label: string; lines: string[] }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="sv-reason">
+      <button
+        type="button"
+        className="sv-reason-toggle"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+      >
+        <ActivityLine label={label} />
+      </button>
+      {open && (
+        <div className="sv-reason-body">
+          {lines.map((line, i) => (
+            <p key={i} className="sv-reason-line">{line}</p>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 /**
  * A conversation being read back.
@@ -20,52 +55,24 @@ export function SavedThread({
   chat,
   onReply,
   onOpenAgent,
-  onEditAgent,
-  onEditTask,
 }: {
   chat: SavedChat;
   onReply: (quote: string) => void;
   onOpenAgent: (id: string) => void;
-  /** "Edit here" on a card inside history: focuses the live composer on this agent */
-  onEditAgent: (id: string) => void;
-  /** the same idea, for an active task — there is no page to open, only the composer */
-  onEditTask: (id: string) => void;
+  /** "Edit here" on a card inside history — no longer used since AgentLive
+   *  (the only card with an Edit here button) was retired, kept optional so
+   *  callers built for the old shape don't have to change */
+  onEditAgent?: (id: string) => void;
+  /** the same idea, for an active task — no longer used here (status lines
+   *  don't open anything), kept optional so callers built for the old shape
+   *  don't have to change */
+  onEditTask?: (id: string) => void;
 }) {
-  const { roster, updateAgent, activeTasks, updateTask } = useAgents();
-  const pause = (id: string) =>
-    updateAgent(id, (a) =>
-      a.status === "paused"
-        ? { ...a, status: "working", mood: "Back on it." }
-        : { ...a, status: "paused", mood: "Paused by you." },
-    );
-  const resume = (id: string, mood: string) => updateAgent(id, (a) => ({ ...a, status: "working", mood }));
-  const pauseTask = (id: string) =>
-    updateTask(id, (t) => (t.status === "paused" ? { ...t, status: "active" } : { ...t, status: "paused" }));
-  const resumeTask = (id: string) => updateTask(id, (t) => ({ ...t, status: "active" }));
+  const { roster } = useAgents();
 
   return (
     <div className="sv-thread">
       {chat.turns.map((turn, i) => {
-        if (turn.who === "made") {
-          const agent = roster.find((a) => a.id === turn.agentId);
-          if (!agent) return null;
-          return (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              <AgentLive
-                agent={agent}
-                onOpen={() => onOpenAgent(agent.id)}
-                onEditHere={() => onEditAgent(agent.id)}
-                onPause={() => pause(agent.id)}
-              />
-            </motion.div>
-          );
-        }
-
         if (turn.who === "signal") {
           const agent = roster.find((a) => a.id === turn.agentId);
           if (!agent) return null;
@@ -75,23 +82,36 @@ export function SavedThread({
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
+              className="flex flex-col items-start gap-2"
             >
-              <AgentUpdate
-                agent={agent}
-                found={turn.found}
-                detailsLabel={turn.detailsLabel}
-                {...(turn.tightenLabel
-                  ? { thresholdLabel: turn.tightenLabel, onThreshold: () => onEditAgent(agent.id) }
-                  : {})}
-                onDetails={() => onOpenAgent(agent.id)}
-              />
+              <Reactable align="left" text={turn.found} onReply={() => onReply(turn.found)}>
+                <div className="sv-msg">{turn.found}</div>
+              </Reactable>
+              <StatusLine label="Agent update" />
             </motion.div>
           );
         }
 
-        if (turn.who === "taskCard") {
-          const task = activeTasks.find((t) => t.id === turn.taskId);
-          if (!task) return null;
+        if (turn.who === "taskUpdate") {
+          return (
+            <div key={i} className="flex flex-col items-start gap-2">
+              <Reactable align="left" text={turn.found} onReply={() => onReply(turn.found)}>
+                <div className="sv-msg">{turn.found}</div>
+              </Reactable>
+              <StatusLine label="Signal forming" />
+            </div>
+          );
+        }
+
+        if (turn.who === "status") {
+          return (
+            <div key={i}>
+              <StatusLine label={turn.label} />
+            </div>
+          );
+        }
+
+        if (turn.who === "decision") {
           return (
             <motion.div
               key={i}
@@ -99,36 +119,30 @@ export function SavedThread({
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
             >
-              <ActiveTaskCard
-                task={task}
-                onEdit={() => onEditTask(task.id)}
-                onPause={() => pauseTask(task.id)}
-                onKeepWatching={task.activity ? () => resumeTask(task.id) : undefined}
+              <OptionModal
+                title={turn.title}
+                subtitle={turn.subtitle}
+                options={turn.options}
+                picked={turn.picked}
+                onPick={() => {}}
+                onCustom={turn.picked ? undefined : () => {}}
+                onClose={() => {}}
+                placeholder="Type your own response"
               />
             </motion.div>
           );
         }
 
-        if (turn.who === "taskUpdate") {
-          const task = activeTasks.find((t) => t.id === turn.taskId);
-          if (!task) return null;
+        if (turn.who === "connectorAdded") {
           return (
-            <div key={i} className="flex flex-col gap-3">
-              <motion.p
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-                className="sv-said"
-              >
-                {turn.found}
-              </motion.p>
-              <ActiveTaskCard
-                task={task}
-                onEdit={() => onEditTask(task.id)}
-                onPause={() => pauseTask(task.id)}
-                onKeepWatching={() => resumeTask(task.id)}
-              />
-            </div>
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <ConnectorAdded id={turn.id} />
+            </motion.div>
           );
         }
 
@@ -147,8 +161,6 @@ export function SavedThread({
                 headline={turn.headline}
                 detail={turn.detail}
                 onOpen={() => onOpenAgent(agent.id)}
-                onKeep={() => resume(agent.id, "Still watching.")}
-                onPause={() => pause(agent.id)}
               />
             </motion.div>
           );
@@ -165,10 +177,37 @@ export function SavedThread({
           );
         }
 
+        if (turn.who === "connectorChoice") {
+          return (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <ConnectorChoice />
+            </motion.div>
+          );
+        }
+
+        if (turn.who === "reasoning") {
+          // A status, not a permanent fixture: it says what's happening right
+          // before the answer that resolves it, and once that answer is in the
+          // transcript the status has nothing left to say. Never rendered
+          // except on the last turn — reading back a finished conversation
+          // means every reasoning turn here already has its answer below it.
+          if (i !== chat.turns.length - 1) return null;
+          return (
+            <div key={i} className="sv-left">
+              <ReasoningRow label={turn.label} lines={turn.lines} />
+            </div>
+          );
+        }
+
         if (turn.who === "connected") {
           return (
             <p key={i} className="sv-connected">
-              <AppIcon kind={BY_ID[turn.app].kind} className="size-3.5" />
+              <ConnectorMark id={turn.app} className="size-3.5" />
               <strong>{BY_ID[turn.app].name} connected</strong>
               <span>{turn.note}</span>
             </p>
@@ -184,7 +223,7 @@ export function SavedThread({
             transition={{ duration: 0.3, delay: Math.min(i * 0.05, 0.3), ease: [0.16, 1, 0.3, 1] }}
             className={mine ? "sv-right" : "sv-left"}
           >
-            <Reactable align={mine ? "right" : "left"} onReply={() => onReply(turn.text)}>
+            <Reactable align={mine ? "right" : "left"} text={turn.text} onReply={() => onReply(turn.text)}>
               <div className={`sv-msg${mine ? " sv-msg--mine" : ""}`}>{turn.text}</div>
             </Reactable>
           </motion.div>
@@ -210,11 +249,6 @@ export function SavedThread({
           background: rgba(255,255,255,.08); color: rgba(255,255,255,.92);
         }
 
-        .sv-said {
-          max-width: 520px; margin: 0;
-          font-size: 15px; line-height: 1.6; color: rgba(255,255,255,.78);
-        }
-
         /* Neither side said this, so it is neither bubble: it is the record of
            something that happened between two things that were said. */
         .sv-connected {
@@ -234,6 +268,17 @@ export function SavedThread({
         .sv-gap::before, .sv-gap::after {
           content: ""; flex: 1; height: 1px; background: rgba(255,255,255,.08);
         }
+
+        .sv-reason { display: flex; flex-direction: column; gap: 10px; max-width: 520px; }
+        .sv-reason-toggle {
+          align-self: flex-start; border: 0; background: none; padding: 2px; cursor: pointer;
+        }
+        .sv-reason-body {
+          display: flex; flex-direction: column; gap: 10px;
+          padding: 12px 16px; border-radius: 14px;
+          border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.03);
+        }
+        .sv-reason-line { margin: 0; font-size: 13.5px; line-height: 1.6; color: rgba(255,255,255,.55); }
       `}</style>
     </div>
   );

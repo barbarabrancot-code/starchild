@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type RefObject } from "react";
 import { AnimatePresence, motion, useInView } from "motion/react";
 import { Container } from "../../Container";
-import { AppIcon } from "../../agents/AppIcon";
+import { ConnectorMark } from "../../agents/ConnectorMark";
 import { BY_ID, type ConnectorId } from "../../agents/connectors";
 import { PresenceOrb } from "../../presence/PresenceOrb";
 import { usePrefersReducedMotion } from "../../presence/usePresence";
@@ -169,7 +169,7 @@ export function ConnectorsOrbitSection({
                         onBlur={() => setOver(null)}
                         aria-label={c.name}
                       >
-                        <AppIcon kind={c.kind} className="size-[22px]" />
+                        <ConnectorMark id={id} className="size-[22px]" />
                       </button>
 
                       <AnimatePresence>

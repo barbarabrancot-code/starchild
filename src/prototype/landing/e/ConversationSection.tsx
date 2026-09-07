@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type RefObject } from "react";
 import { motion, useInView, useScroll, useTransform } from "motion/react";
 import { Container } from "../../Container";
 import { ArrowUpIcon, DocumentIcon } from "../../icons";
-import { ThinkingLine } from "../../ThinkingLine";
+import { ActivityLine } from "../../ActivityLine";
 import { STILL, reveal } from "./still";
 
 /**
@@ -204,7 +204,7 @@ export function ConversationSection({
                 className="cv-turn"
               >
                 <div className="cv-waiting">
-                  <ThinkingLine label={thinking} />
+                  <ActivityLine label={thinking} />
                 </div>
               </motion.div>
             )}
