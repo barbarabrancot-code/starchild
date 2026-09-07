@@ -23,6 +23,7 @@ import type { ConnectorId } from "./agents/connectors";
 import { SAVED, type SavedChat } from "./savedChats";
 import { SavedThread } from "./SavedThread";
 import { AgentsIntroPopover } from "./onboarding/AgentsIntroPopover";
+import { MobileIntroTour } from "./onboarding/MobileIntroTour";
 import {
   ArrowLeftIcon,
   PlusIcon,
@@ -966,18 +967,8 @@ export function ChatScreen({
             </button>
 
             {intro === "conductor" && !guest && (
-              <ConductorIntroPopover onClose={() => setIntro("agents")} />
-            )}
-            {intro === "agents" && !guest && (
-              <div className="lg:hidden">
-                <AgentsIntroPopover
-                  placement="above-right"
-                  onOpen={() => {
-                    setIntro(null);
-                    onSwitchArea?.("agents");
-                  }}
-                  onClose={() => setIntro(null)}
-                />
+              <div className="hidden min-[900px]:block">
+                <ConductorIntroPopover onClose={() => setIntro("agents")} />
               </div>
             )}
           </div>
@@ -1031,6 +1022,16 @@ export function ChatScreen({
               : undefined
           }
         />
+      )}
+
+      {intro && !guest && (
+        <div className="min-[900px]:hidden">
+          <MobileIntroTour
+            step={intro}
+            onNext={() => setIntro("agents")}
+            onClose={() => setIntro(null)}
+          />
+        </div>
       )}
 
       {gate && (
