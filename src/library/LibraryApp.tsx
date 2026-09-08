@@ -14,7 +14,7 @@ import { ChatScreen } from "../prototype-b/ChatScreen";
 import { AgentsWorkspace, Turn } from "../prototype-b/agents/AgentsWorkspace";
 import { type AgentStatus } from "../prototype-b/agents/agentsData";
 import { SAVED } from "../prototype-b/savedChats";
-import { FirstMeeting, useFirstMeeting } from "../prototype-b/onboarding/FirstMeeting";
+import { FirstMeeting, useFirstMeeting, ONBOARDING_WELCOME_LINE, NEW_CHAT_OPENERS } from "../prototype-b/onboarding/FirstMeeting";
 
 /**
  * A dev-facing catalog, not a product screen — for the Chat and Agents areas
@@ -37,11 +37,11 @@ export function LibraryApp() {
             <Entry
               title="ChatScreen"
               path="src/prototype-b/ChatScreen.tsx"
-              desc="The main chat screen. It includes messages, the composer, and cards for connectors and agents. The preview is wider so the full sidebar fits."
+              desc="The main chat screen. It includes messages, the composer, and cards for connectors and agents. The preview is wider so the full sidebar fits. Shown here past onboarding — the guided questions and the intro cards are their own entries, under Onboarding above — with the onboarding-completion welcome as Starchild's own first line."
             >
               <div className="lib-frame-scroll">
                 <div className="lib-frame" style={{ width: 1040, height: 640 }}>
-                  <ChatScreen onBack={() => {}} />
+                  <ChatScreen onBack={() => {}} skipMeeting openingMessage={ONBOARDING_WELCOME_LINE} />
                 </div>
               </div>
             </Entry>
@@ -130,6 +130,48 @@ export function LibraryApp() {
               desc="Shows what Starchild is doing right now, such as reading or checking something. It disappears as soon as the result is ready."
             >
               <ActivityLine label="Reading through it…" />
+            </Entry>
+
+            <Entry
+              title="Conversation entry: onboarding completion vs. new chat"
+              path="src/prototype-b/ChatScreen.tsx"
+              desc="Two distinct moments that share the same big-centered, non-bubble treatment — neither is a chat bubble; that shape is an agent's own thing (a fresh agent's greeting is a real first message in its thread), not the main chat's. Onboarding completion (1) is a one-time welcome, always the same line, gone the instant the conversation starts. A plain new chat (2) is not a welcome — shorter, more familiar, no ceremony — and rotates through a small set rather than repeating one sentence forever. Both are the real ChatScreen below, not a redraw."
+            >
+              <div className="lib-stack">
+                <div className="lib-sequence-step">
+                  <p className="lib-sequence-label">1 · Onboarding completion</p>
+                  <div className="lib-frame-scroll">
+                    <div className="lib-frame" style={{ width: 720, height: 480 }}>
+                      <ChatScreen onBack={() => {}} skipMeeting openingMessage={ONBOARDING_WELCOME_LINE} />
+                    </div>
+                  </div>
+                </div>
+                <div className="lib-sequence-step">
+                  <p className="lib-sequence-label">2 · New chat</p>
+                  <div className="lib-frame-scroll">
+                    <div className="lib-frame" style={{ width: 720, height: 480 }}>
+                      <ChatScreen onBack={() => {}} skipMeeting />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="lib-stack" style={{ marginTop: 20 }}>
+                <div>
+                  <p className="lib-sequence-label">Onboarding welcome line (fixed — shown once, the same line every time)</p>
+                  <ol className="lib-openers">
+                    <li>{ONBOARDING_WELCOME_LINE}</li>
+                  </ol>
+                </div>
+                <div style={{ marginTop: 14 }}>
+                  <p className="lib-sequence-label">New chat openers (rotate when the user's tone is unknown; when a communication preference is known, use a matching line instead)</p>
+                  <ol className="lib-openers">
+                    {NEW_CHAT_OPENERS.map((line) => (
+                      <li key={line}>{line}</li>
+                    ))}
+                  </ol>
+                </div>
+              </div>
             </Entry>
 
             <Entry
@@ -652,6 +694,21 @@ function Style() {
       }
       .lib-sequence-arrow { flex: none; font-size: 20px; color: rgba(255,255,255,.25); }
       .lib-mobile-step-desc { margin: 0; font-size: 13.5px; line-height: 1.6; color: rgba(255,255,255,.55); }
+
+      .lib-openers {
+        margin: 0; padding: 0; list-style: none; counter-reset: opener;
+        display: flex; flex-direction: column; gap: 8px; max-width: 480px;
+      }
+      .lib-openers li {
+        counter-increment: opener; display: flex; align-items: baseline; gap: 10px;
+        padding: 10px 14px; border-radius: 10px;
+        border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.02);
+        font-size: 14px; color: rgba(255,255,255,.85);
+      }
+      .lib-openers li::before {
+        content: counter(opener); flex: none;
+        font-size: 12px; font-weight: 600; color: rgba(255,255,255,.3);
+      }
 
       /* IntroPopover's own outer wrapper is always position:absolute, sized
          off a real anchor this page doesn't have — every attempt to neutralise
