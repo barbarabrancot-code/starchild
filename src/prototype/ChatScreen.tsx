@@ -969,7 +969,12 @@ export function ChatScreen({
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: 0.05, ease: [0.16, 1, 0.3, 1] }}
-      className="w-full max-w-[560px] rounded-[22px] border border-white/12 bg-white/[0.04] p-4 transition-colors focus-within:border-white/30"
+      // Same widths as the transcript column below at every breakpoint, on
+      // purpose: the composer sits directly under the bubbles, and a box
+      // narrower than what they're allowed to reach reads as a mistake, not
+      // a choice. Stays 560px through 1440px — measured, not assumed — and
+      // only widens at 1920px, to 650px.
+      className="w-full max-w-[560px] rounded-[22px] border border-white/12 bg-white/[0.04] p-4 transition-colors focus-within:border-white/30 min-[1920px]:max-w-[650px]"
     >
       {/* Inside the composer rather than above it: what you are replying to is
           part of the message you are writing, and a bar floating over the box
@@ -1411,7 +1416,14 @@ export function ChatScreen({
               )}
             </div>
           ) : (
-            <div className="mx-auto flex w-full max-w-[640px] flex-col gap-7 px-5 py-8 sm:px-0">
+            /* LARGE-DESKTOP BREAKPOINT: 1920px — the only wider stop past
+               the 900px mobile/desktop split; 1440px measures the same as
+               900px, checked in devtools rather than assumed. Has to match
+               composerBox's own min-[1920px]: or the column widens out of
+               step with the box pinned under it. ProductSidebar has its
+               own separate min-[1920px]: bump (268 plus 15%, not this
+               column's own ratio) — the two widen independently. */
+            <div className="mx-auto flex w-full max-w-[560px] flex-col gap-7 px-5 py-8 sm:px-0 min-[1920px]:max-w-[650px]">
               {/* Read back out of history: every turn of it, as it happened. Its
                   agent cards are live, not frozen — the same reason the ones in
                   the tail below are: an edit made anywhere shows up everywhere. */}
@@ -1767,7 +1779,12 @@ export function ChatScreen({
             everything else scrolls behind it. */}
         {pinComposer && (
           <div className="shrink-0 px-5 py-4 sm:px-8">
-            <div className="mx-auto w-full max-w-[560px]">
+            {/* Has to track composerBox's own widths (560px, 650px at
+                1920px) — this wrapper's max-width is what actually bounds
+                it once pinned, so a mismatched value here would silently
+                override the box's own and pull it out of step with the
+                transcript. */}
+            <div className="mx-auto w-full max-w-[560px] min-[1920px]:max-w-[650px]">
               {composerBox}
 
               {!guest && (
