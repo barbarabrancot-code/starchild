@@ -1237,10 +1237,15 @@ export function ChatScreen({
             <button
               type="button"
               onClick={onBack}
-              className="absolute left-1/2 -translate-x-1/2 text-[19px] font-semibold tracking-[0.17em] text-white transition-opacity hover:opacity-75"
-              style={{ fontFamily: "var(--font-google-sans)" }}
+              className="absolute left-1/2 -translate-x-1/2 transition-opacity hover:opacity-75"
             >
-              STARCHILD
+              <img
+                src={`${import.meta.env.BASE_URL}images/starchild-logo.svg`}
+                alt="Starchild"
+                width={700}
+                height={100}
+                className="h-5 w-auto"
+              />
             </button>
 
             <div className="ml-auto hidden items-center gap-3 min-[900px]:flex">
