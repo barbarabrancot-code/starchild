@@ -16,6 +16,10 @@ export default defineConfig({
         // the page being taken forward — see src/landing-main.tsx
         landing: resolve(__dirname, "landing.html"),
         onboarding: resolve(__dirname, "onboarding.html"),
+        // "Version B" product architecture (see sitemap.html) — Main Agent +
+        // Jobs + optional Agents, built on the prototype/ tree since that's
+        // the one with the Jobs/Automations feature already in it
+        onboardingB: resolve(__dirname, "onboarding-b.html"),
         // a dedicated link that always shows the mobile layout, regardless of
         // the actual window it's opened in — wraps onboarding.html in a
         // phone-width frame; see onboarding-mobile.html for why an iframe

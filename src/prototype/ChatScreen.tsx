@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { pickScenario, type HeroIntent, type Scenario, type TaskCard } from "./data";
 import { StepFlow } from "./StepFlow";
 import { GuestSidebar } from "./GuestSidebar";
-import { ProductSidebar } from "./ProductSidebar";
+import { ProductSidebar, jobsLabel } from "./ProductSidebar";
 import { SignupGate } from "./SignupGate";
 import { IntentPicker } from "./IntentPicker";
 import { PresenceOrb } from "./presence/PresenceOrb";
@@ -144,13 +144,14 @@ function PlaceholderAnswer({ onReply }: { onReply: (quote: string) => void }) {
  * arriving from that button is actually asking, so it gets a real answer.
  */
 function AutomationsIntroAnswer() {
+  const label = jobsLabel();
   return (
     <div className="ca-answer">
-      <p>Automations are the things I keep handling in the background.</p>
+      <p>{label} are the things I keep handling in the background.</p>
 
       <p>
         You ask once, and I keep checking, reminding, summarizing, or watching for the
-        right moment. They stay visible in Automations, so you can edit, pause, or cancel
+        right moment. They stay visible in {label}, so you can edit, pause, or cancel
         them anytime.
       </p>
 
