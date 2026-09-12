@@ -7,7 +7,7 @@ import { OrbFace, type Mood } from "./OrbFace";
 import { CharacterOrb } from "./CharacterOrb";
 import { usePointerLean } from "../../presence/usePointerLean";
 import { SiteHeaderF } from "./SiteHeaderF";
-import heroGradientAsset from "../../../../assets/gradiente hero.svg";
+import heroGradientAsset from "../../../../design/assets/gradiente hero.svg";
 
 /**
  * Whether the orb has a face drawn in SVG. Off.
@@ -177,7 +177,10 @@ export function HeroScreenF({
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.25, ease: [0.16, 1, 0.3, 1] }}
-              className="mt-14 text-[26px] leading-[1.2] font-semibold text-balance text-white sm:text-[30px]"
+              /* hf-headline carries no rules of its own here — it is the hook
+                 the design system hangs the Title role on, and only the page
+                 that opts into the system defines it. */
+              className="hf-headline mt-14 text-[26px] leading-[1.2] font-semibold text-balance text-white sm:text-[30px]"
               style={{ fontFamily: "var(--font-google-sans)" }}
             >
               {HEADLINE}
@@ -260,7 +263,7 @@ export function HeroScreenF({
         .hf-send {
           display: grid; place-items: center; flex: none;
           width: 36px; height: 36px; border: 0; border-radius: 999px; cursor: pointer;
-          background: var(--lf-accent); color: #fff;
+          background: var(--lf-accent); color: var(--lf-on-accent, #fff);
           transition: transform .18s ease;
         }
         .hf-send:hover { transform: scale(1.06); }

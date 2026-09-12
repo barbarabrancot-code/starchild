@@ -5,7 +5,7 @@ import { Turn } from "../../agents/AgentsWorkspace";
 import { lastAgentLine, AGENTS, type Agent } from "../../agents/agentsData";
 import { PlusIcon, SearchIcon } from "../../icons";
 import { AgentFace } from "./AgentFace";
-import agentsGlow from "../../../../assets/background connectors svg.svg";
+import agentsGlow from "../../../../design/assets/background connectors svg.svg";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 

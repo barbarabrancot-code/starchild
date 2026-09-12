@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { Container } from "../../Container";
-import useCaseShot from "../../../../assets/images/Imagem do Codex 30 de ago. de 2026, 23_47_28.png";
+import useCaseShot from "../../../../design/assets/images/Imagem do Codex 30 de ago. de 2026, 23_47_28.png";
 
 type UseCase = {
   id: string;

@@ -14,7 +14,8 @@ export default defineConfig({
         // variant B of today's delivery — see README-AB.md
         appB: resolve(__dirname, "app-b.html"),
         // the page being taken forward — see src/landing-main.tsx
-        landing: resolve(__dirname, "landing.html"),
+        landing: resolve(__dirname, "design/landing.html"),
+        designSystem: resolve(__dirname, "design/design-system.html"),
         onboarding: resolve(__dirname, "onboarding.html"),
         // "Version B" product architecture (see sitemap.html) — Main Agent +
         // Jobs + optional Agents, built on the prototype/ tree since that's

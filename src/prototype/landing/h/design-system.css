@@ -1,0 +1,417 @@
+/* =============================================================================
+   The design system, on the landing.
+   Sections 0–3 of design-system.html — tokens, base, layout, components — plus
+   the bridge that connects them to the --lf-* names the sections already read.
+   Section 4 of that file is documentation for that page and is not here.
+
+   ---------------------------------------------------------------------------
+   Why every rule is scoped to `.lf[data-ds]`
+
+   The landing's sections are shared files. LandingPageH — landing.html, the
+   version being taken forward — and LandingPageF and G — the archive on
+   app.html — render the same components out of ./f, which is the whole reason
+   the three were comparable in the first place.
+
+   So this cannot be a global stylesheet. A plain `:root` here would re-ground
+   the archive too, and the two versions kept precisely so the change has
+   something to be judged against would change with it. `data-ds` is on H's
+   wrapper and nowhere else: the tokens below resolve for H, and F and G go on
+   reading the values in their own files.
+
+   That is also why the bridge exists rather than a rename. Renaming --lf-page
+   to --bg-page across 4,700 lines of section CSS would have touched every
+   archived version on the way past. Pointing the old names at the new values
+   changes one file.
+   ========================================================================== */
+
+.lf[data-ds] {
+  /* =========================================================================
+     0 · TOKENS — the single source of truth. Values only, no decisions.
+     ====================================================================== */
+
+  /* --- Palette: the closed list ------------------------------------------ */
+  --color-brand: #f84600;
+
+  --color-surface-0: #121111;  /* recessed well, below the page */
+  --color-surface-1: #1b1919;  /* page background */
+  --color-surface-2: #242221;  /* raised surfaces, header */
+  --color-surface-3: #312f2e;  /* alternate section, hover */
+  --color-surface-4: #4a4847;  /* subtle border */
+  --color-surface-5: #5e5e5e;  /* strong border, divider */
+
+  --color-text-1: #ffffff;
+  --color-text-2: #a2a09f;
+
+  --color-brand-hover:  color-mix(in srgb, var(--color-brand) 88%, #ffffff);
+  --color-brand-active: color-mix(in srgb, var(--color-brand) 88%, #000000);
+
+  /* Conversational response: lower bubble's opaque linear fill. */
+  --gradient-message-outgoing: linear-gradient(90deg, #732A0F 0%, #4B2114 100%);
+
+  /* --- Semantic roles: what the landing points at ------------------------- */
+  color-scheme: dark;
+  --bg-page:        var(--color-surface-1);
+  --bg-well:        var(--color-surface-0);
+  --bg-surface:     var(--color-surface-2);
+  --bg-surface-alt: var(--color-surface-3);
+  --bg-inverse:     var(--color-text-1);
+  --text-primary:   var(--color-text-1);
+  --text-secondary: var(--color-text-2);
+  --text-muted:     var(--color-surface-5);
+  --text-inverse:   var(--color-surface-1);
+  --text-brand:     var(--color-brand);
+  --text-on-brand:  var(--color-surface-1);
+  --border-subtle:  var(--color-surface-4);
+  --border-strong:  var(--color-surface-5);
+  --focus-ring:     var(--color-brand);
+
+  /* --- Type: families ----------------------------------------------------
+     The system left --font-display and --font-body as placeholders waiting on
+     a choice. The landing has been set in Google Sans since before any of this
+     and the files are in the repo, so the placeholder is resolved here rather
+     than left to fall through to Segoe UI. Both roles are the same family: the
+     design's four roles separate by size and colour, not by family. */
+  --font-display: var(--font-google-sans);
+  --font-body:    var(--font-google-sans);
+
+  /* --- Type: the four roles, mobile → desktop across 375px → 1440px ------- */
+  --text-title:    clamp(1.5rem,    .7958rem + 3.005vw, 3.5rem);   /* 24→56 */
+  --text-title-2:  clamp(1.3125rem, .8944rem + 1.784vw, 2.5rem);   /* 21→40 */
+  --text-subtitle: clamp(.875rem,   .4789rem + 1.690vw, 2rem);     /* 14→32 */
+  --text-eyebrow: var(--text-subtitle); /* legacy alias */
+  --text-body:     clamp(.875rem,   .7214rem + .657vw, 1.3125rem); /* 14→21 */
+
+  /* Support scale — for UI that is none of the four roles */
+  --text-xs:   0.75rem;
+  --text-sm:   0.875rem;
+  --text-base: 1rem;
+  --text-xl:   clamp(1.25rem, 1.14rem + 0.55vw, 1.5rem);
+
+  /* --- Type: weight, leading, tracking ----------------------------------
+     Every one of the four roles is regular. Emphasis is size and colour. */
+  --weight-regular:  400;
+  --weight-medium:   500;
+  --weight-semibold: 600;
+  --weight-bold:     700;
+
+  --leading-subtitle: 30px;
+  --leading-eyebrow: var(--leading-subtitle); /* legacy alias */
+  --leading-title:    28px;
+  --leading-body:     24px;
+  --leading-tight:    1.1;
+  --leading-snug:     1.25;
+  --leading-normal:   1.5;
+  --leading-relaxed:  1.7;
+
+  --tracking-title:    0.01em;
+  --tracking-subtitle: 0.02em;
+  --tracking-eyebrow: var(--tracking-subtitle); /* legacy alias */
+  --tracking-body:     0.02em;
+  --tracking-normal:   0;
+  --tracking-wide:     0.08em;
+
+  /* --- Spacing: 4px base ------------------------------------------------- */
+  --space-0:  0;
+  --space-1:  0.25rem;
+  --space-2:  0.5rem;
+  --space-3:  0.75rem;
+  --space-4:  1rem;
+  --space-5:  1.5rem;
+  --space-6:  2rem;
+  --space-7:  3rem;
+  --space-8:  4rem;
+  --space-9:  6rem;
+  --space-10: 8rem;
+
+  --section-y:    clamp(var(--space-7), 5vw + 1rem, var(--space-9));
+  --section-y-lg: clamp(var(--space-8), 7vw + 1rem, var(--space-10));
+
+  /* --- Radius and border -------------------------------------------------- */
+  --radius-sm:    4px;
+  --radius-md:    8px;
+  --radius-lg:    16px;
+  --radius-xl:    24px;
+  --radius-full:  999px;
+  --border-width: 1px;
+
+  /* --- Grid & container --------------------------------------------------- */
+  --container-max:  1296px;
+  --container-wide: 1584px;
+  --gutter: clamp(1.5rem, 5vw, 4.5rem);
+  --grid-columns: 4;
+  --grid-gap: clamp(1.25rem, 1.16rem + 0.38vw, 1.5rem);
+  --grid-column: 86px;
+
+  /* --- Motion ------------------------------------------------------------- */
+  --ease-out:      cubic-bezier(.16,1,.3,1);
+  --ease-in-out:   cubic-bezier(.65,0,.35,1);
+  --duration-fast: 120ms;
+  --duration-base: 200ms;
+  --duration-slow: 400ms;
+
+  /* --- Layers -------------------------------------------------------------- */
+  --z-base: 0; --z-sticky: 100; --z-header: 200;
+  --z-overlay: 300; --z-modal: 400; --z-toast: 500;
+
+  /* =========================================================================
+     THE BRIDGE — the old ground tokens, pointed at the system's roles.
+
+     Every section under this element reads colour through these names and not
+     one of them hard-codes a grey, which is the only reason a page of six
+     sections with six style blocks could be re-grounded without one being
+     missed. The names stay; the values move.
+     ====================================================================== */
+  --lf-page: var(--bg-page);
+  --lf-ink: var(--text-primary);
+  --lf-ink-rgb: 255, 255, 255;
+
+  /* Cards and panels: a step off the page, upward. On #050506 that step was
+     #0A0A0B, four points of lift on near-black; here it is the system's own
+     two raised surfaces, which is the same move with room to make it. */
+  --lf-surface: var(--bg-surface);
+  --lf-surface-2: var(--bg-surface-alt);
+
+  --lf-accent: var(--color-brand);
+  --lf-accent-rgb: 248, 70, 0;
+  /* The accent when it is a word rather than a shape. On #050506 it was 6.4:1
+     and one token covered both uses; on #1B1919 it is 4.9:1 — less room, still
+     over the line, so the two stay the same colour. Watch this if the page
+     ground ever lightens again: at #242221 the same orange is 4.1:1 and copy
+     set in it would stop passing. */
+  --lf-accent-ink: var(--text-brand);
+  /* What is legible on the orange. White is 3.6:1 and fails; this is 4.9:1. */
+  --lf-on-accent: var(--text-on-brand);
+
+  /* The three lifts are what the light mode used to move. With the light mode
+     gone they are permanently zero, and they are still here because forty
+     alphas in the section files are written as A + (1 - A) * lift and removing
+     them would mean rewriting every one. At zero they are the numbers that
+     were always there. */
+  --lf-lift-t: 0;
+  --lf-lift-e: 0;
+  --lf-lift-f: 0;
+
+  /* The edge of a control, and the same edge hovered or focused. These were
+     ink at .10 and .24 — on near-black, barely-there lines. The system has
+     real border colours and they are what these become: #4A4847 is 1.9:1 on
+     the page where ink at .10 was 1.3:1, so every control that was identified
+     by nothing but its outline is now actually outlined. */
+  --lf-ctl-edge: var(--border-subtle);
+  --lf-ctl-edge-on: var(--border-strong);
+
+  /* The composer's own fill, and the one place translucency is the design
+     rather than a shortcut: it sits over the hero's wash and the blur behind
+     it is doing real work. An opaque --bg-surface here would punch a flat
+     rectangle through the gradient. Ink at an alpha over #1B1919 lands within
+     a point or two of --bg-surface anyway, so this is the system's value with
+     the light still coming through it. */
+  --lf-field: rgba(var(--lf-ink-rgb), .045);
+  --lf-field-on: rgba(var(--lf-ink-rgb), .06);
+
+  /* The drawn window in section 2 — a raised object, so an ordinary surface.
+     The well is the only recessed step on the page and the only reason
+     --color-surface-0 exists; see its note in design-system.html. */
+  --lf-window: var(--bg-surface-alt);
+  --lf-well: var(--bg-well);
+
+  --lf-glow: 1;
+  /* The scrim over the page behind a modal. Tinted with the ground rather than
+     neutral black: on #1B1919 a pure-black veil greys the warmth out of the
+     page underneath and the room changes colour when a dialog opens. */
+  --lf-veil: color-mix(in srgb, var(--color-surface-0) 72%, transparent);
+
+  background: var(--bg-page);
+}
+
+/* =============================================================================
+   1 · BASE — scoped, so the product behind the landing keeps its own.
+   ========================================================================== */
+.lf[data-ds] :where(h1, h2, h3, h4) {
+  font-family: var(--font-display);
+  line-height: var(--leading-title);
+  letter-spacing: var(--tracking-title);
+  font-weight: var(--weight-regular);   /* the type system has no bold headings */
+}
+.lf[data-ds] :focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* =============================================================================
+   2 · LAYOUT PRIMITIVES
+
+   Here for the sections that have not been written yet. The five that exist
+   were laid out before the system was and each carries its own measurements;
+   rewriting their geometry is a separate job from re-grounding their colour
+   and type, and doing both at once would make it impossible to tell which of
+   the two moved something. New sections start here.
+   ========================================================================== */
+.lf[data-ds] .container { width: 100%; max-width: var(--container-max); margin-inline: auto; padding-inline: var(--gutter); }
+.lf[data-ds] .container--wide   { max-width: var(--container-wide); }
+.lf[data-ds] .container--narrow { max-width: 720px; }
+
+.lf[data-ds] .section          { padding-block: var(--section-y); }
+.lf[data-ds] .section--lg      { padding-block: var(--section-y-lg); }
+.lf[data-ds] .section--alt     { background: var(--bg-surface-alt); }
+.lf[data-ds] .section--inverse { background: var(--bg-inverse); color: var(--text-inverse); }
+
+.lf[data-ds] .grid { display: grid; grid-template-columns: repeat(var(--grid-columns), minmax(0,1fr)); gap: var(--grid-gap); }
+@media (min-width: 768px)  { .lf[data-ds] { --grid-columns: 8; } }
+@media (min-width: 1024px) { .lf[data-ds] { --grid-columns: 12; } }
+
+.lf[data-ds] .stack > * + * { margin-top: var(--space-4); }
+.lf[data-ds] .cluster { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; }
+.lf[data-ds] .auto-grid { display: grid; gap: var(--grid-gap); grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+
+/* =============================================================================
+   3 · COMPONENTS
+   ========================================================================== */
+
+/* --- Button --- */
+.lf[data-ds] .btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2);
+  font-family: var(--font-body); font-size: var(--text-base); font-weight: var(--weight-medium);
+  line-height: 1; text-decoration: none; cursor: pointer; white-space: nowrap;
+  padding: var(--space-3) var(--space-5);
+  min-height: 44px;
+  border: var(--border-width) solid transparent;
+  border-radius: var(--radius-md);
+  transition: background var(--duration-base) var(--ease-out),
+              border-color var(--duration-base) var(--ease-out),
+              transform var(--duration-fast) var(--ease-out);
+}
+.lf[data-ds] .btn:active { transform: translateY(1px); }
+.lf[data-ds] .btn:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+.lf[data-ds] .btn[disabled], .lf[data-ds] .btn[aria-disabled="true"] { opacity: .5; pointer-events: none; }
+
+.lf[data-ds] .btn--primary       { background: var(--color-brand); color: var(--text-on-brand); }
+.lf[data-ds] .btn--primary:hover { background: var(--color-brand-hover); }
+.lf[data-ds] .btn--primary:active{ background: var(--color-brand-active); }
+.lf[data-ds] .btn--secondary       { background: transparent; color: var(--text-primary); border-color: var(--border-strong); }
+.lf[data-ds] .btn--secondary:hover { background: var(--bg-surface-alt); border-color: var(--text-secondary); }
+.lf[data-ds] .btn--ghost       { background: transparent; color: var(--text-brand); padding-inline: var(--space-3); }
+.lf[data-ds] .btn--ghost:hover { background: var(--bg-surface-alt); }
+.lf[data-ds] .btn--light       { background: var(--color-text-1); color: var(--color-surface-1); }
+.lf[data-ds] .btn--light:hover { background: var(--color-text-2); }
+
+.lf[data-ds] .btn--sm    { font-size: var(--text-sm); padding: var(--space-2) var(--space-4); min-height: 36px; }
+.lf[data-ds] .btn--lg    { font-size: var(--text-body); padding: var(--space-4) var(--space-6); min-height: 52px; }
+.lf[data-ds] .btn--block { display: flex; width: 100%; }
+
+/* --- The four typographic roles --- */
+.lf[data-ds] .type-title {
+  font-family: var(--font-display); font-size: var(--text-title);
+  font-weight: var(--weight-regular); line-height: var(--leading-title);
+  letter-spacing: var(--tracking-title); color: var(--text-primary);
+}
+.lf[data-ds] .type-title-2 {
+  font-family: var(--font-display); font-size: var(--text-title-2);
+  font-weight: var(--weight-regular); line-height: var(--leading-title);
+  letter-spacing: var(--tracking-title); color: var(--text-primary);
+}
+.lf[data-ds] .type-subtitle,
+.lf[data-ds] .type-eyebrow {
+  font-family: var(--font-display); font-size: var(--text-subtitle);
+  font-weight: var(--weight-regular); line-height: var(--leading-subtitle);
+  letter-spacing: var(--tracking-subtitle); text-transform: uppercase;
+  font-variant-caps: all-small-caps;
+  color: var(--text-brand);
+}
+.lf[data-ds] .type-body {
+  font-family: var(--font-body); font-size: var(--text-body);
+  font-weight: var(--weight-regular); line-height: var(--leading-body);
+  letter-spacing: var(--tracking-body); color: var(--text-secondary);
+}
+.lf[data-ds] .type-body--strong { color: var(--text-primary); }
+
+/* --- Section header block --- */
+.lf[data-ds] .section-head { max-width: 64ch; margin-bottom: var(--space-7); }
+.lf[data-ds] .section-head--center { margin-inline: auto; text-align: center; }
+.lf[data-ds] .subtitle,
+.lf[data-ds] .eyebrow {
+  font-size: var(--text-subtitle); font-weight: var(--weight-regular);
+  line-height: var(--leading-subtitle); letter-spacing: var(--tracking-subtitle);
+  text-transform: uppercase; font-variant-caps: all-small-caps;
+  color: var(--text-brand); margin-bottom: var(--space-3);
+}
+.lf[data-ds] .subtitle--sm,
+.lf[data-ds] .eyebrow--sm { font-size: var(--text-sm); letter-spacing: var(--tracking-wide); }
+.lf[data-ds] .section-title { font-size: var(--text-title-2); font-weight: var(--weight-regular); }
+.lf[data-ds] .section-lead   { font-size: var(--text-body); color: var(--text-secondary); margin: 0; }
+
+/* =============================================================================
+   THE EXISTING SECTIONS, ON THE SYSTEM'S TYPE
+
+   The sections H carried over were set before the four roles existed: they open
+   on a 42px/500 heading, or on 38px/500 in the conductor's case. Those are the
+   same role — the opening of a section — so they become Title 2, regular, at
+   the system's size. The hero's line becomes Title, which it is the only one of.
+
+   These are overrides from outside the section files on purpose. The files are
+   shared with the archive, and an edit inside one of them would re-set the type
+   on versions that are being kept as they were. When a section is next opened
+   for its own reasons, its heading rule should move into it and drop out here.
+
+   What is deliberately NOT here: the type inside the drawings. The chat window
+   in section 2, the tooltips on the orbit, the labels on the conductor diagram
+   — those are drawn UI at fixed pixel positions, not page copy, and the system
+   says so itself: the support scale is "only for UI that is none of the four
+   roles". Setting a 14px bubble in 21px body would break the drawing it is part
+   of, and the drawing is the argument the section is making.
+   ========================================================================== */
+
+/* The hero's line — the one Title on the page.
+   It was 26→30px semibold, which was the old hero's proportion: the orb was
+   the subject and the line sat under it as a caption. At the system's size it
+   is the subject. Worth looking at against the orb before this is settled. */
+.lf[data-ds] .hf-headline {
+  font-size: var(--text-title);
+  font-weight: var(--weight-regular);
+  line-height: var(--leading-title);
+  letter-spacing: var(--tracking-title);
+  color: var(--text-primary);
+}
+
+/* The section openings — Title 2. */
+.lf[data-ds] .orbf-copy h2,
+.lf[data-ds] .mss-copy h2,
+.lf[data-ds] .cdb-core h2,
+.lf[data-ds] .fcta-headline {
+  font-size: var(--text-title-2);
+  font-weight: var(--weight-regular);
+  line-height: var(--leading-title);
+  letter-spacing: var(--tracking-title);
+  color: var(--text-primary);
+}
+
+/* The conductor's Subtitle Eyebrow — the page's one Subtitle Eyebrow.
+   It was 12.5px/600 tracked wide, which is the shape of a label. The system
+   gives the role a size of its own (14→32px) and puts it in the same family as
+   everything else, so it reads as a line rather than as chrome. That is a big
+   jump above a 40px heading: if it crowds the title, the system's own
+   `.subtitle--sm` is the smaller cut of the same role and the fallback. */
+.lf[data-ds] .cdb-eyebrow {
+  font-size: var(--text-subtitle);
+  font-weight: var(--weight-regular);
+  line-height: var(--leading-subtitle);
+  letter-spacing: var(--tracking-subtitle);
+  text-transform: uppercase;
+  font-variant-caps: all-small-caps;
+  color: var(--text-brand);
+}
+
+/* Page copy under a heading — Body. Only the copy: this is the conductor's
+   standfirst, not a label inside its diagram. */
+.lf[data-ds] .cdb-body {
+  font-size: var(--text-body);
+  line-height: var(--leading-body);
+  letter-spacing: var(--tracking-body);
+}
+
+/* Controls and navigation are none of the four roles, so they take the support
+   scale: 16px medium for a button, 14px medium for a link. */
+.lf[data-ds] .orbf-more {
+  font-size: var(--text-base);
+  font-weight: var(--weight-medium);
+}

@@ -3,7 +3,7 @@ import { Container } from "../../Container";
 import { AppIcon } from "../../agents/AppIcon";
 import { BY_ID, type ConnectorId } from "../../agents/connectors";
 import { PresenceOrb } from "../../presence/PresenceOrb";
-import connectorsBackground from "../../../../assets/background connectors.png";
+import connectorsBackground from "../../../../design/assets/background connectors.png";
 
 const IN_ORBIT: ConnectorId[] = ["gmail", "gcal", "gdrive", "notion", "slack", "telegram"];
 
@@ -18,7 +18,7 @@ function Chip({ id, active, onEnter, onLeave }: { id: ConnectorId; active: boole
   );
 }
 
-export function OrbitSection({ onSeeAll }: { onSeeAll: () => void }) {
+export function OrbitSection() {
   const [active, setActive] = useState<ConnectorId | null>(null);
 
   return (
@@ -43,12 +43,8 @@ export function OrbitSection({ onSeeAll }: { onSeeAll: () => void }) {
             </div>
 
             <div className="orbf-copy">
-              <h2 id="orbf-title">Works with what<br />you already use.</h2>
-              <button type="button" className="orbf-more" onClick={onSeeAll}>Explore all 30+ connectors
-                <svg className="orbf-more-arrow" viewBox="0 0 22 14" width="22" height="14" fill="none" aria-hidden="true">
-                  <path d="m15 1.5 5.5 5.5-5.5 5.5M20.5 7H1" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </button>
+              <p className="orbf-eyebrow">+30 connectors</p>
+              <h2 id="orbf-title">Starchild can connect to your daily tools and handle the tasks.</h2>
             </div>
           </div>
         </Container>
@@ -146,10 +142,10 @@ export function OrbitSection({ onSeeAll }: { onSeeAll: () => void }) {
           0%, 100% { scale: .84; opacity: .62; }
           50% { scale: 1.1; opacity: 1; }
         }
-        .orbf-chip { display: grid; place-items: center; width: 52px; height: 52px; padding: 0; border: 1px solid var(--lf-ctl-edge); border-radius: 999px; background: #141416; color: var(--lf-ink); cursor: pointer; transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease; }
-        .orbf-chip--brand { background: #fff; border-color: rgba(var(--lf-ink-rgb), calc(.16 + .84 * var(--lf-lift-e))); }.orbf-chip img { display: block; width: 30px; height: 30px; }.orbf-chip:hover, .orbf-chip--active { transform: scale(1.08); border-color: var(--lf-accent); box-shadow: 0 0 0 2px var(--lf-accent), 0 0 24px rgba(var(--lf-accent-rgb), .32); }.orbf-chip:focus-visible { outline: 2px solid var(--lf-accent); outline-offset: 3px; }
-        .orbf-tip { position: absolute; top: 50%; left: calc(100% + 12px); z-index: 2; width: max-content; max-width: 190px; padding: 8px 11px; border: 1px solid rgba(var(--lf-ink-rgb), .12); border-radius: 9px; background: var(--lf-surface); box-shadow: var(--lf-shadow); color: rgba(var(--lf-ink-rgb), calc(.68 + .32 * var(--lf-lift-t))); font-size: 10px; line-height: 1.35; transform: translateY(-50%); }.orbf-tip strong { display: block; margin-bottom: 2px; color: var(--lf-ink); font-size: 11px; }
-        .orbf-copy h2 { margin: 0; color: var(--lf-ink); font-size: 42px; line-height: 50px; font-weight: 500; letter-spacing: 0; }.orbf-more { display: inline-flex; align-items: center; gap: 9px; margin-top: 25px; padding: 0; border: 0; background: none; color: rgba(var(--lf-ink-rgb), calc(.6 + .4 * var(--lf-lift-t))); cursor: pointer; font: 500 15px/1 var(--font-google-sans); transition: color .18s ease; }.orbf-more:hover { color: var(--lf-ink); }.orbf-more-arrow { flex: none; transition: transform .18s ease; }
+        .orbf-chip { display: grid; place-items: center; width: 52px; height: 52px; padding: 0; border: 1px solid var(--lf-ctl-edge); border-radius: 999px; background: #141416; color: var(--lf-ink); cursor: pointer; transition: transform .2s ease, border-color .2s ease; }
+        .orbf-chip--brand { background: #fff; border-color: rgba(var(--lf-ink-rgb), calc(.16 + .84 * var(--lf-lift-e))); }.orbf-chip img { display: block; width: 30px; height: 30px; }.orbf-chip:hover, .orbf-chip--active { transform: scale(1.08); border-color: var(--lf-accent); }.orbf-chip:focus-visible { outline: 2px solid var(--lf-accent); outline-offset: 3px; }
+        .orbf-tip { position: absolute; top: 50%; left: calc(100% + 12px); z-index: 2; width: max-content; max-width: 190px; padding: 8px 11px; border: 1px solid rgba(var(--lf-ink-rgb), .12); border-radius: 9px; background: var(--lf-surface); color: rgba(var(--lf-ink-rgb), calc(.68 + .32 * var(--lf-lift-t))); font-size: 10px; line-height: 1.35; transform: translateY(-50%); }.orbf-tip strong { display: block; margin-bottom: 2px; color: var(--lf-ink); font-size: 11px; }
+        .orbf-eyebrow { margin: 0 0 12px; color: var(--lf-accent); font-size: 16px; font-weight: 500; line-height: 1; letter-spacing: .04em; text-transform: uppercase; }.orbf-copy h2 { max-width: 24ch; margin: 0; color: var(--lf-ink); font-size: 42px; line-height: 50px; font-weight: 500; letter-spacing: 0; }.orbf-more { display: inline-flex; align-items: center; gap: 9px; margin-top: 25px; padding: 0; border: 0; background: none; color: rgba(var(--lf-ink-rgb), calc(.6 + .4 * var(--lf-lift-t))); cursor: pointer; font: 500 15px/1 var(--font-google-sans); transition: color .18s ease; }.orbf-more:hover { color: var(--lf-ink); }.orbf-more-arrow { flex: none; transition: transform .18s ease; }
         .orbf-more:hover .orbf-more-arrow { transform: translateX(2px); }.orbf-more:focus-visible { outline: 2px solid var(--lf-accent); outline-offset: 4px; border-radius: 3px; }
         /* Multiplied rather than added: on clay the orange behaves as pigment
            and warms the ground, where adding it only pushes toward white. The
