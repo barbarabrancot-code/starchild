@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion } from "motion/react";
 import processingIndicator from "../../../../design/assets/images/svgs/Character_Processing_Indicator_300px_Dark_00000 1.svg";
+import starchildLogo from "../../../../design/assets/images/svgs/starchild-logo.svg.svg";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
@@ -35,8 +36,8 @@ export function HeroScreenH({
         transition={{ duration: 0.55, ease: EASE }}
       >
         <div className="hero-h__header-inner">
-          <button className="hero-h__brand" type="button" onClick={onNavigateHome}>
-            Starchild
+          <button className="hero-h__brand" type="button" onClick={onNavigateHome} aria-label="Starchild — back to top">
+            <img src={starchildLogo} alt="" />
           </button>
         </div>
       </motion.header>
@@ -103,10 +104,9 @@ export function HeroScreenH({
         .hero-h__header-inner { width: min(calc(100% - 48px), 852px); margin-inline: auto; }
         .hero-h__brand {
           border: 0; padding: 0; background: transparent; cursor: pointer;
-          color: var(--text-primary); font-family: var(--font-display);
-          font-size: 1.25rem; font-weight: var(--weight-regular); line-height: 1;
-          letter-spacing: -0.05em; text-transform: uppercase;
+          display: block; line-height: 0;
         }
+        .hero-h__brand img { display: block; width: 102px; height: auto; }
         .hero-h__brand:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
         .hero-h__content {
           position: relative; z-index: 1;
@@ -153,7 +153,7 @@ export function HeroScreenH({
           .hero-h__glow { bottom: -140px; }
           .hero-h__header { padding-top: 28px; }
           .hero-h__header-inner { width: min(calc(100% - 40px), 852px); }
-          .hero-h__brand { font-size: 1.0625rem; }
+          .hero-h__brand img { width: 92px; }
           .hero-h__content { padding-top: clamp(150px, 28svh, 190px); }
           .hero-h__title { margin-top: 56px; font-size: 1.5rem; }
           .hero-h__prompt { margin-top: 24px; }
