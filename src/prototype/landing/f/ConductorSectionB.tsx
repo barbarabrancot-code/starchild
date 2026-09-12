@@ -9,6 +9,7 @@ import claudeMark from "../../../../design/assets/images/svgs/conductor/Claude.s
 import geminiMark from "../../../../design/assets/images/svgs/conductor/Gemini.svg";
 import qwenMark from "../../../../design/assets/images/svgs/conductor/Qwen.svg";
 import deepSeekMark from "../../../../design/assets/images/svgs/conductor/Deepseek.svg";
+import grokMark from "../../../../design/assets/images/svgs/conductor/Grok-feb-2025-logo logo.svg";
 import miniMaxMark from "../../../../design/assets/images/svgs/conductor/MiniMax.svg";
 import kimiMark from "../../../../design/assets/images/svgs/conductor/Kimi.svg";
 
@@ -63,9 +64,9 @@ const MODEL_ASSETS = {
   "gemini-wordmark.svg": geminiMark,
   "qwen-card.svg": qwenMark,
   "deepseek.svg": deepSeekMark,
+  "grok.svg": grokMark,
   "minimax-card.svg": miniMaxMark,
   "kimi-wordmark.svg": kimiMark,
-  "spacex.svg": new URL("../../../../public/models/spacex.svg", import.meta.url).href,
 } as const;
 
 type Model = { name: string; art: keyof typeof MODEL_ASSETS; w: number; brand: string; whole?: boolean };
@@ -88,7 +89,7 @@ const MODELS: Model[] = [
   { name: "DeepSeek", art: "deepseek.svg", w: 0.857, brand: "#4D6BFE" },
   { name: "MiniMax", art: "minimax-card.svg", w: 1, brand: "#1456F0", whole: true },
   { name: "Kimi", art: "kimi-wordmark.svg", w: 0.492, brand: "#007CFF" },
-  { name: "SpaceX", art: "spacex.svg", w: 0.72, brand: "#005288" },
+  { name: "Grok", art: "grok.svg", w: 0.68, brand: "#111111" },
 ];
 
 /**
