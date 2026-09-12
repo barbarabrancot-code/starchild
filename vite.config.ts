@@ -4,7 +4,9 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig({
-  base: "./",
+  // Public assets must resolve from the repository root on GitHub Pages. Local
+  // previews retain relative paths so each HTML entry can still be opened alone.
+  base: process.env.GITHUB_ACTIONS === "true" ? "/starchild/" : "./",
   plugins: [react(), tailwindcss()],
   build: {
     rollupOptions: {
