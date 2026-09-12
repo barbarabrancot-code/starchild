@@ -210,24 +210,26 @@ function ReasoningRow({ label, lines }: { label: string; lines: string[] }) {
   );
 }
 
+/** picked once per working stretch — no fixed "is working on this" line,
+ *  a different quiet phrase each time so it doesn't read as a status label
+ *  bolted onto the character */
+const WORKING_LINES = ["Working on it", "Checking a few things", "Putting this together"];
+
 /**
- * Between sending and the reply landing — the agent's own orb, in its own
- * colour, doing the same "working" wander it does everywhere else. Wordless
- * at first, the way a colleague's status dot going active is enough on its
- * own; the name only shows up once the wait has actually run long enough to
- * ask for an explanation.
+ * Activity belongs to the message: while a reply is being generated (or the
+ * agent's very first hello is still coming together), the character sits
+ * directly under the newest thing said, visibly more active, with a short
+ * line explaining the wait. The moment the reply lands this unmounts
+ * outright, not faded or slid away.
  */
-function ThinkingRow({ agent, opening = false }: { agent: Agent; opening?: boolean }) {
-  const [showLabel, setShowLabel] = useState(false);
-  useEffect(() => {
-    if (opening) return;
-    const t = window.setTimeout(() => setShowLabel(true), 1800);
-    return () => window.clearTimeout(t);
-  }, [opening]);
+function AgentWorking() {
+  const [label] = useState(() => WORKING_LINES[Math.floor(Math.random() * WORKING_LINES.length)]);
   return (
-    <div className={`ag-thinking${opening ? " ag-thinking--opening" : ""}`}>
-      <AgentOrb status="working" size={12} halo accent={agent.accent} />
-      {!opening && showLabel && <span className="ag-thinking-label">{agent.name} is working on this.</span>}
+    <div className="ag-working">
+      <span className="ag-working-avatar">
+        <img src={`${import.meta.env.BASE_URL}character/processing-indicator.webp`} alt="" />
+      </span>
+      <span className="ag-working-label">{label}</span>
     </div>
   );
 }
@@ -797,8 +799,9 @@ export function AgentsWorkspace({
             <Turn key={i} turn={turn} onReply={setReplyTo} isLast={i === agent.thread.length - 1} />
           ))}
 
-          {greetingPending && <ThinkingRow key={`greeting-${agent.id}`} agent={agent} opening />}
-          {thinking && <ThinkingRow key={`thinking-${agent.thread.length}`} agent={agent} />}
+          {(thinking || greetingPending) && (
+            <AgentWorking key={`working-${agent.id}-${agent.thread.length}`} />
+          )}
 
           {/* An agent that has come back with something has asked a question, and
               a question with no answers under it is a dead end. These are the same
@@ -1348,12 +1351,23 @@ export function AgentsWorkspace({
           to { transform: rotate(360deg) translateX(3.5px); }
         }
 
-        /* what is going on when there is nothing to answer */
-        /* Aligned with the agent's own words above them, not centred and not
-           right-aligned: they are answers to the thing it just said. */
-        .ag-thinking { display: flex; align-items: center; gap: 10px; align-self: flex-start; }
-        .ag-thinking--opening .ao-beat { animation: ag-opening-pulse 1s ease-in-out infinite; }
-        .ag-thinking-label {
+        /* Activity: the character under the newest message while a reply is
+           coming together. Aligned with the agent's own words above it, not
+           centred and not right-aligned — it belongs to the same column
+           they do. */
+        .ag-working { display: flex; align-items: center; gap: 10px; align-self: flex-start; margin-top: 2px; }
+        .ag-working-avatar {
+          display: block; flex: none; border-radius: 999px; overflow: hidden; position: relative;
+          width: 28px; height: 28px; animation: ag-working-pulse .9s ease-in-out infinite;
+        }
+        .ag-working-avatar img {
+          position: absolute; inset: 0; width: 100%; height: 100%;
+          object-fit: cover; transform: scale(2.4);
+          /* the source frame is exported on a white canvas around the
+             character; cropping in this tight scales past that margin so
+             the badge shows only the glowing blob, no visible square edge */
+        }
+        .ag-working-label {
           font-size: 13px; color: rgba(255,255,255,.4);
           animation: ag-thinking-in .35s cubic-bezier(.16,1,.3,1);
         }
@@ -1361,12 +1375,12 @@ export function AgentsWorkspace({
           from { opacity: 0; transform: translateY(3px); }
           to { opacity: 1; transform: none; }
         }
-        @keyframes ag-opening-pulse {
-          0%, 100% { transform: scale(1); opacity: .72; }
-          50% { transform: scale(1.24); opacity: 1; }
+        @keyframes ag-working-pulse {
+          0%, 100% { transform: scale(1); opacity: .85; }
+          50% { transform: scale(1.16); opacity: 1; }
         }
         @media (prefers-reduced-motion: reduce) {
-          .ag-thinking--opening .ao-beat { animation: none; }
+          .ag-working-avatar { animation: none; }
         }
 
         .ag-answers { display: flex; flex-wrap: wrap; gap: 7px; padding: 2px 0 4px; }
@@ -1378,11 +1392,6 @@ export function AgentsWorkspace({
         .ag-answer:hover { background: rgba(255,255,255,.13); color: #fff; }
         .ag-answer--quiet { background: none; color: rgba(255,255,255,.42); }
         .ag-answer--quiet:hover { background: rgba(255,255,255,.07); color: rgba(255,255,255,.8); }
-
-        .ag-resting {
-          display: flex; align-items: center; gap: 9px; margin: 6px 0 0;
-          font-size: 13px; color: rgba(255,255,255,.3);
-        }
 
 
         .ag-turns {
@@ -1557,7 +1566,13 @@ export function AgentsWorkspace({
         }
         .ag-quote button:hover { color: #fff; }
 
+        /* AgentIdle sits to the left of the pill, outside it — a fixed dock,
+           not a slot inside the input itself. When it's not there (a reply
+           is generating) the pill just fills the space; no motion, no gap
+           left behind. */
+        .ag-composer-dock { display: flex; align-items: center; gap: 10px; }
         .ag-composer-row {
+          flex: 1; min-width: 0;
           display: flex; align-items: center; gap: 6px;
           padding: 8px; border-radius: 999px;
           border: 1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.04);

@@ -3,7 +3,7 @@ import { Container } from "../../Container";
 import { AppIcon } from "../../agents/AppIcon";
 import { BY_ID, type ConnectorId } from "../../agents/connectors";
 import { PresenceOrb } from "../../presence/PresenceOrb";
-import connectorsBackground from "../../../../assets/background connectors.png";
+import connectorsBackground from "../../../../design/assets/background connectors.png";
 
 const IN_ORBIT: ConnectorId[] = ["gmail", "gcal", "gdrive", "notion", "slack", "telegram"];
 

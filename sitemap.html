@@ -1,0 +1,873 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Starchild — Product Architecture</title>
+<style>
+  /* ---------- fonts: same faces the product ships, same rule — Google Sans
+     is the only typeface. Difference is weight/size/tracking, not family. ---------- */
+  @font-face {
+    font-family: "Google Sans";
+    src: url("./src/fonts/google-sans/GoogleSans-Regular.ttf") format("truetype");
+    font-weight: 400; font-style: normal; font-display: swap;
+  }
+  @font-face {
+    font-family: "Google Sans";
+    src: url("./src/fonts/google-sans/GoogleSans-Medium.ttf") format("truetype");
+    font-weight: 500; font-style: normal; font-display: swap;
+  }
+  @font-face {
+    font-family: "Google Sans";
+    src: url("./src/fonts/google-sans/GoogleSans-SemiBold.ttf") format("truetype");
+    font-weight: 600; font-style: normal; font-display: swap;
+  }
+  @font-face {
+    font-family: "Google Sans";
+    src: url("./src/fonts/google-sans/GoogleSans-Bold.ttf") format("truetype");
+    font-weight: 700; font-style: normal; font-display: swap;
+  }
+
+  :root{
+    --font-google-sans: "Google Sans", ui-sans-serif, system-ui, sans-serif;
+
+    /* product ground tokens (src/index.css) */
+    --lf-page: #050506;
+    --lf-surface: #0a0a0b;
+    --lf-window: #111112;
+
+    --color-orange-100: #ffa940;
+    --color-orange-400: #f84600;
+    --color-primary: var(--color-orange-400);
+
+    /* Version B gets its own cool accent — not "better", just "not A" at a
+       glance, so a reader can tell which column they're in without
+       re-reading the header every time. */
+    --color-b-100: #7dd3fc;
+    --color-b-400: #38bdf8;
+
+    --color-text-body: rgba(255, 255, 255, 0.72);
+    --tracking-body: 0.01em;
+
+    --edge: rgba(255, 255, 255, 0.1);
+    --edge-soft: rgba(255, 255, 255, 0.08);
+    --field: rgba(255, 255, 255, 0.045);
+    --chip: rgba(255, 255, 255, 0.06);
+  }
+
+  *,*::before,*::after{box-sizing:border-box;}
+  html,body{min-height:100%;}
+  body{
+    margin:0;
+    background:var(--lf-page);
+    color:#fff;
+    font-family:var(--font-google-sans);
+    line-height:1.65;
+    -webkit-font-smoothing:antialiased;
+  }
+  ::selection{background:var(--color-orange-400); color:#fff;}
+  :focus-visible{outline:2px solid var(--color-orange-400); outline-offset:3px; border-radius:4px;}
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.16) transparent;
+  }
+  *::-webkit-scrollbar{ width:10px; height:10px; }
+  *::-webkit-scrollbar-thumb{
+    border:3px solid transparent; background-clip:padding-box;
+    border-radius:999px; background-color:rgba(255,255,255,.14);
+  }
+
+  .container{max-width:1180px; margin:0 auto; padding:0 32px;}
+
+  /* ---------- header, same grammar as SiteHeader.tsx ---------- */
+  header.top{
+    position:sticky; top:0; z-index:20;
+    padding:20px 0; border-bottom:1px solid var(--edge-soft);
+    background:rgba(5,5,6,.86); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+  }
+  header.top .row{display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;}
+  header.top .pill{
+    border-radius:999px; border:1px solid rgba(255,255,255,.2); background:rgba(255,255,255,.1);
+    padding:9px 18px; font-size:13.5px; font-weight:500; color:#fff;
+  }
+  header.top nav{display:flex; gap:8px;}
+  header.top nav a{
+    font-size:12.5px; font-weight:500; color:rgba(255,255,255,.55); text-decoration:none;
+    padding:8px 13px; border-radius:999px; border:1px solid transparent; transition:color .15s, border-color .15s, background-color .15s;
+  }
+  header.top nav a:hover{color:#fff; background:rgba(255,255,255,.06);}
+  header.top nav a.a{border-color:rgba(248,70,0,.35); color:var(--color-orange-100);}
+  header.top nav a.b{border-color:rgba(56,189,248,.35); color:var(--color-b-100);}
+
+  main{padding:56px 0 120px;}
+
+  .eyebrow{
+    font-size:12px; font-weight:600; letter-spacing:.12em; text-transform:uppercase;
+    color:var(--color-orange-100); margin:0 0 16px;
+  }
+  h1{
+    font-size:clamp(2rem,4vw,2.7rem); font-weight:700; letter-spacing:-.015em;
+    margin:0 0 20px; text-wrap:balance;
+  }
+  .dek{
+    font-size:1.02rem; color:var(--color-text-body); letter-spacing:var(--tracking-body);
+    max-width:70ch; margin:0 0 20px;
+  }
+
+  /* ---------- framing callouts ---------- */
+  .framing{
+    display:flex; flex-direction:column; gap:14px;
+    margin:32px 0 64px; padding:26px 28px; border-radius:18px;
+    border:1px solid var(--edge); background:linear-gradient(180deg, var(--field), transparent);
+  }
+  .framing blockquote{
+    margin:0; padding-left:18px; border-left:2px solid var(--color-orange-400);
+    font-size:1.14rem; font-weight:500; color:#fff; letter-spacing:-.005em; line-height:1.5;
+  }
+  .framing p.secondary{
+    margin:0; padding-left:20px; font-size:.92rem; color:rgba(255,255,255,.5);
+  }
+
+  /* ---------- version switch ---------- */
+  .switch{
+    display:inline-flex; gap:4px; padding:4px; margin:0 0 48px;
+    border-radius:999px; border:1px solid var(--edge); background:var(--field);
+  }
+  .switch-btn{
+    border:0; background:none; cursor:pointer; border-radius:999px;
+    padding:10px 20px; font-family:inherit; font-size:13px; font-weight:500;
+    color:rgba(255,255,255,.5); transition:color .15s ease, background-color .15s ease;
+  }
+  .switch-btn:hover{color:#fff;}
+  .switch-btn.a.is-on{background:rgba(248,70,0,.16); color:var(--color-orange-100);}
+  .switch-btn.b.is-on{background:rgba(56,189,248,.14); color:var(--color-b-100);}
+  .version[hidden]{display:none;}
+
+  /* ---------- version section headers ---------- */
+  .version{margin-bottom:96px;}
+  .version-head{
+    display:flex; align-items:baseline; gap:14px; flex-wrap:wrap;
+    margin-bottom:10px; padding-bottom:18px; border-bottom:1px solid var(--edge-soft);
+  }
+  .version-tag{
+    font-size:12px; font-weight:700; letter-spacing:.1em; text-transform:uppercase;
+    border-radius:999px; padding:6px 14px;
+  }
+  .version-a .version-tag{background:rgba(248,70,0,.14); color:var(--color-orange-100); border:1px solid rgba(248,70,0,.3);}
+  .version-b .version-tag{background:rgba(56,189,248,.12); color:var(--color-b-100); border:1px solid rgba(56,189,248,.3);}
+  .version-head h2{font-size:1.5rem; font-weight:600; margin:0; letter-spacing:-.01em;}
+  .version-head .live-link{
+    font-size:12.5px; font-weight:500; text-decoration:none;
+    color:var(--color-orange-100); border-bottom:1px solid rgba(255,169,64,.35);
+    transition:border-color .15s ease, color .15s ease;
+  }
+  .version-head .live-link:hover{border-color:var(--color-orange-100);}
+  .version-head .sub{flex-basis:100%; font-size:.94rem; color:rgba(255,255,255,.5); margin-top:2px;}
+
+  /* ---------- area cards ---------- */
+  .areas{display:grid; grid-template-columns:repeat(3,1fr); gap:18px; margin:32px 0 40px;}
+  /* Version A dropped Automations and is down to two areas — a 3-up grid
+     with an empty third slot reads as a missing card, not as "there are
+     two of these on purpose". */
+  .version-a .areas{grid-template-columns:repeat(2,1fr); max-width:760px;}
+  .area-card{
+    border-radius:18px; border:1px solid var(--edge); background:var(--lf-window);
+    padding:22px; display:flex; flex-direction:column; gap:16px;
+  }
+  .version-a .area-card{border-top:2px solid var(--color-orange-400);}
+  .version-b .area-card{border-top:2px solid var(--color-b-400);}
+  .area-head{display:flex; align-items:center; gap:10px;}
+  .area-num{
+    flex:none; width:26px; height:26px; border-radius:999px; display:grid; place-items:center;
+    font-size:12px; font-weight:700; background:var(--chip); color:rgba(255,255,255,.6);
+  }
+  .area-head h3{margin:0; font-size:1.02rem; font-weight:600; letter-spacing:.01em;}
+
+  .fields{display:flex; flex-direction:column; gap:14px;}
+  .field dt{
+    font-size:10.5px; font-weight:600; letter-spacing:.09em; text-transform:uppercase;
+    color:rgba(255,255,255,.4); margin:0 0 5px;
+  }
+  .field dd{margin:0; font-size:12.8px; color:var(--color-text-body); letter-spacing:var(--tracking-body);}
+  .field ul{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:7px;}
+  .field li{display:flex; align-items:flex-start; gap:7px; font-size:12.6px; color:var(--color-text-body);}
+  .field li .b{flex:none; width:4px; height:4px; margin-top:6px; border-radius:999px; background:rgba(255,255,255,.3);}
+  .field li .t{flex:1; min-width:0;}
+  .field .chips{display:flex; flex-wrap:wrap; gap:6px;}
+  .field .chip{
+    font-size:11px; font-weight:500; color:rgba(255,255,255,.75);
+    background:var(--chip); border:1px solid var(--edge-soft); border-radius:999px; padding:5px 10px;
+  }
+  .field.why dd{
+    padding:10px 12px; border-radius:10px; background:var(--field); border:1px solid var(--edge-soft);
+    font-style:italic; color:rgba(255,255,255,.68);
+  }
+
+  /* ---------- hierarchy tree (shared shape, both versions) ---------- */
+  .tree-wrap{margin:40px 0 28px; padding:32px 20px 24px; border-radius:18px; border:1px solid var(--edge); background:var(--field);}
+  .tree-wrap .tree-title{
+    font-size:10.5px; font-weight:600; letter-spacing:.09em; text-transform:uppercase;
+    color:rgba(255,255,255,.4); text-align:center; margin:0 0 24px;
+  }
+  .tree{display:flex; flex-direction:column; align-items:center;}
+  .tnode{
+    border-radius:12px; border:1px solid var(--edge); background:var(--lf-surface);
+    padding:10px 18px; font-size:13px; font-weight:600; text-align:center; white-space:nowrap;
+  }
+  .tnode.root{font-size:13.5px; letter-spacing:.04em;}
+  .version-a .tnode.hi{border-color:rgba(248,70,0,.5); color:var(--color-orange-100);}
+  .version-b .tnode.hi{border-color:rgba(56,189,248,.5); color:var(--color-b-100);}
+  .tnode.leaf{font-size:12px; font-weight:500; color:rgba(255,255,255,.65); padding:8px 14px;}
+
+  .tconnect{display:block; width:100%; max-width:560px; height:34px; color:var(--edge);}
+  .trow2{display:flex; gap:56px;}
+  .trow2 > div{display:flex; flex-direction:column; align-items:center;}
+  .tsub-wrap{margin-top:0;}
+  .tconnect-sub{display:block; width:220px; height:28px; color:var(--edge); margin-top:0;}
+  .trow3{display:flex; gap:14px;}
+
+  .key-logic{
+    margin:24px 0; padding:16px 20px; border-radius:12px; background:var(--field); border:1px solid var(--edge-soft);
+    font-size:12.6px; color:rgba(255,255,255,.6);
+  }
+  .key-logic b{color:#fff; font-weight:500;}
+  .key-logic .line{display:block; margin:2px 0;}
+
+  .callout{
+    margin:20px 0 0; padding:18px 22px; border-radius:14px; border:1px dashed var(--edge);
+    font-size:13px; color:rgba(255,255,255,.7); font-style:italic;
+  }
+  .version-a .callout{border-color:rgba(248,70,0,.3);}
+  .version-b .callout{border-color:rgba(56,189,248,.3);}
+
+  /* ---------- comparison table ---------- */
+  .compare{margin:56px 0 96px;}
+  .section-head{margin-bottom:8px;}
+  .section-head h2{font-size:1.5rem; font-weight:600; margin:0 0 8px; letter-spacing:-.01em;}
+  .section-head p{margin:0; font-size:.94rem; color:rgba(255,255,255,.5); max-width:70ch;}
+
+  .table-scroll{overflow-x:auto; margin-top:28px; border-radius:16px; border:1px solid var(--edge);}
+  table.cmp{width:100%; border-collapse:collapse; min-width:820px; background:var(--lf-window);}
+  table.cmp thead th{
+    text-align:left; font-size:10.5px; font-weight:600; letter-spacing:.09em; text-transform:uppercase;
+    color:rgba(255,255,255,.4); padding:14px 20px; border-bottom:1px solid var(--edge);
+  }
+  table.cmp thead th.qa{color:var(--color-orange-100);}
+  table.cmp thead th.qb{color:var(--color-b-100);}
+  table.cmp tbody td{
+    padding:16px 20px; font-size:12.8px; color:var(--color-text-body); letter-spacing:var(--tracking-body);
+    border-bottom:1px solid var(--edge-soft); vertical-align:top;
+  }
+  table.cmp tbody tr:last-child td{border-bottom:0;}
+  table.cmp tbody td.q{color:#fff; font-weight:500; width:22%;}
+  table.cmp tbody td.a{border-left:2px solid rgba(248,70,0,.35);}
+  table.cmp tbody td.b{border-left:2px solid rgba(56,189,248,.35);}
+
+  /* ---------- decisions ---------- */
+  .decisions{
+    margin:56px 0 40px; padding:32px 34px; border-radius:20px;
+    border:1px solid rgba(248,70,0,.25);
+    background:radial-gradient(120% 140% at 0% 0%, rgba(248,70,0,.08), transparent 60%);
+  }
+  .decisions h2{font-size:1.4rem; font-weight:600; margin:0 0 10px; letter-spacing:-.01em;}
+  .decisions > p{margin:0 0 24px; font-size:.94rem; color:rgba(255,255,255,.55); max-width:70ch;}
+  .decisions ol{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:14px; counter-reset:d;}
+  .decisions li{counter-increment:d; display:flex; gap:14px; align-items:flex-start;}
+  .decisions li::before{
+    content:counter(d); flex:none; width:28px; height:28px; border-radius:999px;
+    display:grid; place-items:center; font-size:12.5px; font-weight:700;
+    background:rgba(248,70,0,.16); color:var(--color-orange-100); border:1px solid rgba(248,70,0,.35);
+  }
+  .decisions li .t{padding-top:3px; font-size:13.5px; color:#fff; line-height:1.55;}
+
+  .note{
+    margin-top:0; padding:20px 22px; border-radius:16px;
+    border:1px solid var(--edge); background:var(--field);
+    font-size:12.8px; color:rgba(255,255,255,.5); letter-spacing:var(--tracking-body);
+    max-width:82ch;
+  }
+  .note b{color:rgba(255,255,255,.78); font-weight:500;}
+
+  footer.foot{
+    margin-top:48px; padding-top:22px; border-top:1px solid var(--edge-soft);
+    font-size:12.5px; color:rgba(255,255,255,.35);
+  }
+
+  @media (max-width:980px){
+    .areas, .version-a .areas, .version-b .areas{grid-template-columns:1fr; max-width:none;}
+    .trow2{gap:28px;}
+    .tconnect{max-width:340px;}
+  }
+  @media (max-width:640px){
+    .container{padding:0 20px;}
+    main{padding:40px 0 96px;}
+    header.top nav{display:none;}
+    .decisions{padding:24px 20px;}
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="container row">
+    <span class="pill">Product architecture</span>
+    <nav>
+      <a href="#compare">Compare</a>
+      <a href="#decisions">Decisions</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="container">
+
+    <p class="eyebrow">Starchild</p>
+    <h1>Product Architecture — Two Models Compared</h1>
+    <p class="dek">
+      Not a redesign. A side-by-side map of what each area of the product owns, why it exists,
+      and how people move between them — current architecture next to the model stakeholders
+      have proposed, in the same structure so they can be read against each other line by line.
+    </p>
+
+    <div class="framing">
+      <blockquote>
+        Before changing the interface, we need to agree on the product architecture: what each
+        area owns, why it exists, and how users move between them.
+      </blockquote>
+      <p class="secondary">
+        The goal of these maps is not to choose a UI. It is to agree on the product model first.
+      </p>
+    </div>
+
+    <div class="switch" role="tablist" aria-label="Architecture version">
+      <button type="button" class="switch-btn a is-on" data-version="a" role="tab" aria-selected="true">Version A — current</button>
+      <button type="button" class="switch-btn b" data-version="b" role="tab" aria-selected="false">Version B — proposed</button>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- VERSION A — CURRENT ARCHITECTURE                              -->
+    <!-- ============================================================ -->
+    <section class="version version-a" id="version-a">
+      <div class="version-head">
+        <span class="version-tag">Version A</span>
+        <h2>Current Architecture</h2>
+        <a class="live-link" href="https://barbarabrancot-code.github.io/starchild/onboarding.html" target="_blank" rel="noopener">See it live ↗</a>
+        <p class="sub">Chat and Agents are treated as distinct product areas.</p>
+      </div>
+
+      <div class="areas">
+
+        <article class="area-card">
+          <div class="area-head"><span class="area-num">1</span><h3>Chat</h3></div>
+          <dl class="fields">
+            <div class="field">
+              <dt>Purpose</dt>
+              <dd>The main interaction point with Starchild.</dd>
+            </div>
+            <div class="field">
+              <dt>Primary user goal</dt>
+              <dd>Ask questions, request help, execute tasks, start workflows, and interact with the system without needing to choose a specialized agent first.</dd>
+            </div>
+            <div class="field">
+              <dt>Core content</dt>
+              <ul>
+                <li><span class="b"></span><span class="t">Conversation</span></li>
+                <li><span class="b"></span><span class="t">Input / composer</span></li>
+                <li><span class="b"></span><span class="t">AI responses</span></li>
+                <li><span class="b"></span><span class="t">Current activity / status</span></li>
+                <li><span class="b"></span><span class="t">Action UI when needed</span></li>
+              </ul>
+            </div>
+            <div class="field">
+              <dt>Core actions</dt>
+              <ul>
+                <li><span class="b"></span><span class="t">Send messages, ask questions</span></li>
+                <li><span class="b"></span><span class="t">Execute simple tasks</span></li>
+                <li><span class="b"></span><span class="t">Create simple ongoing tasks</span></li>
+                <li><span class="b"></span><span class="t">Delegate to an existing agent</span></li>
+                <li><span class="b"></span><span class="t">Navigate to other product areas</span></li>
+                <li><span class="b"></span><span class="t">Start a new chat</span></li>
+              </ul>
+            </div>
+            <div class="field">
+              <dt>System behavior</dt>
+              <dd>Acts as the general intelligence / orchestrator. Understands intent, responds directly, creates simple ongoing tasks, and can route work to specialized agents when relevant.</dd>
+            </div>
+            <div class="field">
+              <dt>Relationships / navigation</dt>
+              <dd>The point everything else is reached from: Chat routes into a specific Agent's own thread when work is delegated — a route that never leads back into one shared conversation.</dd>
+            </div>
+            <div class="field why">
+              <dt>Why this needs to exist as a separate area</dt>
+              <dd>It is the universal entry point and should work even if the user never creates a specialized agent.</dd>
+            </div>
+            <div class="field">
+              <dt>Owns</dt>
+              <div class="chips">
+                <span class="chip">General conversation</span>
+                <span class="chip">Intent understanding</span>
+                <span class="chip">Simple actions</span>
+                <span class="chip">Orchestration</span>
+                <span class="chip">Ongoing-task creation</span>
+                <span class="chip">Delegation</span>
+              </div>
+            </div>
+          </dl>
+        </article>
+
+        <article class="area-card">
+          <div class="area-head"><span class="area-num">2</span><h3>Agents</h3></div>
+          <dl class="fields">
+            <div class="field">
+              <dt>Purpose</dt>
+              <dd>Create and use specialized persistent agents with their own role, rules, tools, and history.</dd>
+            </div>
+            <div class="field">
+              <dt>Primary user goal</dt>
+              <dd>Have a dedicated agent for a specific domain, mission, workflow, or context.</dd>
+            </div>
+            <div class="field">
+              <dt>Core content</dt>
+              <ul>
+                <li><span class="b"></span><span class="t">Agent list</span></li>
+                <li><span class="b"></span><span class="t">Individual agent conversation</span></li>
+                <li><span class="b"></span><span class="t">Name / identity, mission, rules</span></li>
+                <li><span class="b"></span><span class="t">Tools / connectors, history</span></li>
+                <li><span class="b"></span><span class="t">Controls</span></li>
+              </ul>
+            </div>
+            <div class="field">
+              <dt>Core actions</dt>
+              <ul>
+                <li><span class="b"></span><span class="t">Create agent, configure agent</span></li>
+                <li><span class="b"></span><span class="t">Chat directly</span></li>
+                <li><span class="b"></span><span class="t">Edit rules, connect tools</span></li>
+                <li><span class="b"></span><span class="t">Pause / delete / manage</span></li>
+              </ul>
+            </div>
+            <div class="field">
+              <dt>System behavior</dt>
+              <dd>Each agent maintains its own persistent context, specialized mission, rules, connectors, and history.</dd>
+            </div>
+            <div class="field">
+              <dt>Relationships / navigation</dt>
+              <dd>Reached from the Agents list, separate from Chat's own thread — creating or opening an Agent never touches Chat's own history, and each Agent's thread is self-contained.</dd>
+            </div>
+            <div class="field why">
+              <dt>Why this needs to exist as a separate area</dt>
+              <dd>An agent is not only a task. It is a persistent specialized intelligence with its own operating context.</dd>
+            </div>
+            <div class="field">
+              <dt>Owns</dt>
+              <div class="chips">
+                <span class="chip">Specialized mission</span>
+                <span class="chip">Persistent context</span>
+                <span class="chip">Dedicated rules</span>
+                <span class="chip">Connectors / tools</span>
+                <span class="chip">Dedicated history</span>
+                <span class="chip">Independent controls</span>
+              </div>
+            </div>
+          </dl>
+        </article>
+
+      </div>
+
+      <!-- hierarchy -->
+      <div class="tree-wrap">
+        <p class="tree-title">Current architecture — visual hierarchy</p>
+        <div class="tree">
+          <div class="tnode root">STARCHILD</div>
+          <svg class="tconnect" viewBox="0 0 560 34" preserveAspectRatio="none" role="presentation" aria-hidden="true">
+            <line x1="280" y1="0" x2="280" y2="34" stroke="currentColor"/>
+          </svg>
+          <div class="tnode hi">Chat</div>
+          <svg class="tconnect" viewBox="0 0 560 34" preserveAspectRatio="none" role="presentation" aria-hidden="true">
+            <line x1="280" y1="0" x2="280" y2="34" stroke="currentColor"/>
+          </svg>
+          <span class="tnode hi">Agents</span>
+          <svg class="tconnect-sub" viewBox="0 0 220 28" preserveAspectRatio="none" role="presentation" aria-hidden="true">
+            <line x1="110" y1="0" x2="110" y2="8" stroke="currentColor"/>
+            <line x1="37" y1="8" x2="183" y2="8" stroke="currentColor"/>
+            <line x1="37" y1="8" x2="37" y2="28" stroke="currentColor"/>
+            <line x1="110" y1="8" x2="110" y2="28" stroke="currentColor"/>
+            <line x1="183" y1="8" x2="183" y2="28" stroke="currentColor"/>
+          </svg>
+          <div class="trow3">
+            <span class="tnode leaf">Agent A</span>
+            <span class="tnode leaf">Agent B</span>
+            <span class="tnode leaf">Agent C</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="key-logic">
+        <span class="line"><b>Chat</b> = general intelligence / main entry point</span>
+        <span class="line"><b>Agent</b> = specialized persistent intelligence</span>
+      </div>
+
+      <p class="callout">
+        Important current-model question: “Why does the product need both New Chat and New Agent
+        if both can create a new context?”
+      </p>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- VERSION B — PROPOSED / STAKEHOLDER ARCHITECTURE               -->
+    <!-- ============================================================ -->
+    <section class="version version-b" id="version-b" hidden>
+      <div class="version-head">
+        <span class="version-tag">Version B</span>
+        <h2>Proposed / Stakeholder Architecture</h2>
+        <p class="sub">Reflects the concern that “New Chat” and “New Agent” may be competing concepts.</p>
+      </div>
+
+      <div class="key-logic" style="margin-top:0 0 28px;">
+        <span class="line"><b>Core stakeholder feedback:</b></span>
+        <span class="line">— Multiple agents can exist, but they are optional. One agent may be enough for many users.</span>
+        <span class="line">— The purpose of “New Chat” is unclear; “New Chat” + “New Agent” can feel like two different ways to create a separate context.</span>
+        <span class="line">— The product may need to choose one primary philosophy rather than giving equal weight to both.</span>
+        <span class="line">— Users still need a clear place to see what routines / Jobs are currently running.</span>
+      </div>
+
+      <div class="areas">
+
+        <article class="area-card">
+          <div class="area-head"><span class="area-num">1</span><h3>Main Agent / Chat</h3></div>
+          <dl class="fields">
+            <div class="field">
+              <dt>Purpose</dt>
+              <dd>Be the user's primary, continuous relationship with Starchild.</dd>
+            </div>
+            <div class="field">
+              <dt>Primary user goal</dt>
+              <dd>Talk, ask for help, delegate tasks, create routines, and manage work from one ongoing context.</dd>
+            </div>
+            <div class="field">
+              <dt>Core content</dt>
+              <ul>
+                <li><span class="b"></span><span class="t">Persistent conversation</span></li>
+                <li><span class="b"></span><span class="t">Current tasks / actions</span></li>
+                <li><span class="b"></span><span class="t">System responses</span></li>
+                <li><span class="b"></span><span class="t">Contextual status</span></li>
+                <li><span class="b"></span><span class="t">Access to ongoing work</span></li>
+              </ul>
+            </div>
+            <div class="field">
+              <dt>Core actions</dt>
+              <ul>
+                <li><span class="b"></span><span class="t">Send messages, ask questions</span></li>
+                <li><span class="b"></span><span class="t">Create routines / Jobs</span></li>
+                <li><span class="b"></span><span class="t">Perform tasks, delegate</span></li>
+                <li><span class="b"></span><span class="t">Optionally create an additional agent when needed</span></li>
+              </ul>
+            </div>
+            <div class="field">
+              <dt>System behavior</dt>
+              <dd>Acts as the primary persistent intelligence. The user does not need to create multiple chats to separate conversations unless there is a very clear reason.</dd>
+            </div>
+            <div class="field">
+              <dt>Relationships / navigation</dt>
+              <dd>The default landing point. Creates Routines/Jobs and, when justified, an Extra Agent — both without leaving the Main Agent's own continuous thread.</dd>
+            </div>
+            <div class="field why">
+              <dt>Why this needs to exist as a separate area</dt>
+              <dd>This is the default relationship between user and Starchild.</dd>
+            </div>
+            <div class="field">
+              <dt>Owns</dt>
+              <div class="chips">
+                <span class="chip">Primary conversation</span>
+                <span class="chip">Accumulated context</span>
+                <span class="chip">Simple tasks</span>
+                <span class="chip">Creation of routines</span>
+                <span class="chip">Delegation</span>
+                <span class="chip">Creation of additional agents when genuinely needed</span>
+              </div>
+            </div>
+          </dl>
+        </article>
+
+        <article class="area-card">
+          <div class="area-head"><span class="area-num">2</span><h3>Routines / Jobs</h3></div>
+          <dl class="fields">
+            <div class="field">
+              <dt>Purpose</dt>
+              <dd>Show all ongoing, recurring, or continuously monitored work.</dd>
+            </div>
+            <div class="field">
+              <dt>Primary user goal</dt>
+              <dd>Understand what is running, when it runs, current status, and whether attention is required.</dd>
+            </div>
+            <div class="field">
+              <dt>Core content</dt>
+              <ul>
+                <li><span class="b"></span><span class="t">Routine / Job title</span></li>
+                <li><span class="b"></span><span class="t">Trigger / schedule</span></li>
+                <li><span class="b"></span><span class="t">Current state, latest result</span></li>
+                <li><span class="b"></span><span class="t">Active / paused</span></li>
+                <li><span class="b"></span><span class="t">Alerts / exceptions</span></li>
+              </ul>
+            </div>
+            <div class="field">
+              <dt>Core actions</dt>
+              <ul>
+                <li><span class="b"></span><span class="t">Edit</span></li>
+                <li><span class="b"></span><span class="t">Pause / resume</span></li>
+                <li><span class="b"></span><span class="t">Cancel</span></li>
+                <li><span class="b"></span><span class="t">Inspect</span></li>
+              </ul>
+            </div>
+            <div class="field">
+              <dt>System behavior</dt>
+              <dd>Jobs continue running independently from the active conversation.</dd>
+            </div>
+            <div class="field">
+              <dt>Relationships / navigation</dt>
+              <dd>Created from the Main Agent. A status view, not a conversation — the user checks in, they don't chat with a Job.</dd>
+            </div>
+            <div class="field why">
+              <dt>Why this needs to exist as a separate area</dt>
+              <dd>Users need one clear place to see “what is currently running.”</dd>
+            </div>
+            <div class="field">
+              <dt>Owns</dt>
+              <div class="chips">
+                <span class="chip">Recurring work</span>
+                <span class="chip">Monitoring</span>
+                <span class="chip">Scheduled tasks</span>
+                <span class="chip">Alerts</span>
+                <span class="chip">Status</span>
+                <span class="chip">Ongoing execution</span>
+              </div>
+            </div>
+          </dl>
+        </article>
+
+        <article class="area-card">
+          <div class="area-head"><span class="area-num">3</span><h3>Additional Agents — Optional</h3></div>
+          <dl class="fields">
+            <div class="field">
+              <dt>Purpose</dt>
+              <dd>Create a separate agent only when the user genuinely needs a specialized persistent context.</dd>
+            </div>
+            <div class="field">
+              <dt>Primary user goal</dt>
+              <dd>Separate a domain, mission, set of tools, rules, or history from the Main Agent.</dd>
+            </div>
+            <div class="field">
+              <dt>Core content</dt>
+              <dd>Examples: Research Agent, Trading Agent, Inbox Manager, Project Agent.</dd>
+            </div>
+            <div class="field">
+              <dt>Core rule</dt>
+              <dd>The user does not need multiple agents by default. One Main Agent can be enough.</dd>
+            </div>
+            <div class="field">
+              <dt>System behavior</dt>
+              <dd>Each Extra Agent maintains its own specialized context, mission, tools, and rules — same behavior as Version A's Agents, scoped down to only when justified.</dd>
+            </div>
+            <div class="field">
+              <dt>Relationships / navigation</dt>
+              <dd>Reached from the Main Agent when a specialized context is created. Each Extra Agent keeps its own thread, separate from the Main Agent's.</dd>
+            </div>
+            <div class="field why">
+              <dt>Why this needs to exist as a separate area</dt>
+              <dd>A new agent should exist only when there is a strong structural reason for independent context, mission, tools, rules, history, and controls.</dd>
+            </div>
+            <div class="field">
+              <dt>Owns</dt>
+              <div class="chips">
+                <span class="chip">Specialized persistent context</span>
+                <span class="chip">Specialized mission</span>
+                <span class="chip">Dedicated tools / connectors</span>
+                <span class="chip">Independent rules and history</span>
+              </div>
+            </div>
+          </dl>
+        </article>
+
+      </div>
+
+      <!-- hierarchy -->
+      <div class="tree-wrap">
+        <p class="tree-title">Proposed architecture — visual hierarchy</p>
+        <div class="tree">
+          <div class="tnode root">STARCHILD</div>
+          <svg class="tconnect" viewBox="0 0 560 34" preserveAspectRatio="none" role="presentation" aria-hidden="true">
+            <line x1="280" y1="0" x2="280" y2="34" stroke="currentColor"/>
+          </svg>
+          <div class="tnode hi">Main Agent / Chat</div>
+          <svg class="tconnect" viewBox="0 0 560 34" preserveAspectRatio="none" role="presentation" aria-hidden="true">
+            <line x1="280" y1="0" x2="280" y2="10" stroke="currentColor"/>
+            <line x1="140" y1="10" x2="420" y2="10" stroke="currentColor"/>
+            <line x1="140" y1="10" x2="140" y2="34" stroke="currentColor"/>
+            <line x1="420" y1="10" x2="420" y2="34" stroke="currentColor"/>
+          </svg>
+          <div class="trow2">
+            <div><span class="tnode">Routines / Jobs</span></div>
+            <div>
+              <span class="tnode hi">Extra Agents <i style="font-style:normal;opacity:.5;font-weight:400;">— optional</i></span>
+              <svg class="tconnect-sub" viewBox="0 0 220 28" preserveAspectRatio="none" role="presentation" aria-hidden="true">
+                <line x1="110" y1="0" x2="110" y2="8" stroke="currentColor"/>
+                <line x1="37" y1="8" x2="183" y2="8" stroke="currentColor"/>
+                <line x1="37" y1="8" x2="37" y2="28" stroke="currentColor"/>
+                <line x1="110" y1="8" x2="110" y2="28" stroke="currentColor"/>
+                <line x1="183" y1="8" x2="183" y2="28" stroke="currentColor"/>
+              </svg>
+              <div class="trow3">
+                <span class="tnode leaf">Agent A</span>
+                <span class="tnode leaf">Agent B</span>
+                <span class="tnode leaf">Agent C</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="key-logic">
+        <span class="line"><b>Main Agent</b> = primary continuous relationship</span>
+        <span class="line"><b>Jobs / Routines</b> = ongoing work</span>
+        <span class="line"><b>Extra Agents</b> = optional specialization</span>
+      </div>
+
+      <p class="callout">
+        Do not treat New Chat as an equally important structural concept unless the team
+        explicitly decides that it has a unique purpose.
+      </p>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- A VS B COMPARISON                                             -->
+    <!-- ============================================================ -->
+    <section class="compare" id="compare">
+      <div class="section-head">
+        <h2>A vs B — Side by Side</h2>
+        <p>The same ten questions, answered once from each model, so a gap between them is visible on the row rather than buried in two separate documents.</p>
+      </div>
+
+      <div class="table-scroll">
+        <table class="cmp">
+          <thead>
+            <tr>
+              <th>Question</th>
+              <th class="qa">Version A</th>
+              <th class="qb">Version B</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="q">What is Chat?</td>
+              <td class="a">General orchestrator / main entry point.</td>
+              <td class="b">Primary persistent Main Agent.</td>
+            </tr>
+            <tr>
+              <td class="q">What is an Agent?</td>
+              <td class="a">A specialized persistent entity alongside Chat.</td>
+              <td class="b">An optional specialized extension of the Main Agent.</td>
+            </tr>
+            <tr>
+              <td class="q">Can users create multiple Agents?</td>
+              <td class="a">Yes, as a normal product structure.</td>
+              <td class="b">Yes, but only when genuinely useful.</td>
+            </tr>
+            <tr>
+              <td class="q">What is the purpose of New Chat?</td>
+              <td class="a">Start a separate conversation / context.</td>
+              <td class="b">Low value / unclear / possibly unnecessary.</td>
+            </tr>
+            <tr>
+              <td class="q">What creates a new context?</td>
+              <td class="a">Both New Chat and New Agent can separate context.</td>
+              <td class="b">Mainly a new Agent, when specialization is needed.</td>
+            </tr>
+            <tr>
+              <td class="q">Where does ongoing work live?</td>
+              <td class="a">Not a dedicated area — Chat creates it, but there's no separate place to see it running.</td>
+              <td class="b">Jobs / Routines.</td>
+            </tr>
+            <tr>
+              <td class="q">Where does history live?</td>
+              <td class="a">Chat history + per-Agent history.</td>
+              <td class="b">Main Agent history + optional per-Agent history.</td>
+            </tr>
+            <tr>
+              <td class="q">Who delegates work?</td>
+              <td class="a">Chat / Chief Agent.</td>
+              <td class="b">Main Agent.</td>
+            </tr>
+            <tr>
+              <td class="q">Why create another Agent?</td>
+              <td class="a">To create a specialized persistent intelligence.</td>
+              <td class="b">Only when mission, tools, rules, or context need to be isolated.</td>
+            </tr>
+            <tr>
+              <td class="q">Main tradeoff</td>
+              <td class="a">More flexibility, but potentially more conceptual complexity.</td>
+              <td class="b">Simpler mental model, but less emphasis on multiple parallel contexts.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- DECISIONS THE TEAM NEEDS TO MAKE                              -->
+    <!-- ============================================================ -->
+    <section class="decisions" id="decisions">
+      <h2>Decisions the Team Needs to Make</h2>
+      <p>These maps don't answer these questions — they only make the questions visible. Nothing here should be resolved by default or by whoever builds the next screen first.</p>
+      <ol>
+        <li><span class="t">What creates a new context in Starchild: a new chat, a new agent, or both?</span></li>
+        <li><span class="t">If one Main Agent can handle most of the user's work, what specific condition justifies creating another agent?</span></li>
+        <li><span class="t">What is the unique purpose of “New Chat”?</span></li>
+        <li><span class="t">Where does ongoing work live, and how does the user see what is currently running?</span></li>
+        <li><span class="t">Are Jobs / Automations a feature of the Main Agent, or a standalone product area?</span></li>
+        <li><span class="t">Where should connectors and tools be configured: globally, per Main Agent, or per specialized Agent?</span></li>
+        <li><span class="t">What should be persistent: conversation history, agent memory, task history, or all of them?</span></li>
+        <li><span class="t">Which architecture creates the clearest user mental model with the least duplication?</span></li>
+      </ol>
+    </section>
+
+    <div class="note">
+      <b>Scope of this document:</b> product model only — what each area owns, why it exists, and
+      how people move between them. Neither version is presented as the recommended one; both are
+      represented neutrally so the team can compare and agree on the architecture before any
+      further interface work.
+    </div>
+
+    <footer class="foot">
+      Starchild — product architecture comparison. Not a UI spec.
+    </footer>
+
+  </div>
+</main>
+
+<script>
+  (function () {
+    var buttons = document.querySelectorAll(".switch-btn");
+    var sections = {
+      a: document.getElementById("version-a"),
+      b: document.getElementById("version-b"),
+    };
+
+    function show(version) {
+      Object.keys(sections).forEach(function (key) {
+        sections[key].hidden = key !== version;
+      });
+      buttons.forEach(function (btn) {
+        var on = btn.dataset.version === version;
+        btn.classList.toggle("is-on", on);
+        btn.setAttribute("aria-selected", on ? "true" : "false");
+      });
+    }
+
+    buttons.forEach(function (btn) {
+      btn.addEventListener("click", function () { show(btn.dataset.version); });
+    });
+  })();
+</script>
+
+</body>
+</html>

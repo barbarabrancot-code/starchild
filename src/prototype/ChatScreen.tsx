@@ -3,11 +3,11 @@ import { AnimatePresence, motion } from "motion/react";
 import { pickScenario, type HeroIntent, type Scenario, type TaskCard } from "./data";
 import { StepFlow } from "./StepFlow";
 import { GuestSidebar } from "./GuestSidebar";
-import { ProductSidebar } from "./ProductSidebar";
+import { ProductSidebar, jobsLabel } from "./ProductSidebar";
 import { SignupGate } from "./SignupGate";
 import { IntentPicker } from "./IntentPicker";
 import { PresenceOrb } from "./presence/PresenceOrb";
-import { FirstMeeting, useFirstMeeting, type Tone } from "./onboarding/FirstMeeting";
+import { FirstMeeting, useFirstMeeting, nextChatOpener, type Tone } from "./onboarding/FirstMeeting";
 import { Reactable } from "./Reactable";
 import { ConductorIntroPopover } from "./onboarding/ConductorIntroPopover";
 import { ConnectFirst } from "./agents/ChatHandoff";
@@ -144,13 +144,14 @@ function PlaceholderAnswer({ onReply }: { onReply: (quote: string) => void }) {
  * arriving from that button is actually asking, so it gets a real answer.
  */
 function AutomationsIntroAnswer() {
+  const label = jobsLabel();
   return (
     <div className="ca-answer">
-      <p>Automations are the things I keep handling in the background.</p>
+      <p>{label} are the things I keep handling in the background.</p>
 
       <p>
         You ask once, and I keep checking, reminding, summarizing, or watching for the
-        right moment. They stay visible in Automations, so you can edit, pause, or cancel
+        right moment. They stay visible in {label}, so you can edit, pause, or cancel
         them anytime.
       </p>
 
@@ -359,6 +360,15 @@ export function ChatScreen({
   const [tasksRemaining, setTasksRemaining] = useState(initialMessage ? 1 : 2);
   const [gate, setGate] = useState<{ heading: string; sub: string } | null>(null);
   const [meetingOver, setMeetingOver] = useState(skipMeeting);
+  // The direct/more-space preference from the meeting's own second question —
+  // dropped on the floor before this, despite already being handed to onDone
+  // below. Read by nextChatOpener() so a new chat's own opener can lean on it
+  // once it's known, instead of only ever rotating the unpersonalized list.
+  const [tone, setTone] = useState<Tone>();
+  // The plain "start a new chat" screen's own line — big and centered, the
+  // same treatment onboarding completion gets, never a message bubble (that
+  // shape is an agent's own thing, not the main chat's).
+  const [homeGreeting, setHomeGreeting] = useState(() => nextChatOpener());
   // The two first-run notes arrive after the meeting: how an answer is made, then
   // how work can keep going on its own. Agents also gets a composer-anchored card
   // on small screens, where the sidebar does not exist.
@@ -749,6 +759,7 @@ export function ChatScreen({
   const meeting = useFirstMeeting({
     onDone: ({ topic, tone, opening: next }) => {
       onLearned?.({ topic, tone });
+      setTone(tone);
       setMeetingOver(true);
       setIntro("conductor");
       if (next) setOpening(next);
@@ -900,6 +911,7 @@ export function ChatScreen({
     setAutomationIntro(false);
     setValue("");
     setOpening(undefined);
+    setHomeGreeting(nextChatOpener(tone));
     setActiveTask(undefined);
     setRequest(null);
     setPending([]);
@@ -957,7 +969,12 @@ export function ChatScreen({
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: 0.05, ease: [0.16, 1, 0.3, 1] }}
-      className="w-full max-w-[560px] rounded-[22px] border border-white/12 bg-white/[0.04] p-4 transition-colors focus-within:border-white/30"
+      // Same widths as the transcript column below at every breakpoint, on
+      // purpose: the composer sits directly under the bubbles, and a box
+      // narrower than what they're allowed to reach reads as a mistake, not
+      // a choice. Stays 560px through 1440px — measured, not assumed — and
+      // only widens at 1920px, to 650px.
+      className="w-full max-w-[560px] rounded-[22px] border border-white/12 bg-white/[0.04] p-4 transition-colors focus-within:border-white/30 min-[1920px]:max-w-[650px]"
     >
       {/* Inside the composer rather than above it: what you are replying to is
           part of the message you are writing, and a bar floating over the box
@@ -1226,10 +1243,15 @@ export function ChatScreen({
             <button
               type="button"
               onClick={onBack}
-              className="absolute left-1/2 -translate-x-1/2 text-[19px] font-semibold tracking-[0.17em] text-white transition-opacity hover:opacity-75"
-              style={{ fontFamily: "var(--font-google-sans)" }}
+              className="absolute left-1/2 -translate-x-1/2 transition-opacity hover:opacity-75"
             >
-              STARCHILD
+              <img
+                src={`${import.meta.env.BASE_URL}images/starchild-logo.svg`}
+                alt="Starchild"
+                width={700}
+                height={100}
+                className="h-5 w-auto"
+              />
             </button>
 
             <div className="ml-auto hidden items-center gap-3 min-[900px]:flex">
@@ -1352,16 +1374,12 @@ export function ChatScreen({
                   transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
                   className="flex flex-col items-center"
                 >
-                  {/* The same presence that was on the landing page, at the size
-                      it gets when it has the screen to itself. It is at rest
-                      until something is being typed, and then it comes closer —
-                      it does not loop while nothing is happening. */}
                   <PresenceOrb state={value.trim() ? "listening" : "resting"} size={124} />
                   <h1
-                    className="mt-9 text-[34px] font-semibold text-white"
+                    className="mt-9 text-[22px] font-medium text-white"
                     style={{ fontFamily: "var(--font-google-sans)" }}
                   >
-                    Let's get to work
+                    {homeGreeting}
                   </h1>
                 </motion.div>
               )}
@@ -1398,7 +1416,14 @@ export function ChatScreen({
               )}
             </div>
           ) : (
-            <div className="mx-auto flex w-full max-w-[640px] flex-col gap-7 px-5 py-8 sm:px-0">
+            /* LARGE-DESKTOP BREAKPOINT: 1920px — the only wider stop past
+               the 900px mobile/desktop split; 1440px measures the same as
+               900px, checked in devtools rather than assumed. Has to match
+               composerBox's own min-[1920px]: or the column widens out of
+               step with the box pinned under it. ProductSidebar has its
+               own separate min-[1920px]: bump (268 plus 15%, not this
+               column's own ratio) — the two widen independently. */
+            <div className="mx-auto flex w-full max-w-[560px] flex-col gap-7 px-5 py-8 sm:px-0 min-[1920px]:max-w-[650px]">
               {/* Read back out of history: every turn of it, as it happened. Its
                   agent cards are live, not frozen — the same reason the ones in
                   the tail below are: an edit made anywhere shows up everywhere. */}
@@ -1598,6 +1623,21 @@ export function ChatScreen({
                     font-size: 15px; line-height: 1.6; color: #fff !important;
                   }
                   .ca-user-turn + .ca-assistant-turn, .ca-you-col + .ca-said { margin-top: 36px; }
+
+                  /* Restated from PlaceholderAnswer's own <style> (that
+                     component mounts only once a scripted answer has actually
+                     been delivered) — a tail-only entry using .ca-answer
+                     (taskHandled/taskUpdate) can in principle render before
+                     that ever happens, so the class needs a definition that
+                     doesn't depend on it having. */
+                  .ca-answer {
+                    display: flex; flex-direction: column; gap: 16px;
+                    max-width: 640px; padding: 14px 18px; border-radius: 18px 18px 18px 4px;
+                    background: rgba(255,255,255,.05);
+                    font-family: var(--font-google-sans);
+                    font-size: 15px; line-height: 1.65; color: rgba(255,255,255,.78);
+                  }
+                  .ca-answer p { margin: 0; }
                   .ca-offer {
                     display: flex; flex-direction: column; gap: 20px; width: 100%;
                     box-sizing: border-box; padding: 24px 26px; border-radius: 18px;
@@ -1739,7 +1779,12 @@ export function ChatScreen({
             everything else scrolls behind it. */}
         {pinComposer && (
           <div className="shrink-0 px-5 py-4 sm:px-8">
-            <div className="mx-auto w-full max-w-[560px]">
+            {/* Has to track composerBox's own widths (560px, 650px at
+                1920px) — this wrapper's max-width is what actually bounds
+                it once pinned, so a mismatched value here would silently
+                override the box's own and pull it out of step with the
+                transcript. */}
+            <div className="mx-auto w-full max-w-[560px] min-[1920px]:max-w-[650px]">
               {composerBox}
 
               {!guest && (

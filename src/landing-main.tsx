@@ -56,10 +56,10 @@ class LandingErrorBoundary extends Component<
  * landing.html — the landing page being taken forward.
  *
  * Same product behind it as app.html: this entry differs by one argument, the
- * line of versions the page offers. Here that line starts at F, shown as A,
- * because F is the first of the design being built rather than the last of the
- * six it was compared against. app.html keeps all six, F included, so a link
- * anyone already has still opens what it opened.
+ * line of versions the page offers. Here that line is a single version, the one
+ * being worked on, so the page has no version switch on it. The ones it was
+ * compared against stay reachable on app.html, which keeps every version that
+ * has been tried and keeps each at the letter it already had.
  */
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

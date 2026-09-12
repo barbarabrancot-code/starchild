@@ -29,7 +29,7 @@ export function FinalCtaSection({
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.5 }}
               transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
-              className="max-w-[28ch] text-[38px] leading-[48px] font-medium tracking-normal text-balance text-[var(--lf-ink,#fff)] sm:text-[42px] sm:leading-[50px]"
+              className="fcta-headline max-w-[28ch] text-[38px] leading-[48px] font-medium tracking-normal text-balance text-[var(--lf-ink,#fff)] sm:text-[42px] sm:leading-[50px]"
               style={{ fontFamily: "var(--font-google-sans)" }}
             >
               {headline}
@@ -41,7 +41,7 @@ export function FinalCtaSection({
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.5 }}
               transition={{ duration: 0.55, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-              className="rounded-full bg-[var(--lf-accent,#f84600)] px-8 py-4 text-[15px] font-medium text-white transition-transform hover:scale-[1.03]"
+              className="rounded-full bg-[var(--lf-accent,#f84600)] px-8 py-4 text-[15px] font-medium text-[var(--lf-on-accent,#fff)] transition-transform hover:scale-[1.03]"
               style={{ fontFamily: "var(--font-google-sans)" }}
             >
               {ctaLabel}

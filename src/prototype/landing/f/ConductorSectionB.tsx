@@ -1,52 +1,42 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { motion, useInView } from "motion/react";
+import gsap from "gsap";
 import { Container } from "../../Container";
 import { PresenceOrb } from "../../presence/PresenceOrb";
+import { buildCarousel } from "./ellipticalCarousel";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
 /**
  * Conductor.
  *
- * The composition is a need on the left, the models on the right, the orb
- * between them, and what comes out of it underneath. Two earlier passes got the
- * words right and the geometry wrong, in the same way twice, so it is worth
- * writing down what the mistake was.
+ * One ring of models with the claim standing inside it. Earlier passes put the
+ * needs on the left and the models on the right with the orb between them, and
+ * the geometry kept saying the wrong thing: two lit cards facing each other
+ * across a middle reads as a pairing, as this-goes-with-that, which makes the
+ * orb a junction rather than a decision. Splitting the composition in two was
+ * the cause, so the composition is no longer split.
  *
- * A line drawn from a lit card on the left to a lit card on the right does not
- * say "this went through the middle". It says these two go together — and once
- * the eye has that, the orb is a junction rather than a decision. Putting both
- * lit cards on the same horizontal axis says it a second time, and levelling
- * them with the orb says it a third. Renaming the left column from attributes to
- * tasks fixed the vocabulary and left all three intact, which is why it still
- * read as a matching interface.
+ * What replaced it is a single carousel and one privileged slot at the top. The
+ * cards lean with the ring, which means the card at twelve o'clock is the only
+ * upright one — the chosen model is legible and the other eight are visibly on
+ * their way past. That falls out of the geometry instead of being a state, so
+ * there is nothing to keep in sync and nothing that can be lit at the wrong
+ * moment.
  *
- * So there is no line between the sides, the two lit cards are never level with
- * each other, and neither of them sits on the orb's axis. The only thing that
- * touches the orb is a glow arriving from the left, and the only thing that
- * leaves it is light falling downward.
- *
- * The order carries the whole argument, which is why it is a sequence and not a
- * set of loops: a need becomes clear, it reaches the orb, the orb takes it, the
- * far side holds while a model is chosen, and only then does an answer appear.
- * Every one of those is after the one before it. Run them together and it is a
- * dashboard where things light up.
- *
- * Both sides orbit continuously and independently — different periods, so they
- * never look geared to each other, which would be its own kind of pairing.
+ * It is also driven rather than performed. An earlier version acted the argument
+ * out on a six-beat timer, which could only say its piece once, to whoever
+ * happened to be looking. Drag it, throw it, click a card or just scroll past —
+ * whatever reaches the top is the answer, every time.
  */
 
-/** what a person arrives with. One word each: a label long enough to read as a
- *  sentence starts competing with the model names for attention. */
-const NEEDS = ["Decide", "Research", "Write", "Plan", "Track", "Prepare", "Create", "Build"];
-
 /**
- * What it can reach — the eight cards as drawn.
+ * What it can reach.
  *
  * Every logo is the exported artwork, not a redraw. `art` is the file in
  * public/models/ and `w` is the mark's width as a fraction of the card, taken
  * off the design rather than eyeballed: OpenAI is 129.707 of 210.554, Kimi is
- * 103.523, and so on. That is what keeps eight marks of very different
+ * 103.523, and so on. That is what keeps nine marks of very different
  * proportions looking like one set.
  *
  * Two of them — Qwen and MiniMax — are flattened in the file itself: the frame
@@ -55,347 +45,399 @@ const NEEDS = ["Decide", "Research", "Write", "Plan", "Track", "Prepare", "Creat
  * `whole` and drawn edge to edge instead of centred inside a card. It renders
  * identically because the ground in the file is the same #3a3a3a the CSS card
  * uses. Ungroup those two in Figma and they can join the rest.
+ *
+ * `lit` is the ground the card takes when it is the chosen one. It is the
+ * provider's own colour, so the answer is recognisable at a glance rather than
+ * being nine identical cards that take turns going orange.
  */
-type Model = { name: string; art: string; w: number; whole?: boolean };
+type Model = { name: string; art: string; w: number; brand: string; whole?: boolean };
 
 const MODELS: Model[] = [
-  { name: "OpenAI", art: "openai-wordmark.svg", w: 0.616 },
-  { name: "Claude", art: "claude-wordmark.svg", w: 0.667 },
-  { name: "Gemini", art: "gemini-wordmark.svg", w: 0.628 },
-  { name: "Grok", art: "grok-wordmark.svg", w: 0.895 },
-  { name: "Qwen", art: "qwen-card.svg", w: 1, whole: true },
-  { name: "DeepSeek", art: "deepseek.svg", w: 0.857 },
-  { name: "MiniMax", art: "minimax-card.svg", w: 1, whole: true },
-  { name: "Kimi", art: "kimi-wordmark.svg", w: 0.492 },
+  { name: "OpenAI", art: "openai-wordmark.svg", w: 0.616, brand: "#10A37F" },
+  { name: "Claude", art: "claude-wordmark.svg", w: 0.667, brand: "#D97757" },
+  {
+    name: "Gemini",
+    art: "gemini-wordmark.svg",
+    w: 0.628,
+    brand: "linear-gradient(115deg, #4285F4 0%, #9B72CB 38%, #EA4335 72%, #FBBC05 100%)",
+  },
+  // No Grok. public/models/grok-wordmark.svg is the SpaceX wordmark under
+  // another name — its root group is still <g id="Spacexai"> — so the entry that
+  // used to be here drew SpaceX a second time and Grok never appeared at all.
+  // Export real Grok artwork and it can come back as a ninth card; until then
+  // naming a model the ring cannot actually show would be the worse bug.
+  { name: "Qwen", art: "qwen-card.svg", w: 1, brand: "#615CED", whole: true },
+  { name: "DeepSeek", art: "deepseek.svg", w: 0.857, brand: "#4D6BFE" },
+  { name: "MiniMax", art: "minimax-card.svg", w: 1, brand: "#1456F0", whole: true },
+  { name: "Kimi", art: "kimi-wordmark.svg", w: 0.492, brand: "#007CFF" },
+  { name: "SpaceX", art: "spacex.svg", w: 0.72, brand: "#005288" },
 ];
-
-/** the one that clarifies, and the one that lights — never at the same moment */
-const LIT_NEED = 0;
-const LIT_MODEL = 1;
 
 /**
- * 0 idle · 1 a need clarifies · 2 the signal crosses · 3 the orb takes it
- * 4 a model is chosen · 5 the light falls · 6 the answer
+ * Two laps of the eight, so the ring is a ring rather than eight cards with gaps
+ * between them. Sixteen seats is 22.5° apart, which is what sets the card size
+ * below: any wider and the chosen card overlaps the two beside it.
  */
-type Stage = 0 | 1 | 2 | 3 | 4 | 5 | 6;
+const LAPS = 2;
+const SEATS = Array.from({ length: LAPS }, (_, lap) =>
+  MODELS.map((model) => ({ ...model, lap })),
+).flat();
 
-const BEATS: [Stage, number][] = [
-  [1, 700],
-  [2, 1350],
-  [3, 2000],
-  [4, 2600],
-  [5, 3150],
-  [6, 3450],
-];
+/**
+ * The card, at 0.641 of the design's numbers.
+ *
+ * The design draws it 210.554 × 119.314 with a 21.933 radius, and gives the
+ * chosen one a 33.247 radius — 33.247 / 21.933 is 1.516, which is where
+ * LIT_SCALE comes from, and scaling rather than re-dimensioning makes the mark,
+ * the radius and the padding all land on the design's active values at once.
+ *
+ * 0.641 is what makes the chosen card come back to 135 × 1.516 = 205 wide, which
+ * is the size it is drawn at. It also has to clear its neighbours: the chosen
+ * card and a resting one together span (205 + 135) / 2 = 170px, against seats
+ * 2 · RING_R · sin(11.25°) = 178px apart. That 8px is the whole margin, and it
+ * is why the ring holds sixteen seats rather than eighteen — at 20° apart the
+ * chosen card runs into both of them, which is the one place in this composition
+ * where a collision is impossible to miss.
+ */
+const CARD_SCALE = 0.641;
+const CARD_W = 210.554 * CARD_SCALE;
+const CARD_H = 119.314 * CARD_SCALE;
+const CARD_R = 21.933 * CARD_SCALE;
+const LIT_SCALE = 1.516;
+
+/**
+ * The ring, in pixels from the top of the stage.
+ *
+ * Its centre sits well below the orb, so what shows is the top of the circle
+ * with the cards falling away on both sides — the claim stands in the open part
+ * of it. RING_PAD is the margin the field needs beyond the rim: a card on the
+ * rim has half its width outside the radius, and outside the element is outside
+ * the mask.
+ */
+const STAGE_H = 700;
+const RING_R = 520;
+const RING_PAD = 140;
+const RING_Y = 590;
+/** the orb, and the centre of the warmth behind the claim */
+const ORB_Y = 460;
+
+/**
+ * A step, and the hold after it.
+ *
+ * The hold is the longer of the two on purpose, and getting that backwards is
+ * what made the whole thing look broken. With a slow step and a short rest the
+ * ring is in transit almost all the time: the chosen card grows and lights while
+ * it is still travelling, sweeps through twelve o'clock without stopping, and
+ * has already begun to dim by the time it is anywhere near centred. Measured, it
+ * spent every moment between +11° and −11° of the slot and none at all in it.
+ *
+ * So it steps quickly and then stands still. The card arrives at the top, holds
+ * there long enough to be read as the answer, and only then does the ring move
+ * on — which is the difference between a carousel and a thing that spins.
+ */
+const STEP_SECONDS = 0.9;
+// Each selected model remains highlighted for 1.5 seconds before the next step.
+const REST_SECONDS = 1.5;
+
+/** pixels of scrolling that advance the ring by one card */
+const SCROLL_PER_STEP = 260;
 
 export function ConductorSectionB() {
   const sectionRef = useRef<HTMLElement>(null);
   const seen = useInView(sectionRef, { once: true, amount: 0.35 });
-  const [stage, setStage] = useState<Stage>(0);
+
+  const cardRefs = useRef<(HTMLSpanElement | null)[]>([]);
 
   useEffect(() => {
-    if (!seen) return;
-    const timers = BEATS.map(([s, ms]) => window.setTimeout(() => setStage(s), ms));
-    return () => timers.forEach(window.clearTimeout);
-  }, [seen]);
+    const section = sectionRef.current;
+    const cards = cardRefs.current;
+    if (!section || cards.length !== SEATS.length || cards.some((el) => !el)) return;
+    const targets = cards as HTMLSpanElement[];
+
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    /**
+     * Exactly one card is ever chosen, and it is always the one standing at the
+     * top of the ring.
+     *
+     * The carousel's own onActivate/onDeactivate cannot express that, because
+     * they fire at the halfway point between two seats — so the highlight jumps
+     * to a card that is still 11° short of the top and rides in with it, while
+     * the one it took over from is 11° past and still fading. For most of a step
+     * that reads as two half-lit cards and none of them where the eye is looking.
+     *
+     * Tying it to the step instead — dim when the ring starts turning, light
+     * whatever has arrived when it stops — means the highlight only ever exists
+     * on a card that is stationary at the top. The ring goes quiet while it
+     * turns, which is honest: mid-turn there is no answer yet.
+     *
+     * Scale is GSAP's rather than the stylesheet's, and it has to be: CSS's
+     * standalone `scale` property is composed before `transform`, so it would
+     * multiply the x/y the carousel writes and push the chosen card outward off
+     * its own orbit. Driving both through one transform keeps them separate.
+     */
+    let litEl: HTMLElement | null = null;
+
+    const light = (el: HTMLElement) => {
+      if (litEl === el) return;
+      litEl = el;
+      el.classList.add("is-lit");
+      gsap.to(el, { scale: LIT_SCALE, duration: 0.42, ease: "power2.out", overwrite: "auto" });
+    };
+
+    const dim = () => {
+      const el = litEl;
+      if (!el) return;
+      litEl = null;
+      el.classList.remove("is-lit");
+      gsap.to(el, { scale: 1, duration: 0.32, ease: "power2.out", overwrite: "auto" });
+    };
+
+    const carousel = buildCarousel(targets, {
+      radiusX: RING_R,
+      radiusY: RING_R,
+      // twelve o'clock, which with rotateItems is the one slot that reads level
+      activeAngle: -90,
+      rotateItems: true,
+      draggable: !reduced,
+      autoAdvance: reduced ? undefined : REST_SECONDS,
+      stepVars: { duration: STEP_SECONDS, ease: "power2.inOut" },
+      // Clicking a card brings it up the way the ring already turns, even when
+      // going the other way round would be shorter — see the note on onScroll.
+      onClick: (el, self) => self.to(el, { duration: 1, ease: "power2.out" }, "ccw"),
+      onStart: dim,
+      onStop: light,
+    });
+
+    // The helper never fires a callback for the card it starts on: its initial
+    // active element already equals the one it is asked to settle on, so the
+    // change it watches for does not happen. Without this the ring opens with
+    // nothing chosen and stays that way until the first step lands — which is
+    // most of the time anybody spends looking at it.
+    light(carousel.activeElement());
+
+    // Scrolling turns it — always the same way, whichever way the page is going.
+    //
+    // Mapping scroll direction onto rotation direction was worse than it sounds:
+    // reading down the page and then nudging back up made the ring stop and run
+    // backwards, so the models appeared to un-choose themselves. Nobody asked it
+    // to reverse; they just scrolled.
+    //
+    // It advances by distance travelled rather than per event, because a step is
+    // now short: firing one on every scroll event would restart the tween sixty
+    // times a second and the ring would never come to rest at all, which is the
+    // problem the short step exists to fix.
+    let onScreen = false;
+    let lastY = window.scrollY;
+    let travelled = 0;
+
+    const onScroll = () => {
+      const y = window.scrollY;
+      if (onScreen) {
+        travelled += Math.abs(y - lastY);
+        if (travelled >= SCROLL_PER_STEP) {
+          travelled = 0;
+          carousel.next();
+        }
+      }
+      lastY = y;
+    };
+
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        onScreen = entry.isIntersecting;
+        lastY = window.scrollY;
+      },
+      { threshold: 0 },
+    );
+    io.observe(section);
+
+    if (!reduced) window.addEventListener("scroll", onScroll, { passive: true });
+
+    return () => {
+      io.disconnect();
+      window.removeEventListener("scroll", onScroll);
+      carousel.kill();
+      gsap.killTweensOf(targets);
+      // kill() does not deactivate, so the chosen card would keep its class and
+      // its transform into the next mount — which StrictMode makes routine in dev.
+      targets.forEach((el) => el.classList.remove("is-lit"));
+      gsap.set(targets, { clearProps: "transform" });
+    };
+  }, []);
 
   return (
     <section ref={sectionRef} className="cdb-section" aria-labelledby="cdb-title">
       <Container>
-        <motion.div
-          className="cdb-heading"
-          initial={{ opacity: 0, y: 14 }}
-          animate={seen ? { opacity: 1, y: 0 } : undefined}
-          transition={{ duration: 0.55, ease: EASE }}
-        >
-          <p>Conductor</p>
-          <h2 id="cdb-title">It knows you. It knows AI.</h2>
-        </motion.div>
-
         <div className="cdb-stage">
-          {/* Two orbits, centred on the orb and turning at different rates. Each
-              is a full circle with only its own side showing — the mask is on the
-              still wrapper, not on the turning one, so a card fades out as it
-              reaches the middle rather than crossing it. */}
-          {/* The needs. Words, because a need is what somebody would say. */}
-          <div className="cdb-orbit cdb-orbit--left">
-            <div className="cdb-spin cdb-spin--left">
-              {NEEDS.map((label, i) => (
-                <span key={label} className="cdb-seat" style={{ ["--a" as string]: `${(360 / NEEDS.length) * i}deg` }}>
-                  <span className={`cdb-card cdb-card--left${i === LIT_NEED && stage >= 1 ? " is-lit" : ""}`}>
-                    {label}
-                  </span>
+          <span className="cdb-halo" aria-hidden="true" />
+
+          <div className="cdb-ring">
+            <div className="cdb-track">
+              {SEATS.map((model, i) => (
+                <span
+                  key={`${model.name}-${model.lap}`}
+                  ref={(el) => {
+                    cardRefs.current[i] = el;
+                  }}
+                  className={`cdb-card${model.whole ? " is-whole" : ""}`}
+                  style={{ ["--brand" as string]: model.brand }}
+                  // The second lap is the same nine again, so it is named once.
+                  {...(model.lap === 0
+                    ? { role: "img", "aria-label": model.name }
+                    : { "aria-hidden": true })}
+                >
+                  <img
+                    src={`${import.meta.env.BASE_URL}models/${model.art}`}
+                    alt=""
+                    draggable={false}
+                    style={{ width: `${model.w * 100}%` }}
+                  />
                 </span>
               ))}
             </div>
           </div>
 
-          {/* The models. Cards, because a model is a thing with a mark. */}
-          <div className="cdb-orbit cdb-orbit--right">
-            <div className={`cdb-spin cdb-spin--right${stage >= 3 && stage < 6 ? " is-holding" : ""}`}>
-              {MODELS.map((model, i) => (
-                <span key={model.name} className="cdb-seat" style={{ ["--a" as string]: `${(360 / MODELS.length) * i}deg` }}>
-                  <span
-                    className={`cdb-card cdb-card--right${model.whole ? " is-whole" : ""}${i === LIT_MODEL && stage >= 4 ? " is-lit" : ""}`}
-                    role="img"
-                    aria-label={model.name}
-                  >
-                    <img
-                      src={`${import.meta.env.BASE_URL}models/${model.art}`}
-                      alt=""
-                      style={{ width: `${model.w * 100}%` }}
-                    />
-                  </span>
-                </span>
-              ))}
-            </div>
+          {/* Two elements, and they have to stay two: the centring lives on the
+              outer one because Motion writes the inner one's transform outright
+              on every frame, and a translateX(-50%) written in CSS next to it is
+              simply overwritten — which parks the whole claim half its own width
+              to the right of the ring it is supposed to stand inside. */}
+          <div className="cdb-core">
+            <motion.div
+              className="cdb-core-in"
+              initial={{ opacity: 0, y: 14 }}
+              animate={seen ? { opacity: 1, y: 0 } : undefined}
+              transition={{ duration: 0.55, ease: EASE }}
+            >
+              <p className="cdb-eyebrow">Your request. A model picked for the task.</p>
+              <h2 id="cdb-title">Not sure which model to use?</h2>
+              <p className="cdb-body">
+                Starchild can pick the best AI model
+                <br />
+                for your task, saves money and time
+              </p>
+              <PresenceOrb state="resting" size={36} className="cdb-orb" />
+            </motion.div>
           </div>
-
-          {/* The signal. Not a line between two cards — a glow that comes off the
-              left side and goes into the orb, and stops existing once it lands. */}
-          <span className={`cdb-signal${stage >= 2 ? " is-on" : ""}`} aria-hidden="true" />
-
-          <div className={`cdb-orb${stage >= 3 ? " is-taking" : ""}`} aria-hidden="true">
-            <PresenceOrb state={stage >= 3 && stage < 6 ? "working" : "resting"} size={140} />
-          </div>
-
-          {/* What leaves the orb goes down, not sideways. The answer is below it
-              because that is where the light falls. */}
-          <span className={`cdb-spill${stage >= 5 ? " is-on" : ""}`} aria-hidden="true" />
-          <motion.p
-            className="cdb-answer"
-            initial={{ opacity: 0, y: 8 }}
-            animate={stage >= 6 ? { opacity: 1, y: 0 } : undefined}
-            transition={{ duration: 0.5, ease: EASE }}
-          >
-            The right AI,
-            <br />
-            for what you need.
-          </motion.p>
         </div>
       </Container>
 
       <style>{`
-        .cdb-section { position: relative; padding: 96px 0 104px; background: transparent; font-family: var(--font-google-sans); overflow: hidden; }
+        /* The stage supplies the visual breathing room. Keeping the outer padding
+           compact stops this carousel from creating a second, oversized gap before
+           the 200px rhythm that separates landing sections. */
+        .cdb-section { position: relative; padding: 48px 0 56px; background: transparent; font-family: var(--font-google-sans); overflow: hidden; }
 
-        .cdb-heading { position: relative; z-index: 3; text-align: center; }
-        .cdb-heading p {
-          margin: 0 0 10px; color: var(--lf-accent-ink);
-          font-size: 13px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase;
+        .cdb-stage { position: relative; height: ${STAGE_H}px; }
+
+        /* ---------- the ring ---------- */
+
+        /* Centred on RING_Y rather than on the stage, so what the stage shows is
+           the top of the circle and the claim stands in the open middle of it. */
+        .cdb-ring {
+          position: absolute; top: ${RING_Y}px; left: 50%; z-index: 1;
+          width: ${(RING_R + RING_PAD) * 2}px;
+          height: ${(RING_R + RING_PAD) * 2}px;
+          margin: ${-(RING_R + RING_PAD)}px 0 0 ${-(RING_R + RING_PAD)}px;
+          pointer-events: none;
+          /* Solid over the top of the circle and gone by the bottom of it: cards
+             dissolve as they come round past the horizontal instead of piling up
+             underneath the claim. The mask is on the still field, not the turning
+             track — on the turning one it turns with the cards and nothing ever
+             fades. */
+          -webkit-mask-image: linear-gradient(to bottom, #000 0 44%, transparent 62%);
+          mask-image: linear-gradient(to bottom, #000 0 44%, transparent 62%);
         }
-        .cdb-heading h2 {
-          margin: 0; color: var(--lf-ink);
-          font-size: 42px; line-height: 1.16; font-weight: 500; letter-spacing: -.01em;
+        .cdb-track { position: absolute; inset: 0; }
+
+        /* Stacked at the centre and spread from there by the carousel, which owns
+           the transform outright — no translate, no rotate and no scale in here,
+           or they would compose with what it writes. */
+        .cdb-card {
+          position: absolute; top: 50%; left: 50%; z-index: 1;
+          display: grid; place-items: center; overflow: hidden;
+          width: ${CARD_W}px; height: ${CARD_H}px;
+          border-radius: ${CARD_R}px;
+          background: var(--brand);
+          /* Quiet brand colours show the available models without competing
+             with the selected card. */
+          opacity: .52;
+          pointer-events: auto;
+          cursor: grab;
+          will-change: transform;
+          transition: opacity .34s ease, background .34s ease;
         }
+        .cdb-card:active { cursor: grabbing; }
+        .cdb-card img { display: block; height: auto; user-select: none; }
+        /* Qwen and MiniMax are the whole card in one file — see the note on
+           MODELS — so they fill it instead of sitting inside it. */
+        .cdb-card.is-whole img { width: 100%; height: 100%; }
 
-        /* --cdb-r is the orbit radius and the only number the geometry needs. The
-           field is twice it plus room for a card, so nothing is clipped by the
-           section as it comes round. */
-        .cdb-stage {
-          position: relative; height: 660px; margin-top: 20px;
-          --cdb-r: 300px;
-          /* room for the widest card to hang off the rim without being clipped */
-          --cdb-pad: 190px;
+        /* The chosen card resolves to its provider's own ground. */
+        .cdb-card.is-lit {
+          z-index: 2;
+          opacity: 1;
+          background: var(--brand);
         }
+        .cdb-card.is-lit:not(.is-whole) img { filter: brightness(0) invert(1); }
 
-        /* ---------- the two orbits ---------- */
+        /* ---------- what stands inside it ---------- */
 
-        /* The field is the circle plus a card's worth of margin on every side.
-           Sized to the circle exactly, a card sitting on the rim has half its
-           width outside the element — and outside the element is outside the
-           mask, so it was being cut in half at the very place it is meant to be
-           seen. --cdb-pad is that margin. */
-        .cdb-orbit {
-          position: absolute; top: 50%; left: 50%;
-          width: calc((var(--cdb-r) + var(--cdb-pad)) * 2);
-          height: calc((var(--cdb-r) + var(--cdb-pad)) * 2);
-          margin: calc((var(--cdb-r) + var(--cdb-pad)) * -1) 0 0 calc((var(--cdb-r) + var(--cdb-pad)) * -1);
+        .cdb-halo {
+          position: absolute; top: ${ORB_Y}px; left: 50%; z-index: 0;
+          width: 560px; height: 400px;
+          transform: translate(-50%, -50%);
+          background: radial-gradient(closest-side,
+            rgba(var(--lf-accent-rgb), calc(.13 * var(--lf-glow))), transparent 100%);
+          filter: blur(34px);
           pointer-events: none;
         }
 
-        /* Opaque at the outside edge and transparent toward the middle, which is
-           the opposite of what it said before: a card is visible while it is out
-           on its own side and fades as it comes round toward the orb, so it never
-           crosses the centre. The mask is on the still layer — on the turning one
-           it turns with the cards and nothing ever fades. */
-        .cdb-orbit--left {
-          -webkit-mask-image: linear-gradient(to left, transparent 0 46%, #000 62%);
-          mask-image: linear-gradient(to left, transparent 0 46%, #000 62%);
-        }
-        .cdb-orbit--right {
-          -webkit-mask-image: linear-gradient(to right, transparent 0 46%, #000 62%);
-          mask-image: linear-gradient(to right, transparent 0 46%, #000 62%);
-        }
-
-        .cdb-spin { position: absolute; inset: 0; }
-        /* Different periods on purpose. Two orbits turning at one rate look
-           geared to each other, which is the pairing this section is trying to
-           stop implying. */
-        .cdb-spin--left { animation: cdb-turn 88s linear infinite; }
-        .cdb-spin--right { animation: cdb-turn 71s linear infinite; }
-        /* Held, not stopped dead: the far side pauses while the choice is made,
-           which is what makes the choice look like it took a moment. */
-        .cdb-spin.is-holding { animation-play-state: paused; }
-
-        .cdb-seat {
-          position: absolute; top: 50%; left: 50%;
-          transform: rotate(var(--a)) translateX(var(--cdb-r));
-        }
-
-        /* Upright the whole way round, so a label is never read at an angle. The
-           counter-turn has to be animated at the same period as the turn it is
-           undoing, and in the same direction. */
-        .cdb-card {
-          position: absolute; top: 50%; left: 50%;
-          display: block;
-          /* Quiet. They are what was available, not what happened. */
-          opacity: .28;
-          transform: translate(-50%, -50%) rotate(calc(var(--a) * -1));
-          transition: opacity .6s ease, border-color .6s ease, background-color .6s ease, color .6s ease, box-shadow .6s ease, scale .6s cubic-bezier(.16,1,.3,1);
-        }
-
-        /* The needs stay words. */
-        .cdb-card--left {
-          padding: 11px 16px; border-radius: 11px;
-          border: 1px solid rgba(var(--lf-ink-rgb), calc(.07 + .93 * var(--lf-lift-e)));
-          background: rgba(var(--lf-ink-rgb), calc(.04 + .96 * var(--lf-lift-f)));
-          color: rgba(var(--lf-ink-rgb), calc(.55 + .45 * var(--lf-lift-t)));
-          font-size: 14px; white-space: nowrap;
-        }
-
-        /* ---------- the model cards ----------
-
-           210.554 × 119.314 with a 21.933 radius, which are the file's numbers
-           rather than rounded ones — at this size the difference is invisible and
-           the provenance is not, and the next person to open the design should
-           find the same figures.
-
-           The chosen state is the same card scaled by 1.516 rather than a second
-           card with its own dimensions. That number is not chosen either: the
-           design's active radius is 33.247, and 33.247 / 21.933 is 1.516. Scaling
-           makes the mark, the radius and the padding all land on the design's
-           active values at once, which no amount of hand-set widths would. */
-        .cdb-card--right {
-          display: grid; place-items: center; overflow: hidden;
-          width: 210.554px; height: 119.314px;
-          border-radius: 21.933px;
-          background: #3a3a3a;
-        }
-        .cdb-card--right img { display: block; height: auto; }
-        /* Qwen and MiniMax are the whole card in one file — see the note on
-           MODELS — so they fill it instead of sitting inside it. */
-        .cdb-card--right.is-whole img { width: 100%; height: 100%; }
-
-        /* Orange, and the mark on it is white in the file for exactly this. */
-        .cdb-card--right.is-lit {
-          background: #ce6339;
-          scale: 1.516;
-          box-shadow: 0 0 46px rgba(var(--lf-accent-rgb), calc(.26 * var(--lf-glow)));
-        }
-        .cdb-card--left { animation: cdb-unturn-left 88s linear infinite; }
-        .cdb-card--right { animation: cdb-unturn-right 71s linear infinite; }
-        .cdb-spin.is-holding .cdb-card { animation-play-state: paused; }
-
-        /* The need does not go orange. It becomes legible — the accent is kept
-           for the orb, the chosen model and the signal, so that three things and
-           not five are carrying it. */
-        .cdb-card--left.is-lit {
-          opacity: 1;
-          border-color: rgba(var(--lf-ink-rgb), calc(.22 + .78 * var(--lf-lift-e)));
-          background: var(--lf-surface);
-          color: var(--lf-ink);
-        }
-        .cdb-card.is-lit { opacity: 1; }
-
-        @keyframes cdb-turn { to { transform: rotate(360deg); } }
-        @keyframes cdb-unturn-left {
-          from { transform: translate(-50%, -50%) rotate(calc(var(--a) * -1)); }
-          to { transform: translate(-50%, -50%) rotate(calc(var(--a) * -1 - 360deg)); }
-        }
-        @keyframes cdb-unturn-right {
-          from { transform: translate(-50%, -50%) rotate(calc(var(--a) * -1)); }
-          to { transform: translate(-50%, -50%) rotate(calc(var(--a) * -1 - 360deg)); }
-        }
-
-        /* ---------- the signal in ---------- */
-
-        /* A soft streak that crosses from the left field into the orb and is gone.
-           It is not anchored to a card, and that is deliberate: anchored, it
-           would be a line from one card to the middle, and a line from one card
-           is the beginning of a line between two. */
-        .cdb-signal {
-          position: absolute; top: 50%; left: calc(50% - 300px);
-          width: 230px; height: 76px;
-          transform: translateY(-50%);
-          border-radius: 999px;
-          background: radial-gradient(closest-side at 20% 50%,
-            rgba(var(--lf-accent-rgb), calc(.5 * var(--lf-glow))), transparent 100%);
-          filter: blur(18px);
-          opacity: 0;
-        }
-        .cdb-signal.is-on { animation: cdb-travel 900ms cubic-bezier(.32,0,.2,1) forwards; }
-        @keyframes cdb-travel {
-          0% { opacity: 0; translate: -40px 0; }
-          35% { opacity: 1; }
-          100% { opacity: 0; translate: 250px 0; }
-        }
-
-        /* ---------- the orb ---------- */
-
-        .cdb-orb {
-          position: absolute; top: 50%; left: 50%; z-index: 2;
-          transform: translate(-50%, -50%);
-        }
-        .cdb-orb.is-taking { animation: cdb-pulse 1s cubic-bezier(.16,1,.3,1); }
-        @keyframes cdb-pulse {
-          0% { scale: 1; }
-          34% { scale: 1.08; }
-          100% { scale: 1; }
-        }
-
-        /* ---------- what comes out ---------- */
-
-        .cdb-spill {
-          position: absolute; top: calc(50% + 42px); left: 50%; z-index: 1;
-          width: 400px; height: 280px;
+        /* Wide enough for the headline to hold one line — it is 620px set — while
+           the supporting line is capped much shorter so it breaks where it is
+           written to break, under the headline rather than across its full width. */
+        .cdb-core {
+          position: absolute; top: 316px; left: 50%; z-index: 3;
+          width: 100%; max-width: 700px;
           transform: translateX(-50%);
-          clip-path: polygon(43% 0, 57% 0, 100% 100%, 0 100%);
-          background: linear-gradient(to bottom,
-            rgba(var(--lf-accent-rgb), calc(.3 * var(--lf-glow))) 0%,
-            rgba(var(--lf-accent-rgb), calc(.11 * var(--lf-glow))) 44%,
-            transparent 92%);
-          filter: blur(16px);
-          opacity: 0; transition: opacity .8s ease;
+          pointer-events: none;
         }
-        .cdb-spill.is-on { opacity: 1; }
-
-        .cdb-answer {
-          position: absolute; top: calc(50% + 176px); left: 50%; z-index: 2;
-          width: 320px; margin: 0;
-          transform: translateX(-50%);
-          text-align: center; color: var(--lf-ink);
-          font-size: 21px; line-height: 1.3; font-weight: 500;
+        .cdb-core-in {
+          display: flex; flex-direction: column; align-items: center;
+          text-align: center;
         }
+        .cdb-eyebrow {
+          margin: 0 0 13px; color: var(--lf-accent-ink);
+          font-size: 12.5px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase;
+        }
+        .cdb-core h2 {
+          margin: 0; color: var(--lf-ink);
+          font-size: 38px; line-height: 1.16; font-weight: 500; letter-spacing: -.01em;
+        }
+        .cdb-body {
+          margin: 12px 0 0; max-width: 280px;
+          color: rgba(var(--lf-ink-rgb), calc(.62 + .38 * var(--lf-lift-t)));
+          font-size: 13px; line-height: 1.45;
+        }
+        .cdb-orb { margin-top: 8px; }
 
         @media (prefers-reduced-motion: reduce) {
-          .cdb-spin, .cdb-card { animation: none; }
-          .cdb-orb.is-taking { animation: none; }
-          .cdb-signal.is-on { animation: none; opacity: .8; }
+          .cdb-card { cursor: default; }
         }
 
-        /* The orbits are 600 across and the answer is 320: below this they start
-           sharing pixels. The orbits go and the three things that carry the
-           argument stay. */
-        @media (max-width: 1240px) {
-          .cdb-orbit { display: none; }
-          .cdb-stage { height: 420px; }
-          .cdb-signal { display: none; }
+        /* The ring is 1135 across at the rim. Below this it stops fitting the
+           gutters, so it goes and the claim it was arranged around stays — at
+           full size, rather than scaled down until the body copy is unreadable. */
+        @media (max-width: 1280px) {
+          .cdb-ring { display: none; }
+          .cdb-stage { height: 320px; }
+          .cdb-core { top: 50%; transform: translate(-50%, -50%); }
+          .cdb-halo { top: 50%; width: 480px; height: 340px; }
         }
 
         @media (max-width: 760px) {
-          .cdb-heading h2 { font-size: 32px; }
-          .cdb-stage { height: 380px; }
-          .cdb-answer { width: 100%; font-size: 19px; }
+          .cdb-core h2 { font-size: 28px; }
         }
       `}</style>
     </section>

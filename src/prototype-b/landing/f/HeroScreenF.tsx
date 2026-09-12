@@ -10,7 +10,7 @@ import { usePointerLean } from "../../presence/usePointerLean";
 import { ActivityLine } from "../../ActivityLine";
 import { replyTo } from "../e/heroReplies";
 import { SiteHeaderF } from "./SiteHeaderF";
-import heroGradientAsset from "../../../../assets/gradiente hero.svg";
+import heroGradientAsset from "../../../../design/assets/gradiente hero.svg";
 
 /**
  * Whether the orb has a face drawn in SVG. Off.

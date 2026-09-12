@@ -1,6 +1,7 @@
 import type { TaskCard } from "../data";
 import { HeroScreenF } from "./f/HeroScreenF";
 import { ConversationShowcaseF } from "./f/ConversationShowcaseF";
+import { AgentsShowcaseSection } from "./f/AgentsShowcaseSection";
 import { OrbitSection } from "./f/OrbitSection";
 import { ConductorSectionA } from "./f/ConductorSectionA";
 import { MemoryShowcaseSection } from "./f/MemoryShowcaseSection";
@@ -106,6 +107,11 @@ export function LandingPageF({
 
       {/* 2 · You talk; Starchild turns the request into the next concrete step. */}
       <ConversationShowcaseF />
+
+      {/* 2.5 · It doesn't stop when you close the tab. A dedicated agent has
+             its own roster row, its own thread, and its own history — the
+             same screen the product itself uses, curated down to five. */}
+      <AgentsShowcaseSection />
 
       {/* 3 · What it plugs into. Carried over from E, on its own concave ground —
              the one section here that is a panel rather than a stretch of page. */}

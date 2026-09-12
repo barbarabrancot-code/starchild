@@ -28,9 +28,60 @@ const GUIDED_LINE = "What's taking up most of your attention lately?";
 const PREFERENCE_LINE =
   "One thing that helps me work better with you: do you want me to be more direct, or give you more room to think things through?";
 
+/**
+ * Two different moments, two different registers. Onboarding completion is
+ * a one-time welcome — always this exact line, the same way a person
+ * doesn't vary a greeting they only ever say once. A plain new chat is not
+ * a welcome — the person has been here for months — so it talks the way a
+ * real conversation starter does: short, familiar, no ceremony, and varied
+ * enough that it doesn't read as a fixed label each time.
+ */
+export const ONBOARDING_WELCOME_LINE = "Hey, glad you're here. What's up?";
+
+export const NEW_CHAT_OPENERS = [
+  "What are we working on?",
+  "What's on your mind?",
+  "Need a hand with anything?",
+  "What do you want to tackle?",
+  "What should we get into?",
+  "What can I help move forward?",
+  "What are we shipping?",
+  "What's worth your time today?",
+];
+
+/** One line per known communication style — deliberately just one each,
+ *  not its own rotating pool: the style is the personalization, so a
+ *  further layer of variety on top of it would just be noise. Unknown tone
+ *  (nothing learned yet, or an account from before this shipped) falls back
+ *  to rotating NEW_CHAT_OPENERS instead. */
+const NEW_CHAT_BY_TONE: Record<Tone, string> = {
+  direct: "What do you want to get done?",
+  space: "What's up?",
+};
+
+function rotateThrough(key: string, lines: string[]): string {
+  let index = 0;
+  try {
+    index = Number(window.localStorage.getItem(key)) || 0;
+  } catch { /* private mode — falls back to always starting at the first line */ }
+  const line = lines[index % lines.length];
+  try {
+    window.localStorage.setItem(key, String((index + 1) % lines.length));
+  } catch { /* private mode */ }
+  return line;
+}
+
+/** `tone`, once known (the direct/more-space preference from this same
+ *  meeting's second question), picks a specific line over the general
+ *  rotation — see NEW_CHAT_BY_TONE. */
+export function nextChatOpener(tone?: Tone): string {
+  if (tone) return NEW_CHAT_BY_TONE[tone];
+  return rotateThrough("starchild.newChat.openerIndex", NEW_CHAT_OPENERS);
+}
+
 function openingFor(topic?: Topic) {
   if (!topic) return "So - what's the first thing you'd like to put in front of me?";
-  return `Got it. Let's start there. What would have to happen this week for ${topic.echo ?? "that"} to feel handled?`;
+  return ONBOARDING_WELCOME_LINE;
 }
 
 let questionId = 0;

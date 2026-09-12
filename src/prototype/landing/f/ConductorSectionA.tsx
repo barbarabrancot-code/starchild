@@ -1,14 +1,14 @@
 import { useRef } from "react";
 import { motion, useInView } from "motion/react";
 import { Container } from "../../Container";
-import conductorAsset from "../../../../assets/conductor.svg";
+import conductorAsset from "../../../../design/assets/conductor.svg";
 /* The same drawing with its line art inverted. Two files and a CSS swap rather
    than one file and a filter: the drawing is near-white lines plus one orange
    fill, and every filter that lifts the lines also moves the orange. */
-import conductorLightAsset from "../../../../assets/conductor-light.svg";
-import leftBeamAsset from "../../../../assets/feixe1.svg";
-import rightBeamAsset from "../../../../assets/feixe 2.svg";
-import conductorBeamAsset from "../../../../assets/feixe conductor.svg";
+import conductorLightAsset from "../../../../design/assets/conductor-light.svg";
+import leftBeamAsset from "../../../../design/assets/feixe1.svg";
+import rightBeamAsset from "../../../../design/assets/feixe 2.svg";
+import conductorBeamAsset from "../../../../design/assets/feixe conductor.svg";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 

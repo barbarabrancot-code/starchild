@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Container } from "../../Container";
-import showcaseShot from "../../../../assets/images/Imagem do Codex 30 de ago. de 2026, 23_47_28.png";
+import showcaseShot from "../../../../design/assets/images/Imagem do Codex 30 de ago. de 2026, 23_47_28.png";
 
 const MESSAGES = [
   "Talk to an AI that remembers you.",

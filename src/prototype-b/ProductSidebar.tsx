@@ -226,7 +226,10 @@ export function ProductSidebar({
 
   return (
     <>
-    <div className="hidden w-[268px] shrink-0 border-r border-white/[0.08] bg-[#0c0c0d] min-[900px]:block">
+    {/* Stays 268px through 1440px — a list of names and previews doesn't
+        need more room just because ChatScreen's own reading column got
+        one. 1920px is the exception: 308px, 268 plus 15%. */}
+    <div className="hidden w-[268px] shrink-0 border-r border-white/[0.08] bg-[#0c0c0d] min-[900px]:block min-[1920px]:w-[308px]">
       <SidebarBody
         areas={areas}
         area={area}

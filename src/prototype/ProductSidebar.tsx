@@ -15,6 +15,19 @@ import {
 type AreaId = "jobs" | "agents" | "connectors";
 type Area = { id: AreaId; label: string; Icon: IconComponent };
 
+/** onboarding-b.html is the "Version B" product architecture from
+ *  sitemap.html (Main Agent + Jobs + optional Agents) — same feature as
+ *  Automations, just named the way that architecture names it. Read off
+ *  the URL rather than threaded as a prop, since it's the one thing that
+ *  actually differs between the two entry points sharing this component. */
+function isArchB(): boolean {
+  return typeof window !== "undefined" && window.location.pathname.includes("onboarding-b");
+}
+
+export function jobsLabel(): string {
+  return isArchB() ? "Jobs" : "Automations";
+}
+
 // The signed-in navigation. A fresh account has no history yet, so there are no
 // pinned or recent conversations under it — the list appears once there's
 // something to list, and until then the rail is just the places you can go.
@@ -62,10 +75,17 @@ export function ProductSidebar({
   // Jobs sits in the same array as Agents/Connectors on purpose: it is a
   // place with the same standing as the rest, reached the same way, not a
   // button that happens to look like its neighbours while doing something else.
+  // "Version B" swaps which glyph goes with which area: the briefcase reads
+  // as work-you-can-point-to, which fits a Job better than it ever fit an
+  // Agent — so B gives Jobs the briefcase and Agents the automation mark.
+  const swapIcons = isArchB();
   const areas = (["jobs", "agents", "connectors"] as const).map((id) => ({
     id,
-    label: id === "jobs" ? "Automations" : id === "agents" ? "Agents" : "Connectors",
-    Icon: id === "jobs" ? AutomationIcon : id === "agents" ? BriefcaseIcon : PuzzleIcon,
+    label: id === "jobs" ? jobsLabel() : id === "agents" ? "Agents" : "Connectors",
+    Icon:
+      id === "jobs" ? (swapIcons ? BriefcaseIcon : AutomationIcon)
+      : id === "agents" ? (swapIcons ? AutomationIcon : BriefcaseIcon)
+      : PuzzleIcon,
   }));
   const orderedConversations = [...conversations].sort((a, b) => {
     if (a.id === "hype-analysis") return -1;
@@ -230,7 +250,10 @@ export function ProductSidebar({
 
   return (
     <>
-    <div className="hidden w-[268px] shrink-0 border-r border-white/[0.08] bg-[#0c0c0d] min-[900px]:block">
+    {/* Stays 268px through 1440px — a list of names and previews doesn't
+        need more room just because ChatScreen's own reading column got
+        one. 1920px is the exception: 308px, 268 plus 15%. */}
+    <div className="hidden w-[268px] shrink-0 border-r border-white/[0.08] bg-[#0c0c0d] min-[900px]:block min-[1920px]:w-[308px]">
       <SidebarBody
         areas={areas}
         area={area}

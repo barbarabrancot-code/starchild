@@ -43,10 +43,8 @@ type Screen =
 // Guest Mode reopens: those have to be the set the visitor was just choosing
 // from, so C carries its own through to the chat.
 //
-// Which one you land on is in the URL, never in storage: the bare link always
-// opens C, the version being worked on, so anyone opening it sees the same thing.
-// The floating switch rewrites the query (?v=a) instead, which means a reload
-// keeps the one you're reviewing and the address bar is shareable as it stands.
+// Which one you land on is in the URL, never in storage — see `LandingLine`
+// below for how a page picks its default and how the switch rewrites it.
 export type LandingVariant = "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h";
 
 const VARIANT_PARAM = "v";
@@ -54,9 +52,9 @@ const VARIANT_PARAM = "v";
 /**
  * A line of landing versions, and the page it lives on.
  *
- * There are two pages now. `app.html` is where A through F were built, and it
- * keeps all six. `landing.html` is the page being taken forward, and on it F is
- * version A — the first of a new line rather than the sixth of the old one.
+ * There are two pages now. `app.html` is the archive, and it keeps every
+ * version that has been compared. `landing.html` is the page being taken
+ * forward, and it carries only the version still being worked on.
  *
  * The letter in the URL is a position on the line, not the name of a component.
  * That is what lets the same page be F on one link and A on the other without
@@ -81,11 +79,27 @@ export type LandingLine = {
   opensAt: number;
 };
 
-/** app.html — where A through F were built, and where all six stay reachable */
-export const BUILT_LINE: LandingLine = { slots: ["a", "b", "c", "d", "e", "f"], opensAt: 2 };
+/**
+ * app.html — the archive. A through F were built here and all six keep the
+ * positions they had, so a link anyone already has still opens what it opened.
+ * G is appended rather than inserted for the same reason: it was the next
+ * line's B, and when that line narrowed to a single version G needed somewhere
+ * to stay reachable. F, the next line's A, was already here at its own letter.
+ */
+export const BUILT_LINE: LandingLine = {
+  slots: ["a", "b", "c", "d", "e", "f", "g"],
+  opensAt: 2,
+};
 
-/** landing.html — the page being taken forward. F is its A. */
-export const NEXT_LINE: LandingLine = { slots: ["f", "g", "h"], opensAt: 0 };
+/**
+ * landing.html — the page being taken forward, now a line of one.
+ *
+ * It ran F/G/H as A/B/C while the three were being compared. That comparison is
+ * over and H is the version being worked on, which is what removes the switch:
+ * `VariantToggle` only renders for a line with somewhere to go. A and B are not
+ * gone, they are on the archive line above, as F and G.
+ */
+export const NEXT_LINE: LandingLine = { slots: ["h"], opensAt: 0 };
 
 /** "a" → 0, "b" → 1 … the switch's letters are positions, and so is the URL's */
 const LETTERS = "abcdefghijklmnopqrstuvwxyz";

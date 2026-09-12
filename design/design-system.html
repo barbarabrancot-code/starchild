@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Design System — Landing Page</title>
+<style>
+/* ==========================================================================
+   0. TOKENS — single source of truth.
+   Change ONLY the values here. Nothing below hardcodes a color or size.
+   ========================================================================== */
+:root {
+  /* ==========================================================
+     PALETTE — the closed list. No other hex exists in this file.
+     ========================================================== */
+
+  /* Brand */
+  --color-brand: #f84600;
+
+  /* Surfaces, darkest to lightest.
+     Surface 0 is below the page rather than on it — the only recessed step in
+     the list. It was added when the landing's drawn sections needed a well for
+     an illustration to sit *in*: every other surface is a thing lying on the
+     page, and a well is the page opened up. Nothing flat should use it. */
+  --color-surface-0: #121111;  /* recessed well, below the page */
+  --color-surface-1: #1b1919;  /* page background */
+  --color-surface-2: #242221;  /* raised surfaces, header */
+  --color-surface-3: #312f2e;  /* alternate section, hover */
+  --color-surface-4: #4a4847;  /* subtle border */
+  --color-surface-5: #5e5e5e;  /* strong border, divider */
+
+  /* Text — from the typography spec */
+  --color-text-1: #ffffff;     /* primary text */
+  --color-text-2: #a2a09f;     /* secondary text */
+
+  /* Computed, not new palette colors:
+     hover lightens and active darkens the base color itself. */
+  --color-brand-hover:  color-mix(in srgb, var(--color-brand) 88%, #ffffff);
+  --color-brand-active: color-mix(in srgb, var(--color-brand) 88%, #000000);
+
+  /* Conversational response: the lower message bubble's opaque linear fill. */
+  --gradient-message-outgoing: linear-gradient(90deg, #732A0F 0%, #4B2114 100%);
+
+  /* --- Semantic roles: ALWAYS use these in the landing, never the raw palette ---
+     The landing is dark-first: the dark theme IS the design, not a variant.   */
+  color-scheme: dark;
+  --bg-page:        var(--color-surface-1);  /* #1B1919 */
+  --bg-well:        var(--color-surface-0);  /* #121111 — recessed, see above */
+  --bg-surface:     var(--color-surface-2);  /* #242221 */
+  --bg-surface-alt: var(--color-surface-3);  /* #312F2E */
+  --bg-inverse:     var(--color-text-1);
+  --text-primary:   var(--color-text-1);     /* #FFFFFF */
+  --text-secondary: var(--color-text-2);     /* #A2A09F */
+  --text-muted:     var(--color-surface-5);  /* #5E5E5E — decorative only, fails contrast */
+  --text-inverse:   var(--color-surface-1);
+  --text-brand:     var(--color-brand);      /* #F84600 */
+  /* What is legible ON the orange. Named because it is the one pairing people
+     get wrong: white on #F84600 is 3.6:1 and fails, and it is the reading
+     every button reaches for first. See the contrast table in section 02. */
+  --text-on-brand:  var(--color-surface-1);  /* 4.9:1 on #F84600 */
+  --border-subtle:  var(--color-surface-4);  /* #4A4847 */
+  --border-strong:  var(--color-surface-5);  /* #5E5E5E */
+  --focus-ring:     var(--color-brand);
+
+  /* --- Typography: families (still placeholder — the design suggests a geometric sans) --- */
+  --font-display: "Font Display", "Segoe UI", -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif;
+  --font-body:    "Font Body", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono:    "Font Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* --- Typography: the FOUR roles of the design ---
+     Each has a mobile and a desktop value defined in Figma.
+     clamp() interpolates between a 375px and a 1440px viewport:
+       role         mobile → desktop
+       Title         24px  →  56px
+       Title 2       21px  →  40px
+       Subtitle Eyebrow 14px  →  32px
+       Body          14px  →  21px                                          */
+  --text-title:    clamp(1.5rem,    .7958rem + 3.005vw, 3.5rem);    /* 24→56 */
+  --text-title-2:  clamp(1.3125rem, .8944rem + 1.784vw, 2.5rem);    /* 21→40 */
+  --text-subtitle: clamp(.875rem,   .4789rem + 1.690vw, 2rem);      /* 14→32 */
+  --text-eyebrow:  var(--text-subtitle); /* legacy alias: use --text-subtitle */
+  --text-body:     clamp(.875rem,   .7214rem + .657vw, 1.3125rem); /* 14→21 */
+
+  /* Support scale — only for UI that is none of the four roles */
+  --text-xs:   0.75rem;    /* 12px — captions, fine print */
+  --text-sm:   0.875rem;   /* 14px — navigation, supporting text */
+  --text-base: 1rem;       /* 16px — buttons */
+  --text-xl:   clamp(1.25rem, 1.14rem + 0.55vw, 1.5rem); /* 20→24 — minor headings */
+
+  /* --- Typography: weights, line height, tracking ---
+     All four type roles are REGULAR. Emphasis comes from size and color,
+     never from weight. The heavier weights below exist only for UI chrome. */
+  --weight-regular:  400;   /* every type role */
+  --weight-medium:   500;   /* buttons, nav */
+  --weight-semibold: 600;
+  --weight-bold:     700;
+
+  /* Leading values are explicit in the supplied type specification. */
+  --leading-subtitle: 30px;
+  --leading-eyebrow:  var(--leading-subtitle); /* legacy alias */
+  --leading-title:    28px;   /* Title and Title 2 */
+  --leading-body:     24px;   /* Body */
+  --leading-tight:    1.1;
+  --leading-snug:     1.25;
+  --leading-normal:   1.5;
+  --leading-relaxed:  1.7;
+
+  /* Tracking — also constant between mobile and desktop */
+  --tracking-title:    0.01em;  /* 1% — Title and Title 2 */
+  --tracking-subtitle: 0.02em;  /* 2% */
+  --tracking-eyebrow:  var(--tracking-subtitle); /* legacy alias */
+  --tracking-body:     0.02em;  /* 2% */
+  --tracking-normal:   0;
+  --tracking-wide:     0.08em;
+
+  /* --- Spacing: 4px base scale --- */
+  --space-0:  0;
+  --space-1:  0.25rem;  /*   4 */
+  --space-2:  0.5rem;   /*   8 */
+  --space-3:  0.75rem;  /*  12 */
+  --space-4:  1rem;     /*  16 */
+  --space-5:  1.5rem;   /*  24 */
+  --space-6:  2rem;     /*  32 */
+  --space-7:  3rem;     /*  48 */
+  --space-8:  4rem;     /*  64 */
+  --space-9:  6rem;     /*  96 */
+  --space-10: 8rem;     /* 128 */
+
+  /* Vertical rhythm between landing sections (fluid) */
+  --section-y:    clamp(var(--space-7), 5vw + 1rem, var(--space-9));
+  --section-y-lg: clamp(var(--space-8), 7vw + 1rem, var(--space-10));
+
+  /* --- Radius and border --- */
+  --radius-sm:    4px;
+  --radius-md:    8px;
+  --radius-lg:    16px;
+  --radius-xl:    24px;
+  --radius-full:  999px;
+  --border-width: 1px;
+
+  /* --- Grid & container — derived from Figma ---
+     Desktop @1920: 12 col · margin 312 · gap 24
+       1920 − (312 × 2) = 1296 of content
+       (1296 − 11 × 24) ÷ 12 = 86px column
+     Mobile @375:   4 col · margin 24 · gap 20
+       375 − (24 × 2) = 327 of content
+       (327 − 3 × 20) ÷ 4 = ~67px column
+     Content is FIXED at 1296 and centered; the margin is a consequence:
+       @1920 → 312px · @1440 → 72px · below that, --gutter takes over.     */
+  --container-max:  1296px;                /* usable content width */
+  --container-wide: 1584px;                /* wider sections (1296 + 2 col + 2 gaps) */
+  --gutter: clamp(1.5rem, 5vw, 4.5rem);    /* 24px (mobile margin) → 72px (margin @1440) */
+  --grid-columns: 4;                       /* mobile-first; steps up at the breakpoints below */
+  --grid-gap: clamp(1.25rem, 1.16rem + 0.38vw, 1.5rem); /* 20px mobile → 24px desktop */
+  --grid-column: 86px;                     /* reference: column width @1440+ */
+
+  /* --- Motion --- */
+  --ease-out:      cubic-bezier(.16,1,.3,1);
+  --ease-in-out:   cubic-bezier(.65,0,.35,1);
+  --duration-fast: 120ms;
+  --duration-base: 200ms;
+  --duration-slow: 400ms;
+
+  /* --- Layers (z-index) --- */
+  --z-base: 0; --z-sticky: 100; --z-header: 200; --z-overlay: 300; --z-modal: 400; --z-toast: 500;
+}
+
+/* There is no light variant: the palette has no light surfaces and the design
+   is dark by definition. Adding one would mean adding new colors. */
+
+/* ==========================================================================
+   1. BASE
+   ========================================================================== */
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: var(--space-7); }
+body {
+  margin: 0;
+  background: var(--bg-page);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: var(--text-body);
+  line-height: var(--leading-body);
+  letter-spacing: var(--tracking-body);
+  -webkit-font-smoothing: antialiased;
+}
+img, svg, video { max-width: 100%; height: auto; display: block; }
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  line-height: var(--leading-title);
+  letter-spacing: var(--tracking-title);
+  font-weight: var(--weight-regular);   /* the type system has no bold headings */
+  margin: 0 0 var(--space-4);
+}
+p { margin: 0 0 var(--space-4); }
+a { color: var(--text-brand); }
+:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; border-radius: var(--radius-sm); }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ==========================================================================
+   2. LAYOUT PRIMITIVES — copy these into the landing
+   ========================================================================== */
+.container { width: 100%; max-width: var(--container-max); margin-inline: auto; padding-inline: var(--gutter); }
+.container--wide   { max-width: var(--container-wide); }
+.container--narrow { max-width: 720px; }   /* long-form text: 60–75ch */
+
+.section          { padding-block: var(--section-y); }
+.section--lg      { padding-block: var(--section-y-lg); }
+.section--alt     { background: var(--bg-surface-alt); }
+.section--inverse { background: var(--bg-inverse); color: var(--text-inverse); }
+
+.grid { display: grid; grid-template-columns: repeat(var(--grid-columns), minmax(0,1fr)); gap: var(--grid-gap); }
+
+/* Column count per range — 4 (mobile) → 8 (tablet) → 12 (desktop).
+   The tablet 8 is a bridge: Figma defines only the extremes, 4 and 12.  */
+@media (min-width: 768px)  { :root { --grid-columns: 8; } }
+@media (min-width: 1024px) { :root { --grid-columns: 12; } }
+
+.stack > * + * { margin-top: var(--space-4); }
+.cluster { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; }
+.auto-grid { display: grid; gap: var(--grid-gap); grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+
+/* ==========================================================================
+   3. COMPONENTS
+   ========================================================================== */
+
+/* --- Prompt field --- */
+.prompt-field {
+  display: flex; align-items: center; gap: var(--space-4);
+  max-width: 800px; min-height: 68px;
+  padding: var(--space-3) var(--space-3) var(--space-3) var(--space-6);
+  background: var(--bg-well); border: var(--border-width) solid transparent;
+  border-radius: var(--radius-full);
+}
+.prompt-field__input {
+  min-width: 0; flex: 1; border: 0; outline: 0; padding: 0;
+  background: transparent; color: var(--text-primary);
+  font: inherit; font-size: var(--text-body); letter-spacing: var(--tracking-body);
+}
+.prompt-field__input::placeholder { color: var(--text-secondary); opacity: 1; }
+.prompt-field:focus-within { border-color: var(--focus-ring); outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+
+/* --- Actions --- */
+.icon-button, .outline-button {
+  display: inline-flex; align-items: center; justify-content: center;
+  flex: 0 0 auto; border: var(--border-width) solid transparent;
+  font: inherit; font-weight: var(--weight-regular); line-height: 1;
+  text-decoration: none; cursor: pointer;
+  transition: background var(--duration-base) var(--ease-out), transform var(--duration-fast) var(--ease-out);
+}
+.icon-button { inline-size: 40px; block-size: 40px; padding: 0; border-radius: 50%; background: var(--color-brand); color: var(--color-text-1); }
+.icon-button:hover { background: var(--color-brand-hover); }
+.icon-button:active, .outline-button:active { transform: translateY(1px); }
+.icon-button:focus-visible, .outline-button:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+.icon-button svg, .outline-button svg { inline-size: 1.5em; block-size: 1.5em; stroke: currentColor; }
+.outline-button { min-height: 45px; gap: var(--space-3); padding-inline: var(--space-4); border-color: var(--color-brand); border-radius: var(--radius-full); color: var(--text-brand); font-size: var(--text-body); }
+.outline-button:hover { background: color-mix(in srgb, var(--color-brand) 12%, transparent); }
+
+/* --- Browser preview --- */
+.browser-preview { overflow: hidden; max-width: 540px; border: var(--border-width) solid var(--border-subtle); border-radius: var(--radius-md); background: var(--bg-well); }
+.browser-preview__bar { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; min-height: 21px; padding-inline: var(--space-2); background: var(--bg-well); }
+.browser-preview__controls { display: flex; gap: 5px; }
+.browser-preview__dot { inline-size: 9px; block-size: 9px; border-radius: 50%; }
+.browser-preview__dot--red { background: var(--color-brand); }
+.browser-preview__dot--yellow { background: color-mix(in srgb, var(--color-brand) 76%, var(--color-text-1)); }
+.browser-preview__dot--green { background: var(--text-secondary); }
+.browser-preview__title { grid-column: 2; margin: 0; color: var(--text-secondary); font-size: 10px; line-height: 1; }
+.browser-preview__canvas { min-height: 268px; background: color-mix(in srgb, var(--color-text-1) 58%, var(--bg-surface)); }
+
+/* --- Conversation bubbles --- */
+.conversation { display: grid; gap: var(--space-4); max-width: 360px; }
+.message { width: fit-content; max-width: 100%; margin: 0; padding: var(--space-4) var(--space-5); border-radius: var(--radius-xl); font-size: var(--text-body); line-height: var(--leading-body); letter-spacing: var(--tracking-body); }
+.message--incoming { background: var(--bg-inverse); color: var(--text-inverse); border-bottom-right-radius: var(--radius-sm); }
+.message--outgoing { background: var(--gradient-message-outgoing); color: var(--text-primary); border-top-left-radius: var(--radius-sm); }
+
+@media (max-width: 500px) {
+  .prompt-field { min-height: 60px; padding-left: var(--space-4); }
+  .prompt-field__input { font-size: var(--text-base); }
+  .browser-preview__canvas { min-height: 180px; }
+}
+
+/* --- The four typographic roles --- */
+.type-title {
+  font-family: var(--font-display); font-size: var(--text-title);
+  font-weight: var(--weight-regular); line-height: var(--leading-title);
+  letter-spacing: var(--tracking-title); color: var(--text-primary);
+}
+.type-title-2 {
+  font-family: var(--font-display); font-size: var(--text-title-2);
+  font-weight: var(--weight-regular); line-height: var(--leading-title);
+  letter-spacing: var(--tracking-title); color: var(--text-primary);
+}
+/* Subtitle Eyebrow is the small orange line that supports a title. It uses
+   all-small-caps. The eyebrow names remain as aliases for existing markup. */
+.type-subtitle, .type-eyebrow {
+  font-family: var(--font-display); font-size: var(--text-subtitle);
+  font-weight: var(--weight-regular); line-height: var(--leading-subtitle);
+  letter-spacing: var(--tracking-subtitle); text-transform: uppercase;
+  font-variant-caps: all-small-caps;
+  color: var(--text-brand);
+}
+.type-body {
+  font-family: var(--font-body); font-size: var(--text-body);
+  font-weight: var(--weight-regular); line-height: var(--leading-body);
+  letter-spacing: var(--tracking-body); color: var(--text-secondary);
+}
+.type-body--strong { color: var(--text-primary); }
+
+/* --- Section header block --- */
+.section-head { max-width: 64ch; margin-bottom: var(--space-7); }
+.section-head--center { margin-inline: auto; text-align: center; }
+.subtitle, .eyebrow { /* same role as .type-subtitle — see the note there */
+  font-family: var(--font-display); font-size: var(--text-subtitle);
+  font-weight: var(--weight-regular); line-height: var(--leading-subtitle);
+  letter-spacing: var(--tracking-subtitle); text-transform: uppercase;
+  font-variant-caps: all-small-caps;
+  color: var(--text-brand); margin-bottom: var(--space-3);
+}
+.subtitle--sm, .eyebrow--sm { font-size: var(--text-sm); letter-spacing: var(--tracking-wide); }
+.section-title { font-size: var(--text-title-2); font-weight: var(--weight-regular); }
+.section-lead   { font-size: var(--text-body); color: var(--text-secondary); margin: 0; }
+
+/* ==========================================================================
+   4. CSS FOR THIS PAGE (documentation) — do NOT copy into the landing
+   ========================================================================== */
+.ds-shell { display: grid; grid-template-columns: 240px 1fr; gap: var(--space-7); max-width: var(--container-wide); margin-inline: auto; padding-inline: var(--gutter); }
+.ds-side { position: sticky; top: 0; align-self: start; height: 100dvh; overflow-y: auto; padding-block: var(--space-6); }
+.ds-side__brand { font-family: var(--font-display); font-weight: var(--weight-bold); font-size: var(--text-body); margin-bottom: var(--space-5); }
+.ds-side nav a { display: block; padding: var(--space-2) 0 var(--space-2) var(--space-3); font-size: var(--text-sm); color: var(--text-secondary); text-decoration: none; border-left: 2px solid transparent; }
+.ds-side nav a:hover { color: var(--text-primary); border-left-color: var(--color-brand); }
+.ds-main { padding-block: var(--space-6) var(--space-10); min-width: 0; }
+.ds-sec { padding-block: var(--space-6); border-top: var(--border-width) solid var(--border-subtle); }
+.ds-sec:first-child { border-top: 0; }
+.ds-sec > h2 { font-size: var(--text-xl); }
+.ds-note { font-size: var(--text-sm); color: var(--text-muted); border-left: 3px solid var(--border-strong); padding-left: var(--space-4); margin-block: var(--space-4); }
+.ds-demo { background: var(--bg-surface); border: var(--border-width) solid var(--border-subtle); border-radius: var(--radius-lg); padding: var(--space-5); margin-block: var(--space-4); }
+.ds-label { font-family: var(--font-mono); font-size: var(--text-xs); color: var(--text-muted); }
+.ds-table { width: 100%; border-collapse: collapse; font-size: var(--text-sm); }
+.ds-table th, .ds-table td { text-align: left; padding: var(--space-3); border-bottom: var(--border-width) solid var(--border-subtle); vertical-align: top; }
+.ds-table th { font-weight: var(--weight-semibold); color: var(--text-secondary); }
+.ds-table code, .ds-label code { font-family: var(--font-mono); }
+.ds-scroll { overflow-x: auto; }
+.ds-swatches { display: grid; grid-template-columns: repeat(auto-fit, minmax(88px, 1fr)); gap: var(--space-2); }
+.ds-swatch { border-radius: var(--radius-md); overflow: hidden; border: var(--border-width) solid var(--border-subtle); }
+.ds-swatch__chip { height: 56px; }
+.ds-swatch__meta { padding: var(--space-2); font-family: var(--font-mono); font-size: 10px; color: var(--text-muted); }
+.ds-grid-demo { display: grid; grid-template-columns: repeat(12, 1fr); gap: var(--grid-gap); }
+.ds-grid-demo span { background: var(--color-surface-3); color: var(--text-brand); border-radius: var(--radius-sm); text-align: center; font-family: var(--font-mono); font-size: var(--text-xs); padding: var(--space-3) 0; }
+.ds-placeholder { background: repeating-linear-gradient(45deg, var(--bg-surface-alt), var(--bg-surface-alt) 10px, transparent 10px, transparent 20px); border: 1px dashed var(--border-strong); border-radius: var(--radius-md); display: grid; place-items: center; color: var(--text-muted); font-family: var(--font-mono); font-size: var(--text-xs); min-height: 120px; }
+pre.ds-code { background: var(--color-surface-1); color: var(--color-text-2); padding: var(--space-4); border-radius: var(--radius-md); overflow-x: auto; font-family: var(--font-mono); font-size: var(--text-sm); line-height: var(--leading-normal); }
+@media (max-width: 1023px) {
+  .ds-shell { grid-template-columns: 1fr; gap: 0; }
+  .ds-side { position: static; height: auto; border-bottom: var(--border-width) solid var(--border-subtle); }
+  .ds-side nav { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+  .ds-side nav a { border-left: 0; padding: var(--space-1) var(--space-3); background: var(--bg-surface-alt); border-radius: var(--radius-full); }
+}
+</style>
+</head>
+<body>
+
+<div class="ds-shell">
+
+  <!-- ===================== SIDEBAR ===================== -->
+  <aside class="ds-side">
+    <div class="ds-side__brand">[LOGO] Design System</div>
+    <nav>
+      <a href="#principles">01 · Principles</a>
+      <a href="#color">02 · Color</a>
+      <a href="#typography">03 · Typography</a>
+      <a href="#spacing">04 · Spacing</a>
+      <a href="#grid">05 · Grid</a>
+      <a href="#breakpoints">06 · Breakpoints</a>
+      <a href="#elevation">07 · Radius</a>
+      <a href="#components">08 · Components</a>
+      <a href="#sections">09 · Landing sections</a>
+    </nav>
+  </aside>
+
+  <!-- ===================== CONTENT ===================== -->
+  <main class="ds-main">
+
+    <header class="ds-sec">
+      <p class="subtitle subtitle--sm">[PRODUCT NAME] · v0.3</p>
+      <h1 style="font-size:var(--text-title-2)">Landing Page Design System</h1>
+      <p class="section-lead">[One sentence on what the landing has to prove to a visitor — replace.]</p>
+      <p class="ds-note"><strong>Color, typography and grid are defined.</strong> Still placeholder: the <strong>type families</strong> and every bracketed string. Change only the <code>:root</code> block at the top of the file.</p>
+    </header>
+
+    <!-- 01 PRINCIPLES -->
+    <section class="ds-sec" id="principles">
+      <h2>01 · Principles</h2>
+      <p class="section-lead">[Three to five rules that settle arguments. Each one should rule something out.]</p>
+      <div class="auto-grid">
+        <div class="ds-demo"><p class="ds-label">Principle 1</p><p class="type-body" style="margin:0">[How this principle turns into a concrete visual decision.]</p></div>
+        <div class="ds-demo"><p class="ds-label">Principle 2</p><p class="type-body" style="margin:0">[Same.]</p></div>
+        <div class="ds-demo"><p class="ds-label">Principle 3</p><p class="type-body" style="margin:0">[Same.]</p></div>
+      </div>
+    </section>
+
+    <!-- 02 COLOR -->
+    <section class="ds-sec" id="color">
+      <h2>02 · Color</h2>
+      <p class="section-lead">Six colors, closed list. No other hex appears in the file — anything that looks like a seventh color is one of these with opacity or <code>color-mix()</code>.</p>
+
+      <div class="ds-demo">
+        <p class="ds-label">Brand</p>
+        <div class="ds-swatches" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr))">
+          <div class="ds-swatch"><div class="ds-swatch__chip" style="background:#f84600;height:88px"></div><div class="ds-swatch__meta">F84600<br><code>--color-brand</code></div></div>
+        </div>
+
+        <p class="ds-label" style="margin-top:var(--space-5)">Surfaces — back to front</p>
+        <div class="ds-swatches" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr))">
+          <div class="ds-swatch"><div class="ds-swatch__chip" style="background:#1b1919;height:88px"></div><div class="ds-swatch__meta">1B1919<br><code>--color-surface-1</code><br>page background</div></div>
+          <div class="ds-swatch"><div class="ds-swatch__chip" style="background:#242221;height:88px"></div><div class="ds-swatch__meta">242221<br><code>--color-surface-2</code><br>raised surface, header</div></div>
+          <div class="ds-swatch"><div class="ds-swatch__chip" style="background:#312f2e;height:88px"></div><div class="ds-swatch__meta">312F2E<br><code>--color-surface-3</code><br>alternate section, hover</div></div>
+          <div class="ds-swatch"><div class="ds-swatch__chip" style="background:#4a4847;height:88px"></div><div class="ds-swatch__meta">4A4847<br><code>--color-surface-4</code><br>subtle border</div></div>
+          <div class="ds-swatch"><div class="ds-swatch__chip" style="background:#5e5e5e;height:88px"></div><div class="ds-swatch__meta">5E5E5E<br><code>--color-surface-5</code><br>strong border</div></div>
+        </div>
+
+        <p class="ds-label" style="margin-top:var(--space-5)">Text — from the typography spec</p>
+        <div class="ds-swatches" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr))">
+          <div class="ds-swatch"><div class="ds-swatch__chip" style="background:#ffffff;height:88px"></div><div class="ds-swatch__meta">FFFFFF<br><code>--color-text-1</code></div></div>
+          <div class="ds-swatch"><div class="ds-swatch__chip" style="background:#a2a09f;height:88px"></div><div class="ds-swatch__meta">A2A09F<br><code>--color-text-2</code></div></div>
+        </div>
+      </div>
+
+      <p class="ds-note"><strong>Hover and active are not new colors.</strong> They come from <code>color-mix()</code> on the base itself — 88% brand + 12% white for hover, + 12% black for active. Change the brand and the states follow on their own.</p>
+
+      <p class="ds-note"><strong>No state colors.</strong> Success / warning / error / info are not in the palette, so they are gone. Nothing in the system can currently distinguish an error from a highlight — add those colors when a form or a status message needs them.</p>
+
+      <div class="ds-scroll">
+        <table class="ds-table">
+          <thead><tr><th>Role</th><th>Token</th><th>Use for</th></tr></thead>
+          <tbody>
+            <tr><td>Page background</td><td><code>--bg-page</code></td><td>#1B1919 — body, default sections</td></tr>
+            <tr><td>Surface</td><td><code>--bg-surface</code></td><td>#242221 — header, raised blocks</td></tr>
+            <tr><td>Alternate surface</td><td><code>--bg-surface-alt</code></td><td>#312F2E — alternating sections, hover</td></tr>
+            <tr><td>Primary text</td><td><code>--text-primary</code></td><td>#FFFFFF — titles and emphasis</td></tr>
+            <tr><td>Secondary text</td><td><code>--text-secondary</code></td><td>#A2A09F — body copy, descriptions</td></tr>
+            <tr><td>Muted text</td><td><code>--text-muted</code></td><td>#5E5E5E — decorative only: 2.7:1, fails contrast</td></tr>
+            <tr><td>Brand text</td><td><code>--text-brand</code></td><td>#F84600 — subtitle, links</td></tr>
+            <tr><td>Subtle border</td><td><code>--border-subtle</code></td><td>#4A4847 — dividers, outlines</td></tr>
+            <tr><td>Strong border</td><td><code>--border-strong</code></td><td>#5E5E5E — secondary button</td></tr>
+            <tr><td>Focus</td><td><code>--focus-ring</code></td><td>#F84600 — keyboard outline (never remove)</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="ds-note"><strong>Rule:</strong> one brand color carries the primary action. If everything is a highlight, nothing is — at most one primary button per visible fold.</p>
+
+      <h3>Contrast</h3>
+      <div class="ds-scroll">
+        <table class="ds-table">
+          <thead><tr><th>Pair</th><th>Ratio</th><th>Verdict</th></tr></thead>
+          <tbody>
+            <tr><td>#FFFFFF on #1B1919</td><td>17.5:1</td><td>✅ passes at any size, comfortably</td></tr>
+            <tr><td>#A2A09F on #1B1919</td><td>7.0:1</td><td>✅ passes at any size</td></tr>
+            <tr><td>#F84600 on #1B1919</td><td>4.9:1</td><td>✅ passes at any size</td></tr>
+            <tr><td>#1B1919 on #F84600</td><td>4.9:1</td><td>✅ this is why the primary button uses near-black text, not white (white on orange is 3.6:1 and fails)</td></tr>
+            <tr><td>#5E5E5E on #1B1919</td><td>2.7:1</td><td>⚠️ a border color, not a text color. Never use it for anything readable.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="ds-note">Every text pair in the palette clears WCAG AA at any size. There are no contrast exceptions to remember.</p>
+    </section>
+
+    <!-- 03 TYPOGRAPHY -->
+    <section class="ds-sec" id="typography">
+      <h2>03 · Typography</h2>
+      <p class="section-lead">Four roles, each with a mobile and a desktop size. The rest of the scale exists only to support them.</p>
+
+      <div class="ds-scroll">
+        <table class="ds-table">
+          <thead><tr><th>Role</th><th>Weight</th><th>Mobile</th><th>Desktop</th><th>Leading</th><th>Tracking</th><th>Color</th><th>Token / class</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><strong>Title</strong></td><td>regular</td><td>24px</td><td>56px</td><td>28px</td><td>1%</td>
+              <td>#FFFFFF</td>
+              <td><code>--text-title</code><br><code>.type-title</code></td>
+            </tr>
+            <tr>
+              <td><strong>Title 2</strong></td><td>regular</td><td>21px</td><td>40px</td><td>28px</td><td>1%</td>
+              <td>#FFFFFF</td>
+              <td><code>--text-title-2</code><br><code>.type-title-2</code> · <code>.section-title</code></td>
+            </tr>
+            <tr>
+              <td><strong>Subtitle Eyebrow</strong><br><span style="color:var(--text-muted)">all-small-caps</span></td><td>regular</td><td>14px</td><td>32px</td><td>30px</td><td>2%</td>
+              <td>#F84600</td>
+              <td><code>--text-subtitle</code><br><code>.type-subtitle</code> · <code>.subtitle</code></td>
+            </tr>
+            <tr>
+              <td><strong>Body</strong></td><td>regular</td><td>14px</td><td>21px</td><td>24px</td><td>2%</td>
+              <td>#FFFFFF or #A2A09F</td>
+              <td><code>--text-body</code><br><code>.type-body</code></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="ds-note"><strong>Every role is regular — there is no bold in this type system.</strong> Hierarchy is carried entirely by size, color and case: 56px white for the Title, 32px orange all-small-caps for the Subtitle Eyebrow, 21px grey for Body. So emphasis inside a paragraph means switching the text from grey to white (<code>.type-body--strong</code>), not bolding it. Headings inherit regular too — <code>&lt;h1&gt;</code>–<code>&lt;h4&gt;</code> are no longer bold by default.</p>
+
+      <p class="ds-note">The one exception is UI chrome: buttons and nav sit at <strong>medium (500)</strong>, since a 16px label in a filled button needs a little more presence than body copy. Nothing in the four roles uses it. If you want those regular too, it is two lines.</p>
+
+      <p class="ds-note"><strong>Leading uses the source value.</strong> Subtitle Eyebrow stays at <strong>30px</strong>; Title and Title 2 use <strong>28px</strong>; Body uses <strong>24px</strong>. Tracking is constant across mobile and desktop.</p>
+
+      <p class="ds-note"><strong>The scale is responsive:</strong> each role interpolates from its mobile value to its desktop value while preserving its assigned line height and tracking.</p>
+
+      <h3>Interpolation</h3>
+      <p class="type-body" style="max-width:65ch">The two values become one <code>clamp()</code> anchored at 375px (mobile) and 1440px (desktop). Between them the size grows continuously; outside them it locks. No font-size jump at any breakpoint.</p>
+      <pre class="ds-code">/* Title: 24px @375 → 56px @1440 */
+--text-title: clamp(1.5rem, .7958rem + 3.005vw, 3.5rem);
+
+/*  375px → 32.0px  (locks here going down)
+    768px → 40.8px
+   1024px → 46.6px
+   1440px → 56.0px  (locks here going up)  */</pre>
+
+      <div class="ds-demo">
+        <p class="ds-label">.type-eyebrow · regular · all-small-caps · 14→32px · 30px leading · 2% · #F84600</p>
+        <p class="type-eyebrow" style="margin:0 0 var(--space-6)">Subtitle eyebrow</p>
+
+        <p class="ds-label">.type-title · regular · 24→56px · 28px leading · 1% · #FFFFFF</p>
+        <p class="type-title" style="margin:0 0 var(--space-6)">[Hero headline in eight words or fewer]</p>
+
+        <p class="ds-label">.type-title-2 · regular · 21→40px · 28px leading · 1% · #FFFFFF</p>
+        <p class="type-title-2" style="margin:0 0 var(--space-6)">[Inner section heading]</p>
+
+        <p class="ds-label">.type-body--strong · regular · 14→21px · 24px leading · 2% · #FFFFFF</p>
+        <p class="type-body type-body--strong" style="max-width:60ch;margin:0 0 var(--space-6)">[White body text, for anything that needs weight: hero lead, the offer line, a short answer.]</p>
+
+        <p class="ds-label">.type-body · regular · 14→21px · 24px leading · 2% · #A2A09F</p>
+        <p class="type-body" style="max-width:60ch;margin:0">[Grey body text, the default. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore.]</p>
+      </div>
+
+      <h3>When to use each</h3>
+      <div class="ds-scroll">
+        <table class="ds-table">
+          <thead><tr><th>Role</th><th>Where</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Title</strong></td><td>hero only — once per page</td></tr>
+            <tr><td><strong>Title 2</strong></td><td>opening of every section (features, pricing, FAQ, final CTA)</td></tr>
+            <tr><td><strong>Subtitle Eyebrow</strong></td><td>the orange all-small-caps line that supports a title</td></tr>
+            <tr><td><strong>Body</strong></td><td>all copy: lead, list item, FAQ answer</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Support scale</h3>
+      <div class="ds-scroll">
+        <table class="ds-table">
+          <thead><tr><th>Token</th><th>Size</th><th>Weight</th><th>Use</th></tr></thead>
+          <tbody>
+            <tr><td><code>--text-xl</code></td><td>20→24px</td><td>regular</td><td>minor headings inside a block</td></tr>
+            <tr><td><code>--text-base</code></td><td>16px</td><td>medium</td><td>buttons</td></tr>
+            <tr><td><code>--text-sm</code></td><td>14px</td><td>medium</td><td>navigation, supporting text</td></tr>
+            <tr><td><code>--text-xs</code></td><td>12px</td><td>regular</td><td>captions, fine print</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="ds-note">Measure: <strong>60–75 characters</strong> for body copy, <strong>20 words max</strong> for a title. Use <code>.container--narrow</code> for long-form blocks. Body leading is fixed at <strong>24px</strong>, so the short measure remains important.</p>
+      <p class="ds-note"><strong>Type families are still placeholder:</strong> <code>--font-display</code> and <code>--font-body</code>. The design suggests a light-weight geometric sans for the title. Send me the font and I'll swap it in.</p>
+    </section>
+
+    <!-- 04 SPACING -->
+    <section class="ds-sec" id="spacing">
+      <h2>04 · Spacing</h2>
+      <p class="section-lead">4px base scale. Never invent a value outside it.</p>
+      <div class="ds-scroll">
+        <table class="ds-table">
+          <thead><tr><th>Token</th><th>px</th><th>Typical use</th></tr></thead>
+          <tbody>
+            <tr><td><code>--space-1</code></td><td>4</td><td>gap between icon and text</td></tr>
+            <tr><td><code>--space-2</code></td><td>8</td><td>tightest related pair</td></tr>
+            <tr><td><code>--space-3</code></td><td>12</td><td>button inner padding</td></tr>
+            <tr><td><code>--space-4</code></td><td>16</td><td>between paragraphs</td></tr>
+            <tr><td><code>--space-5</code></td><td>24</td><td>inner padding of a block</td></tr>
+            <tr><td><code>--space-6</code></td><td>32</td><td>between groups inside a section</td></tr>
+            <tr><td><code>--space-7</code></td><td>48</td><td>section header → section content</td></tr>
+            <tr><td><code>--space-8</code></td><td>64</td><td>vertical breathing room on mobile</td></tr>
+            <tr><td><code>--space-9</code></td><td>96</td><td>vertical breathing room on desktop</td></tr>
+            <tr><td><code>--space-10</code></td><td>128</td><td>hero and feature sections</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="ds-note">Rhythm between sections: <code>--section-y</code> (default) and <code>--section-y-lg</code> (hero, final CTA). Both are fluid — they shrink on mobile on their own.</p>
+    </section>
+
+    <!-- 05 GRID -->
+    <section class="ds-sec" id="grid">
+      <h2>05 · Grid</h2>
+      <p class="section-lead">Two grids defined in Figma — 1920 and 375. Everything else is interpolation between them.</p>
+
+      <div class="ds-scroll">
+        <table class="ds-table">
+          <thead><tr><th>&nbsp;</th><th>Desktop @1920</th><th>Mobile @375</th></tr></thead>
+          <tbody>
+            <tr><td>Columns</td><td>12</td><td>4</td></tr>
+            <tr><td>Type</td><td>Stretch</td><td>Stretch</td></tr>
+            <tr><td>Margin</td><td>312px</td><td>24px</td></tr>
+            <tr><td>Gutter (gap)</td><td>24px</td><td>20px</td></tr>
+            <tr><td><strong>Resulting content</strong></td><td><strong>1296px</strong></td><td><strong>327px</strong></td></tr>
+            <tr><td><strong>Resulting column</strong></td><td><strong>86px</strong></td><td><strong>~67px</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="ds-note"><strong>The key to the system:</strong> content is locked at <code>1296px</code> and centered. The 312px margin is not a value you write — it <em>happens</em> when the screen is 1920 wide. At 1440 the same rule yields 72px. One <code>max-width</code> covers both screens.</p>
+
+      <pre class="ds-code">/* this is all of it — the 312 and 72 margins fall out of here */
+.container {
+  width: 100%;
+  max-width: var(--container-max);   /* 1296px */
+  margin-inline: auto;
+  padding-inline: var(--gutter);     /* 24px → 72px */
+}</pre>
+
+      <div class="ds-scroll">
+        <table class="ds-table">
+          <thead><tr><th>Token</th><th>Value</th><th>What it is</th></tr></thead>
+          <tbody>
+            <tr><td><code>--container-max</code></td><td>1296px</td><td>usable content width on any screen ≥1440</td></tr>
+            <tr><td><code>--container-wide</code></td><td>1584px</td><td>wider sections (1296 + 2 columns + 2 gaps)</td></tr>
+            <tr><td><code>.container--narrow</code></td><td>720px</td><td>long-form text (FAQ, article)</td></tr>
+            <tr><td><code>--gutter</code></td><td>24 → 72px</td><td>side margin below 1440</td></tr>
+            <tr><td><code>--grid-gap</code></td><td>20 → 24px</td><td>gap between columns</td></tr>
+            <tr><td><code>--grid-columns</code></td><td>4 / 8 / 12</td><td>switches on its own at the breakpoints</td></tr>
+            <tr><td><code>--grid-column</code></td><td>86px</td><td>column reference @1440+ (for sizing assets)</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="ds-demo">
+        <p class="ds-label">Desktop — 12 columns · gap 24 · content 1296</p>
+        <div class="ds-grid-demo">
+          <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span>
+          <span>7</span><span>8</span><span>9</span><span>10</span><span>11</span><span>12</span>
+        </div>
+
+        <p class="ds-label" style="margin-top:var(--space-5)">Mobile — 4 columns · gap 20 · margin 24 (actual scale, 375px)</p>
+        <div style="width:375px;max-width:100%;border:1px dashed var(--border-strong);border-radius:var(--radius-md);padding:var(--space-4) 24px">
+          <div class="ds-grid-demo" style="grid-template-columns:repeat(4,1fr);gap:20px">
+            <span>1</span><span>2</span><span>3</span><span>4</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="ds-demo">
+        <p class="ds-label">Recommended arrangements — and how each lands on the 4-column mobile grid</p>
+        <div class="ds-scroll">
+          <table class="ds-table" style="margin-top:var(--space-3)">
+            <thead><tr><th>Arrangement</th><th>@1440 (12 col)</th><th>@768 (8 col)</th><th>@375 (4 col)</th></tr></thead>
+            <tbody>
+              <tr><td>Hero</td><td>text 7 · visual 5</td><td>text 8 · visual 8 (stacks)</td><td>4 · 4 (stacks)</td></tr>
+              <tr><td>Features</td><td>4 + 4 + 4</td><td>4 + 4 (two per row)</td><td>4 (one per row)</td></tr>
+              <tr><td>Alternating</td><td>6 / 6</td><td>8 / 8 (stacks)</td><td>4 / 4 (stacks)</td></tr>
+              <tr><td>Centered</td><td>8, offset 2</td><td>8, no offset</td><td>4</td></tr>
+              <tr><td>Footer</td><td>3 + 3 + 3 + 3</td><td>4 + 4</td><td>4 (accordion or list)</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <p class="ds-note"><strong>On mobile, 4 columns almost always becomes 1.</strong> The 4-column grid is there to align the margin and allow halves (2/4) for small paired blocks — not to squeeze three columns onto a 375px screen.</p>
+    </section>
+
+    <!-- 06 BREAKPOINTS -->
+    <section class="ds-sec" id="breakpoints">
+      <h2>06 · Breakpoints</h2>
+      <p class="section-lead">Mobile-first: write the base style for the smallest screen and step up with <code>min-width</code>.</p>
+      <div class="ds-scroll">
+        <table class="ds-table">
+          <thead><tr><th>Name</th><th>min-width</th><th>Target</th><th>Col.</th><th>Margin</th><th>Gap</th><th>Content</th><th>Column</th></tr></thead>
+          <tbody>
+            <tr><td><code>xs</code></td><td>0</td><td>phone (320–479)</td><td>4</td><td>24px</td><td>20px</td><td>fluid</td><td>~54–67px</td></tr>
+            <tr><td><code>sm</code></td><td>480px</td><td>large phone</td><td>4</td><td>24px</td><td>20px</td><td>fluid</td><td>~93px</td></tr>
+            <tr><td><code>md</code></td><td>768px</td><td>tablet portrait</td><td>8</td><td>38px</td><td>21px</td><td>~691px</td><td>~68px</td></tr>
+            <tr><td><code>lg</code></td><td>1024px</td><td>tablet landscape / laptop</td><td>12</td><td>51px</td><td>22px</td><td>~922px</td><td>~56px</td></tr>
+            <tr><td><code>xl</code></td><td>1280px</td><td>desktop</td><td>12</td><td>64px</td><td>23px</td><td>~1152px</td><td>~75px</td></tr>
+            <tr><td><strong><code>2xl</code></strong></td><td><strong>1440px</strong></td><td><strong>standard desktop</strong></td><td>12</td><td><strong>72px</strong></td><td><strong>24px</strong></td><td><strong>1296px</strong></td><td><strong>86px</strong></td></tr>
+            <tr><td><strong><code>3xl</code></strong></td><td><strong>1920px</strong></td><td><strong>wide monitor</strong></td><td>12</td><td><strong>312px</strong></td><td><strong>24px</strong></td><td><strong>1296px</strong></td><td><strong>86px</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Why 1440 needs no rule of its own</h3>
+      <p class="type-body" style="max-width:65ch">The 72px margin at 1440 and the 312px margin at 1920 come from the same line of CSS. Locking content at 1296px and centering it already produces both — writing a breakpoint at 1440 would only create another number to keep in sync by hand.</p>
+
+      <p class="ds-note">Hard rules: no <code>min-width</code> larger than the screen; tables, code and diagrams inside <code>overflow-x:auto</code>; the body never scrolls horizontally.</p>
+    </section>
+
+    <!-- 07 RADIUS & ELEVATION -->
+    <section class="ds-sec" id="elevation">
+      <h2>07 · Radius</h2>
+      <div class="auto-grid">
+        <div class="ds-demo"><p class="ds-label">--radius-sm · 4px</p><div style="height:56px;background:var(--bg-surface-alt);border-radius:var(--radius-sm)"></div></div>
+        <div class="ds-demo"><p class="ds-label">--radius-md · 8px</p><div style="height:56px;background:var(--bg-surface-alt);border-radius:var(--radius-md)"></div></div>
+        <div class="ds-demo"><p class="ds-label">--radius-lg · 16px</p><div style="height:56px;background:var(--bg-surface-alt);border-radius:var(--radius-lg)"></div></div>
+        <div class="ds-demo"><p class="ds-label">--radius-full</p><div style="height:56px;background:var(--bg-surface-alt);border-radius:var(--radius-full)"></div></div>
+      </div>
+    </section>
+
+    <!-- 08 COMPONENTS -->
+    <section class="ds-sec" id="components">
+      <h2>08 · Components</h2>
+      <p class="section-lead">A compact set of conversational controls: prompt, preview, actions and message states.</p>
+
+      <h3>Prompt field</h3>
+      <div class="ds-demo">
+        <form class="prompt-field" action="#components">
+          <input class="prompt-field__input" id="component-prompt" type="text" placeholder="Mind sharing me with your struggles?" aria-label="Share your struggles">
+          <button class="icon-button" type="submit" aria-label="Send prompt">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+          </button>
+        </form>
+      </div>
+
+      <h3>Browser preview</h3>
+      <div class="ds-demo">
+        <div class="browser-preview" role="img" aria-label="Blank browser preview window">
+          <div class="browser-preview__bar">
+            <div class="browser-preview__controls" aria-hidden="true"><span class="browser-preview__dot browser-preview__dot--red"></span><span class="browser-preview__dot browser-preview__dot--yellow"></span><span class="browser-preview__dot browser-preview__dot--green"></span></div>
+            <p class="browser-preview__title">Preview</p>
+          </div>
+          <div class="browser-preview__canvas"></div>
+        </div>
+      </div>
+
+      <h3>Actions</h3>
+      <div class="ds-demo">
+        <div class="cluster">
+          <button class="icon-button" type="button" aria-label="Continue">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+          </button>
+          <a class="outline-button" href="#components">Try now for free
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+          </a>
+        </div>
+      </div>
+
+      <h3>Conversation</h3>
+      <p class="ds-note"><code>--gradient-message-outgoing</code> runs left to right from <code>#732A0F</code> to <code>#4B2114</code>.</p>
+      <div class="ds-demo">
+        <div class="conversation">
+          <p class="message message--incoming">I’m a wedding photographer<br>and I really need a website</p>
+          <p class="message message--outgoing">Your website is ready and<br>in the air! Take a look</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 09 LANDING SECTIONS -->
+    <section class="ds-sec" id="sections">
+      <h2>09 · Landing sections</h2>
+      <p class="section-lead">The approved landing flow, its purpose and the interaction each section must support.</p>
+      <div class="ds-scroll" style="display:none" aria-hidden="true">
+        <table class="ds-table">
+          <thead><tr><th>#</th><th>Section</th><th>Must contain</th><th>Layout</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td>Header</td><td>logo · 3–5 links · 1 CTA</td><td>sticky, 64px</td></tr>
+            <tr><td>2</td><td>Hero</td><td>subtitle · headline · lead · primary + secondary CTA · visual proof</td><td>7/5 · <code>--section-y-lg</code></td></tr>
+            <tr><td>3</td><td>Social proof</td><td>logos or a metric</td><td>band · <code>.section--alt</code></td></tr>
+            <tr><td>4</td><td>Problem</td><td>the pain in one title + 3 points</td><td>centered, 8 columns</td></tr>
+            <tr><td>5</td><td>Solution / features</td><td>3–6 blocks with an icon</td><td>4+4+4</td></tr>
+            <tr><td>6</td><td>How it works</td><td>3 numbered steps</td><td>4+4+4 or alternating</td></tr>
+            <tr><td>7</td><td>Testimonials</td><td>2–3 quotes with name and context</td><td>6/6</td></tr>
+            <tr><td>8</td><td>Pricing / offer</td><td>plans or a single offer + guarantee</td><td>equal-height blocks</td></tr>
+            <tr><td>9</td><td>FAQ</td><td>5–8 questions in an accordion</td><td>centered, 8 columns</td></tr>
+            <tr><td>10</td><td>Final CTA</td><td>restate the promise + 1 button</td><td><code>.section--inverse</code></td></tr>
+            <tr><td>11</td><td>Footer</td><td>links · contact · legal</td><td>4 columns → 1 on mobile</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="ds-scroll">
+        <table class="ds-table">
+          <thead><tr><th>#</th><th>Section</th><th>Must contain</th><th>Layout</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td>Header</td><td>logo &middot; login &middot; sign up</td><td>top bar</td></tr>
+            <tr><td>2</td><td>Hero</td><td>character &middot; value proposition &middot; prompt input</td><td>first interaction</td></tr>
+            <tr><td>3</td><td>Product Possibilities</td><td>3-5 use cases &middot; platform visual &middot; agents/chat</td><td>stacked cards</td></tr>
+            <tr><td>4</td><td>Connectors</td><td>connector ecosystem &middot; external apps &middot; representative workflow</td><td>orbit</td></tr>
+            <tr><td>5</td><td>Conductor Mode</td><td>model carousel &middot; routing message &middot; Starchild</td><td>interactive circle</td></tr>
+            <tr><td>6</td><td>Video</td><td>personal story &middot; video placeholder</td><td>embedded video</td></tr>
+            <tr><td>7</td><td>Final CTA</td><td>character presence &middot; value &middot; Try it for free</td><td>two columns</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="ds-demo" style="display:none" aria-hidden="true">
+        <p class="ds-label">Landing flow</p>
+        <div class="ds-placeholder" style="min-height:180px">[HERO — text 7 col. · visual 5 col.]</div>
+      </div>
+      <p class="ds-note">Several of these sections need components that do not exist yet (feature block, quote, pricing block, accordion). Build each one when you reach the section that needs it, so its shape comes from real content.</p>
+    </section>
+
+  </main>
+</div>
+
+</body>
+</html>
