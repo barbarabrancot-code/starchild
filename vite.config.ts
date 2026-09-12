@@ -11,24 +11,17 @@ export default defineConfig({
   build: {
     rollupOptions: {
       input: {
-        main: resolve(__dirname, "index.html"),
-        app: resolve(__dirname, "app.html"),
         // variant B of today's delivery — see README-AB.md
-        appB: resolve(__dirname, "app-b.html"),
         // the page being taken forward — see src/landing-main.tsx
         landing: resolve(__dirname, "design/landing.html"),
         designSystem: resolve(__dirname, "design/design-system.html"),
-        onboarding: resolve(__dirname, "onboarding.html"),
         // "Version B" product architecture (see sitemap.html) — Main Agent +
         // Jobs + optional Agents, built on the prototype/ tree since that's
         // the one with the Jobs/Automations feature already in it
-        onboardingB: resolve(__dirname, "onboarding-b.html"),
         // a dedicated link that always shows the mobile layout, regardless of
         // the actual window it's opened in — wraps onboarding.html in a
         // phone-width frame; see onboarding-mobile.html for why an iframe
-        onboardingMobile: resolve(__dirname, "onboarding-mobile.html"),
         // dev-facing catalog of Chat/Agents components — see src/library-main.tsx
-        library: resolve(__dirname, "library.html"),
       },
     },
   },

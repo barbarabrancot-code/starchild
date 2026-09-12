@@ -4,6 +4,13 @@ import gsap from "gsap";
 import { Container } from "../../Container";
 import { PresenceOrb } from "../../presence/PresenceOrb";
 import { buildCarousel } from "./ellipticalCarousel";
+import openAiMark from "../../../../design/assets/images/svgs/conductor/ChatGPT.svg";
+import claudeMark from "../../../../design/assets/images/svgs/conductor/Claude.svg";
+import geminiMark from "../../../../design/assets/images/svgs/conductor/Gemini.svg";
+import qwenMark from "../../../../design/assets/images/svgs/conductor/Qwen.svg";
+import deepSeekMark from "../../../../design/assets/images/svgs/conductor/Deepseek.svg";
+import miniMaxMark from "../../../../design/assets/images/svgs/conductor/MiniMax.svg";
+import kimiMark from "../../../../design/assets/images/svgs/conductor/Kimi.svg";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
@@ -50,7 +57,18 @@ const EASE = [0.16, 1, 0.3, 1] as const;
  * provider's own colour, so the answer is recognisable at a glance rather than
  * being nine identical cards that take turns going orange.
  */
-type Model = { name: string; art: string; w: number; brand: string; whole?: boolean };
+const MODEL_ASSETS = {
+  "openai-wordmark.svg": openAiMark,
+  "claude-wordmark.svg": claudeMark,
+  "gemini-wordmark.svg": geminiMark,
+  "qwen-card.svg": qwenMark,
+  "deepseek.svg": deepSeekMark,
+  "minimax-card.svg": miniMaxMark,
+  "kimi-wordmark.svg": kimiMark,
+  "spacex.svg": new URL("../../../../public/models/spacex.svg", import.meta.url).href,
+} as const;
+
+type Model = { name: string; art: keyof typeof MODEL_ASSETS; w: number; brand: string; whole?: boolean };
 
 const MODELS: Model[] = [
   { name: "OpenAI", art: "openai-wordmark.svg", w: 0.616, brand: "#10A37F" },
@@ -288,7 +306,7 @@ export function ConductorSectionB() {
                     : { "aria-hidden": true })}
                 >
                   <img
-                    src={`${import.meta.env.BASE_URL}models/${model.art}`}
+                    src={MODEL_ASSETS[model.art]}
                     alt=""
                     draggable={false}
                     style={{ width: `${model.w * 100}%` }}
