@@ -235,6 +235,22 @@ export function StackedCardsSection() {
 
         .sc-card { width: min(100%, 795px); margin: 0 auto; }
 
+        /* The stack reads as a climb up the system's grey scale: each card is
+           dealt one step lighter than the one it covers, so the deal has a
+           direction of its own and the two cards on screen at any moment are
+           never the same colour. The ramp stops at surface-3 — surface-4 and
+           above are the border steps, and a card filled with one loses its own
+           border.
+
+           Redefining the surface roles on the card, rather than setting a
+           background on it, is what carries the step inwards: the mock browser
+           reads --bg-surface for its chrome and --bg-surface-alt for its fill,
+           so it keeps the same one-step lift above its card on all four. */
+        .sc-card:nth-child(1) { --bg-surface: var(--color-surface-0); --bg-surface-alt: var(--color-surface-1); }
+        .sc-card:nth-child(2) { --bg-surface: var(--color-surface-1); --bg-surface-alt: var(--color-surface-2); }
+        .sc-card:nth-child(3) { --bg-surface: var(--color-surface-2); --bg-surface-alt: var(--color-surface-3); }
+        .sc-card:nth-child(4) { --bg-surface: var(--color-surface-3); --bg-surface-alt: var(--color-surface-4); }
+
         .sc-card-in {
           height: 100%;
           display: flex;
@@ -273,23 +289,46 @@ export function StackedCardsSection() {
           position: absolute; left: 0; bottom: 0;
           width: min(52%, 362px); height: auto;
         }
+        /* The window is the one from design/assets/images/svgs/macui.svg, which
+           the website card above renders directly. That file is a 1.8MB SVG —
+           chrome plus a screenshot baked in as base64 — so it is quoted here
+           rather than imported a second time: same titlebar height, same
+           radius, same stroke, same three lights, measured off its 594×320
+           frame and scaled to this 362px box (×0.609).
+
+           These are macOS greys, not system surfaces, and that is deliberate —
+           the frame reads as somebody else's window, which is the whole point
+           of putting the work inside one. The card behind it is on the system;
+           only the chrome is not. */
         .sc-mock-browser {
+          --chrome-h: 15px;
           position: absolute; left: 0; bottom: 0; width: min(52%, 362px); height: 196px;
-          overflow: hidden; border: 1px solid var(--border-subtle); border-radius: var(--radius-md);
+          overflow: hidden; border: 1px solid #2a2a2a; border-radius: 5px;
           background: var(--bg-surface-alt); color: var(--text-primary);
         }
         .sc-mock-browser > span {
-          position: absolute; inset: 0 0 auto; z-index: 2; height: 20px; display: grid; place-items: center;
-          border-bottom: 1px solid var(--border-subtle); background: var(--bg-surface); color: var(--text-secondary);
-          font-size: 9px; line-height: 1;
+          position: absolute; inset: 0 0 auto; z-index: 2; height: var(--chrome-h);
+          display: grid; place-items: center;
+          background: #1e1e1e; color: rgba(235,235,245,.6);
+          font-size: 8px; line-height: 1;
+        }
+        /* The three lights, at macui.svg's spacing: 4.75r on 15.8 centres,
+           scaled — 2.9px radius, 9.6px apart, first centre 2.9px in. */
+        .sc-mock-browser > span::before {
+          content: ""; position: absolute; left: 4.8px; top: 50%;
+          width: 25px; height: 6px; transform: translateY(-50%);
+          background:
+            radial-gradient(circle 2.9px at 2.9px 50%,  #ff5e57 99%, transparent 100%),
+            radial-gradient(circle 2.9px at 12.5px 50%, #ffbb2e 99%, transparent 100%),
+            radial-gradient(circle 2.9px at 22.1px 50%, #38c149 99%, transparent 100%);
         }
         .sc-mock-browser--video { background: linear-gradient(90deg, #8a7468 0 50%, #273345 50% 100%); }
-        .sc-mock-browser--video::before { content: ""; position: absolute; inset: 20px 0 0; background: linear-gradient(180deg, rgba(8,13,20,.05) 0 50%, rgba(33,26,20,.42) 50%); }
-        .sc-mock-browser--video i { position: absolute; z-index: 1; left: 27%; top: 56px; width: 34px; height: 105px; border-radius: 20px 20px 8px 8px; background: rgba(245,237,224,.72); }
+        .sc-mock-browser--video::before { content: ""; position: absolute; inset: var(--chrome-h) 0 0; background: linear-gradient(180deg, rgba(8,13,20,.05) 0 50%, rgba(33,26,20,.42) 50%); }
+        .sc-mock-browser--video i { position: absolute; z-index: 1; left: 27%; top: 51px; width: 34px; height: 105px; border-radius: 20px 20px 8px 8px; background: rgba(245,237,224,.72); }
         .sc-mock-browser--video b { position: absolute; z-index: 1; right: 18%; bottom: 32px; width: 74px; height: 3px; background: rgba(255,151,60,.75); }
         .sc-mock-browser--crm { background: #0d1018; }
-        .sc-mock-browser--crm > strong { position: absolute; z-index: 1; top: 34px; left: 50%; width: 30px; height: 30px; display: grid; place-items: center; border-radius: 50%; transform: translateX(-50%); background: #61729a; color: white; font-size: 15px; }
-        .sc-mock-browser--crm > div { position: absolute; z-index: 1; top: 68px; left: 50%; width: min(70%, 230px); padding: 16px; border: 1px solid #263246; border-radius: var(--radius-md); transform: translateX(-50%); background: #151b29; }
+        .sc-mock-browser--crm > strong { position: absolute; z-index: 1; top: 29px; left: 50%; width: 30px; height: 30px; display: grid; place-items: center; border-radius: 50%; transform: translateX(-50%); background: #61729a; color: white; font-size: 15px; }
+        .sc-mock-browser--crm > div { position: absolute; z-index: 1; top: 63px; left: 50%; width: min(70%, 230px); padding: 16px; border: 1px solid #263246; border-radius: var(--radius-md); transform: translateX(-50%); background: #151b29; }
         .sc-mock-browser--crm > div b, .sc-mock-browser--crm > div small { display: block; }
         .sc-mock-browser--crm > div b { color: #e8ecf6; font-size: 11px; }
         .sc-mock-browser--crm > div small { margin-top: 7px; color: #8b96ae; font-size: 8px; line-height: 1.3; }

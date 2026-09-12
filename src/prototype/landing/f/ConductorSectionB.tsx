@@ -47,12 +47,17 @@ const EASE = [0.16, 1, 0.3, 1] as const;
  * 103.523, and so on. That is what keeps nine marks of very different
  * proportions looking like one set.
  *
- * Two of them — Qwen and MiniMax — are flattened in the file itself: the frame
- * has no children, so the mark cannot be exported on its own and what comes back
- * is the whole card, ground and all, at exactly the card's size. They are marked
- * `whole` and drawn edge to edge instead of centred inside a card. It renders
- * identically because the ground in the file is the same #3a3a3a the CSS card
- * uses. Ungroup those two in Figma and they can join the rest.
+ * The rule behind those fractions is one height, not one width: every `w` is the
+ * mark's aspect ratio times 0.1435 of the card, which is the height Gemini
+ * stands at. Nine wordmarks sharing a width read as nine different sizes; nine
+ * sharing a height read as a set.
+ *
+ * Qwen and MiniMax used to be exceptions. The old public/models/ artwork for
+ * those two was flattened with the card ground baked in, so they were marked
+ * `whole` and drawn edge to edge. The conductor exports replaced that artwork
+ * with plain white marks and the flag outlived its reason, which is why those
+ * were the only two cards with no margin around the mark. Both are ordinary
+ * cards now, and `whole` is gone with them.
  *
  * `lit` is the ground the card takes when it is the chosen one. It is the
  * provider's own colour, so the answer is recognisable at a glance rather than
@@ -69,11 +74,11 @@ const MODEL_ASSETS = {
   "kimi-wordmark.svg": kimiMark,
 } as const;
 
-type Model = { name: string; art: keyof typeof MODEL_ASSETS; w: number; brand: string; whole?: boolean };
+type Model = { name: string; art: keyof typeof MODEL_ASSETS; w: number; brand: string };
 
 const MODELS: Model[] = [
-  { name: "OpenAI", art: "openai-wordmark.svg", w: 0.616, brand: "#10A37F" },
-  { name: "Claude", art: "claude-wordmark.svg", w: 0.667, brand: "#D97757" },
+  { name: "OpenAI", art: "openai-wordmark.svg", w: 0.622, brand: "#10A37F" },
+  { name: "Claude", art: "claude-wordmark.svg", w: 0.673, brand: "#D97757" },
   {
     name: "Gemini",
     art: "gemini-wordmark.svg",
@@ -85,11 +90,11 @@ const MODELS: Model[] = [
   // used to be here drew SpaceX a second time and Grok never appeared at all.
   // Export real Grok artwork and it can come back as a ninth card; until then
   // naming a model the ring cannot actually show would be the worse bug.
-  { name: "Qwen", art: "qwen-card.svg", w: 1, brand: "#615CED", whole: true },
-  { name: "DeepSeek", art: "deepseek.svg", w: 0.857, brand: "#4D6BFE" },
-  { name: "MiniMax", art: "minimax-card.svg", w: 1, brand: "#1456F0", whole: true },
-  { name: "Kimi", art: "kimi-wordmark.svg", w: 0.492, brand: "#007CFF" },
-  { name: "Grok", art: "grok.svg", w: 0.68, brand: "#111111" },
+  { name: "Qwen", art: "qwen-card.svg", w: 0.488, brand: "#615CED" },
+  { name: "DeepSeek", art: "deepseek.svg", w: 0.881, brand: "#4D6BFE" },
+  { name: "MiniMax", art: "minimax-card.svg", w: 0.6, brand: "#1456F0" },
+  { name: "Kimi", art: "kimi-wordmark.svg", w: 0.42, brand: "#007CFF" },
+  { name: "Grok", art: "grok.svg", w: 0.377, brand: "#111111" },
 ];
 
 /**
@@ -299,7 +304,7 @@ export function ConductorSectionB() {
                   ref={(el) => {
                     cardRefs.current[i] = el;
                   }}
-                  className={`cdb-card${model.whole ? " is-whole" : ""}`}
+                  className="cdb-card"
                   style={{ ["--brand" as string]: model.brand }}
                   // The second lap is the same nine again, so it is named once.
                   {...(model.lap === 0
@@ -389,17 +394,13 @@ export function ConductorSectionB() {
         }
         .cdb-card:active { cursor: grabbing; }
         .cdb-card img { display: block; height: auto; user-select: none; }
-        /* Qwen and MiniMax are the whole card in one file — see the note on
-           MODELS — so they fill it instead of sitting inside it. */
-        .cdb-card.is-whole img { width: 100%; height: 100%; }
-
         /* The chosen card resolves to its provider's own ground. */
         .cdb-card.is-lit {
           z-index: 2;
           opacity: 1;
           background: var(--brand);
         }
-        .cdb-card.is-lit:not(.is-whole) img { filter: brightness(0) invert(1); }
+        .cdb-card.is-lit img { filter: brightness(0) invert(1); }
 
         /* ---------- what stands inside it ---------- */
 
@@ -429,6 +430,23 @@ export function ConductorSectionB() {
         .cdb-eyebrow {
           margin: 0 0 13px; color: var(--lf-accent-ink);
           font-size: 12.5px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase;
+        }
+        /* This file is shared with the archived versions on app.html, so the
+           rule above stays as those versions set it and the design system's
+           subtitle role is added behind data-ds rather than replacing it.
+
+           text-transform alone gives full capitals — it rewrites the characters
+           before the font ever sees them, and nothing downstream knows the line
+           was sentence case. all-small-caps is the other half: it asks Google
+           Sans for c2sc, which the file carries, so the capitals come back at
+           x-height. Tracking comes down with them — .16em was set to open up
+           full caps and is too much once they are small. */
+        .lf[data-ds] .cdb-eyebrow {
+          font-variant-caps: all-small-caps;
+          font-size: var(--text-sm);
+          font-weight: var(--weight-medium);
+          letter-spacing: var(--tracking-wide);
+          color: var(--text-brand);
         }
         .cdb-core h2 {
           margin: 0; color: var(--lf-ink);

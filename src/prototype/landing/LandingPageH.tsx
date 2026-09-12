@@ -31,7 +31,6 @@
  */
 import type { TaskCard } from "../data";
 import { HeroScreenH } from "./h/HeroScreenH";
-import { VideoPlaceholderSection } from "./h/VideoPlaceholderSection";
 import { OrbitSection } from "./f/OrbitSection";
 import { ConductorSectionB } from "./f/ConductorSectionB";
 import { FinalCtaSectionH } from "./h/FinalCtaSectionH";
@@ -136,8 +135,6 @@ export function LandingPageH({
              what it can reach on the right, and the answer falling out of the
              bottom of the mark in the middle. */}
       <ConductorSectionB />
-
-      <VideoPlaceholderSection />
 
       <FinalCtaSectionH onStartFree={() => onEnterGuest()} />
 
