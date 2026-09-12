@@ -38,6 +38,7 @@
   --color-surface-3: #312f2e;  /* alternate section, hover */
   --color-surface-4: #4a4847;  /* subtle border */
   --color-surface-5: #5e5e5e;  /* strong border, divider */
+  --color-surface-6: #727272;  /* lightest step — 3.6:1 on the page */
 
   --color-text-1: #ffffff;
   --color-text-2: #a2a09f;
@@ -94,10 +95,12 @@
   --weight-semibold: 600;
   --weight-bold:     700;
 
-  --leading-subtitle: 30px;
+  /* Leading is 120% for every role, on both breakpoints. As a ratio it
+     scales with the size on its own, so nothing here needs a clamp.    */
+  --leading-subtitle: 1.2;
   --leading-eyebrow: var(--leading-subtitle); /* legacy alias */
-  --leading-title:    28px;
-  --leading-body:     24px;
+  --leading-title:    1.2;
+  --leading-body:     1.2;
   --leading-tight:    1.1;
   --leading-snug:     1.25;
   --leading-normal:   1.5;
