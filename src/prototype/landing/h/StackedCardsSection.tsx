@@ -36,7 +36,7 @@ type Card = {
   title: string;
   subtitle?: string;
   body: string;
-  visual?: "website";
+  visual: "website" | "video" | "crm" | "endless";
 };
 
 const CARDS: Card[] = [
@@ -49,18 +49,24 @@ const CARDS: Card[] = [
   },
   {
     index: "02",
-    title: "Everything you already use",
-    body: "Forty-odd connectors, so the work happens where it lives — your drive, your inbox, your calendar — instead of being pasted back and forth.",
+    title: "Video",
+    subtitle: "Editing and color grading",
+    visual: "video",
+    body: "Create a LUT based on reference images and the camera model, the color space",
   },
   {
     index: "03",
-    title: "It remembers",
-    body: "What you are working on, how you like it done, what you said last week. You stop re-explaining yourself at the start of every conversation.",
+    title: "CRM",
+    subtitle: "Outreach management",
+    visual: "crm",
+    body: "Build us an outreach CRM similar to what we use in monday.com.",
   },
   {
     index: "04",
-    title: "Work that continues without you",
-    body: "Hand a job to an agent and close the tab. It keeps going, and tells you when there is something only you can decide.",
+    title: "Endless possibilities",
+    subtitle: "Whatever you need",
+    visual: "endless",
+    body: "I need...",
   },
 ];
 
@@ -178,7 +184,7 @@ export function StackedCardsSection() {
               style={{ zIndex: i + 1 }}
             >
               <div className={`sc-card-in${card.visual ? ` sc-card-in--${card.visual}` : ""}`}>
-                {card.visual === "website" ? (
+                {card.visual ? (
                   <>
                     <div className="sc-website-copy">
                       <h3 className="sc-website-title">
@@ -187,11 +193,14 @@ export function StackedCardsSection() {
                       </h3>
                       <p className="sc-website-body">{card.body}</p>
                     </div>
-                    <div className="sc-website-visual" aria-label="Starchild builds a website from a request">
-                      <img className="sc-website-browser" src={macUi} alt="Website preview" />
+                    <div className={`sc-website-visual sc-website-visual--${card.visual}`} aria-label={`Starchild creates a ${card.title.toLowerCase()} from a request`}>
+                      {card.visual === "website" && <img className="sc-website-browser" src={macUi} alt="Wedding photographer website preview" />}
+                      {card.visual === "video" && <div className="sc-mock-browser sc-mock-browser--video" aria-hidden="true"><span>Video.mp4</span><i /><b /></div>}
+                      {card.visual === "crm" && <div className="sc-mock-browser sc-mock-browser--crm" aria-hidden="true"><span>Preview</span><strong>B</strong><div><b>Outreach CRM</b><small>This board is invite-only. Ask an admin on your team for an invite link.</small></div></div>}
+                      {card.visual === "endless" && <img className="sc-website-character--large" src={processingIndicator} alt="" aria-hidden="true" />}
                       <div className="sc-website-conversation">
-                        <p className="sc-message sc-message--incoming">I&apos;m a wedding photographer<br />and I really need a website</p>
-                        <p className="sc-message sc-message--outgoing">Your website is ready and<br />in the air! Take a look</p>
+                        <p className="sc-message sc-message--incoming">{card.visual === "website" ? <>I&apos;m a wedding photographer<br />and I really need a website</> : card.body}</p>
+                        <p className="sc-message sc-message--outgoing">{card.visual === "website" ? <>Your website is ready and<br />in the air! Take a look</> : card.visual === "video" ? <>Your file cube is ready.<br />Take a look:</> : card.visual === "crm" ? <>Your outreach CRM is ready. Track prospects, manage pipeline stages,<br />and stay on top of follow-ups in one place.</> : <>Tell me what you have in mind.<br />We&apos;ll figure out the rest.</>}</p>
                         <img className="sc-website-character" src={processingIndicator} alt="" aria-hidden="true" />
                       </div>
                     </div>
@@ -226,6 +235,22 @@ export function StackedCardsSection() {
 
         .sc-card { width: min(100%, 795px); margin: 0 auto; }
 
+        /* The stack reads as a climb up the system's grey scale: each card is
+           dealt one step lighter than the one it covers, so the deal has a
+           direction of its own and the two cards on screen at any moment are
+           never the same colour. The ramp stops at surface-3 — surface-4 and
+           above are the border steps, and a card filled with one loses its own
+           border.
+
+           Redefining the surface roles on the card, rather than setting a
+           background on it, is what carries the step inwards: the mock browser
+           reads --bg-surface for its chrome and --bg-surface-alt for its fill,
+           so it keeps the same one-step lift above its card on all four. */
+        .sc-card:nth-child(1) { --bg-surface: var(--color-surface-0); --bg-surface-alt: var(--color-surface-1); }
+        .sc-card:nth-child(2) { --bg-surface: var(--color-surface-1); --bg-surface-alt: var(--color-surface-2); }
+        .sc-card:nth-child(3) { --bg-surface: var(--color-surface-2); --bg-surface-alt: var(--color-surface-3); }
+        .sc-card:nth-child(4) { --bg-surface: var(--color-surface-3); --bg-surface-alt: var(--color-surface-4); }
+
         .sc-card-in {
           height: 100%;
           display: flex;
@@ -238,7 +263,7 @@ export function StackedCardsSection() {
           border: var(--border-width) solid var(--border-subtle);
           border-radius: var(--radius-xl);
         }
-        .sc-card-in--website {
+        .sc-card-in--website, .sc-card-in--video, .sc-card-in--crm, .sc-card-in--endless {
           display: block;
           min-height: 418px;
           padding: var(--space-7);
@@ -264,6 +289,49 @@ export function StackedCardsSection() {
           position: absolute; left: 0; bottom: 0;
           width: min(52%, 362px); height: auto;
         }
+        /* The window is the one from design/assets/images/svgs/macui.svg, which
+           the website card above renders directly. That file is a 1.8MB SVG —
+           chrome plus a screenshot baked in as base64 — so it is quoted here
+           rather than imported a second time: same titlebar height, same
+           radius, same stroke, same three lights, measured off its 594×320
+           frame and scaled to this 362px box (×0.609).
+
+           These are macOS greys, not system surfaces, and that is deliberate —
+           the frame reads as somebody else's window, which is the whole point
+           of putting the work inside one. The card behind it is on the system;
+           only the chrome is not. */
+        .sc-mock-browser {
+          --chrome-h: 15px;
+          position: absolute; left: 0; bottom: 0; width: min(52%, 362px); height: 196px;
+          overflow: hidden; border: 1px solid #2a2a2a; border-radius: 5px;
+          background: var(--bg-surface-alt); color: var(--text-primary);
+        }
+        .sc-mock-browser > span {
+          position: absolute; inset: 0 0 auto; z-index: 2; height: var(--chrome-h);
+          display: grid; place-items: center;
+          background: #1e1e1e; color: rgba(235,235,245,.6);
+          font-size: 8px; line-height: 1;
+        }
+        /* The three lights, at macui.svg's spacing: 4.75r on 15.8 centres,
+           scaled — 2.9px radius, 9.6px apart, first centre 2.9px in. */
+        .sc-mock-browser > span::before {
+          content: ""; position: absolute; left: 4.8px; top: 50%;
+          width: 25px; height: 6px; transform: translateY(-50%);
+          background:
+            radial-gradient(circle 2.9px at 2.9px 50%,  #ff5e57 99%, transparent 100%),
+            radial-gradient(circle 2.9px at 12.5px 50%, #ffbb2e 99%, transparent 100%),
+            radial-gradient(circle 2.9px at 22.1px 50%, #38c149 99%, transparent 100%);
+        }
+        .sc-mock-browser--video { background: linear-gradient(90deg, #8a7468 0 50%, #273345 50% 100%); }
+        .sc-mock-browser--video::before { content: ""; position: absolute; inset: var(--chrome-h) 0 0; background: linear-gradient(180deg, rgba(8,13,20,.05) 0 50%, rgba(33,26,20,.42) 50%); }
+        .sc-mock-browser--video i { position: absolute; z-index: 1; left: 27%; top: 51px; width: 34px; height: 105px; border-radius: 20px 20px 8px 8px; background: rgba(245,237,224,.72); }
+        .sc-mock-browser--video b { position: absolute; z-index: 1; right: 18%; bottom: 32px; width: 74px; height: 3px; background: rgba(255,151,60,.75); }
+        .sc-mock-browser--crm { background: #0d1018; }
+        .sc-mock-browser--crm > strong { position: absolute; z-index: 1; top: 29px; left: 50%; width: 30px; height: 30px; display: grid; place-items: center; border-radius: 50%; transform: translateX(-50%); background: #61729a; color: white; font-size: 15px; }
+        .sc-mock-browser--crm > div { position: absolute; z-index: 1; top: 63px; left: 50%; width: min(70%, 230px); padding: 16px; border: 1px solid #263246; border-radius: var(--radius-md); transform: translateX(-50%); background: #151b29; }
+        .sc-mock-browser--crm > div b, .sc-mock-browser--crm > div small { display: block; }
+        .sc-mock-browser--crm > div b { color: #e8ecf6; font-size: 11px; }
+        .sc-mock-browser--crm > div small { margin-top: 7px; color: #8b96ae; font-size: 8px; line-height: 1.3; }
         .sc-website-conversation {
           position: absolute; right: 0; bottom: 0; width: 244px;
           display: flex; flex-direction: column; align-items: flex-end;
@@ -287,6 +355,10 @@ export function StackedCardsSection() {
           position: absolute; left: 18px; bottom: -4px;
           width: 64px; height: 64px; object-fit: contain;
         }
+        .sc-website-character--large {
+          position: absolute; left: 27%; bottom: -16px; width: 210px; height: 210px; object-fit: contain;
+        }
+        .sc-website-visual--endless .sc-website-character { display: none; }
 
         /* Support scale, not a type role: it is a counter, and setting it in
            one of the four would make it compete with the title beside it. */
@@ -317,15 +389,17 @@ export function StackedCardsSection() {
         }
 
         @media (max-width: 640px) {
-          .sc-card-in--website { min-height: 0; padding: var(--space-6); }
+          .sc-card-in--website, .sc-card-in--video, .sc-card-in--crm, .sc-card-in--endless { min-height: 0; padding: var(--space-6); }
           .sc-website-visual {
             display: grid; height: auto; margin-top: var(--space-5); gap: var(--space-4);
           }
           .sc-website-browser { position: static; width: 100%; }
+          .sc-mock-browser { position: relative; left: auto; bottom: auto; width: 100%; }
           .sc-website-conversation {
             position: relative; right: auto; bottom: auto; width: 100%; min-height: 130px;
           }
           .sc-website-character { left: 22px; bottom: 0; }
+          .sc-website-character--large { left: 10%; bottom: -8px; width: 160px; height: 160px; }
         }
 
         /* ---------- the stack ----------

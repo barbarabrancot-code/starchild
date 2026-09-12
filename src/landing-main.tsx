@@ -1,7 +1,7 @@
 import { Component, StrictMode, type ErrorInfo, type ReactNode } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
-import { ConductorApp, NEXT_LINE } from "./prototype/ConductorApp";
+import { LandingPageH } from "./prototype/landing/LandingPageH";
 
 class LandingErrorBoundary extends Component<
   { children: ReactNode },
@@ -55,16 +55,20 @@ class LandingErrorBoundary extends Component<
 /**
  * landing.html — the landing page being taken forward.
  *
- * Same product behind it as app.html: this entry differs by one argument, the
- * line of versions the page offers. Here that line is a single version, the one
- * being worked on, so the page has no version switch on it. The ones it was
- * compared against stay reachable on app.html, which keeps every version that
- * has been tried and keeps each at the letter it already had.
+ * This is the public landing artifact. Archived prototypes are intentionally
+ * excluded so their retired assets never affect the live landing build.
  */
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <LandingErrorBoundary>
-      <ConductorApp line={NEXT_LINE} />
+      <LandingPageH
+        onEnterGuest={() => undefined}
+        onStartTask={() => undefined}
+        onNavigateConnectors={() => undefined}
+        onNavigatePricing={() => undefined}
+        onLogIn={() => undefined}
+        onSignUp={() => undefined}
+      />
     </LandingErrorBoundary>
   </StrictMode>
 );

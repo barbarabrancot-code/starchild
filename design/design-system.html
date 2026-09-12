@@ -28,6 +28,7 @@
   --color-surface-3: #312f2e;  /* alternate section, hover */
   --color-surface-4: #4a4847;  /* subtle border */
   --color-surface-5: #5e5e5e;  /* strong border, divider */
+  --color-surface-6: #727272;  /* lightest step — 3.6:1 on the page */
 
   /* Text — from the typography spec */
   --color-text-1: #ffffff;     /* primary text */
@@ -95,11 +96,14 @@
   --weight-semibold: 600;
   --weight-bold:     700;
 
-  /* Leading values are explicit in the supplied type specification. */
-  --leading-subtitle: 30px;
+  /* Leading is 120% for every role, on both breakpoints. As a ratio it scales
+     with the size on its own, so nothing here needs a clamp. The separate
+     tokens stay because they are what the type classes read — if one role
+     ever needs its own leading, it changes here and nowhere else.           */
+  --leading-subtitle: 1.2;
   --leading-eyebrow:  var(--leading-subtitle); /* legacy alias */
-  --leading-title:    28px;   /* Title and Title 2 */
-  --leading-body:     24px;   /* Body */
+  --leading-title:    1.2;
+  --leading-body:     1.2;
   --leading-tight:    1.1;
   --leading-snug:     1.25;
   --leading-normal:   1.5;
@@ -330,7 +334,9 @@ a { color: var(--text-brand); }
    ========================================================================== */
 .ds-shell { display: grid; grid-template-columns: 240px 1fr; gap: var(--space-7); max-width: var(--container-wide); margin-inline: auto; padding-inline: var(--gutter); }
 .ds-side { position: sticky; top: 0; align-self: start; height: 100dvh; overflow-y: auto; padding-block: var(--space-6); }
-.ds-side__brand { font-family: var(--font-display); font-weight: var(--weight-bold); font-size: var(--text-body); margin-bottom: var(--space-5); }
+.ds-side__brand { display: grid; gap: var(--space-2); justify-items: start; margin-bottom: var(--space-5); }
+.ds-side__brand img { width: 140px; height: auto; }
+.ds-side__brand span { font-family: var(--font-mono); font-size: var(--text-xs); letter-spacing: var(--tracking-wide); text-transform: uppercase; color: var(--text-muted); }
 .ds-side nav a { display: block; padding: var(--space-2) 0 var(--space-2) var(--space-3); font-size: var(--text-sm); color: var(--text-secondary); text-decoration: none; border-left: 2px solid transparent; }
 .ds-side nav a:hover { color: var(--text-primary); border-left-color: var(--color-brand); }
 .ds-main { padding-block: var(--space-6) var(--space-10); min-width: 0; }
@@ -367,17 +373,19 @@ pre.ds-code { background: var(--color-surface-1); color: var(--color-text-2); pa
 
   <!-- ===================== SIDEBAR ===================== -->
   <aside class="ds-side">
-    <div class="ds-side__brand">[LOGO] Design System</div>
+    <div class="ds-side__brand">
+      <img src="assets/logo.svg" alt="Starchild" width="140" height="20">
+      <span>Design System</span>
+    </div>
     <nav>
-      <a href="#principles">01 · Principles</a>
-      <a href="#color">02 · Color</a>
-      <a href="#typography">03 · Typography</a>
-      <a href="#spacing">04 · Spacing</a>
-      <a href="#grid">05 · Grid</a>
-      <a href="#breakpoints">06 · Breakpoints</a>
-      <a href="#elevation">07 · Radius</a>
-      <a href="#components">08 · Components</a>
-      <a href="#sections">09 · Landing sections</a>
+      <a href="#color">01 · Color</a>
+      <a href="#typography">02 · Typography</a>
+      <a href="#spacing">03 · Spacing</a>
+      <a href="#grid">04 · Grid</a>
+      <a href="#breakpoints">05 · Breakpoints</a>
+      <a href="#elevation">06 · Radius</a>
+      <a href="#components">07 · Components</a>
+      <a href="#sections">08 · Landing sections</a>
     </nav>
   </aside>
 
@@ -385,26 +393,12 @@ pre.ds-code { background: var(--color-surface-1); color: var(--color-text-2); pa
   <main class="ds-main">
 
     <header class="ds-sec">
-      <p class="subtitle subtitle--sm">[PRODUCT NAME] · v0.3</p>
       <h1 style="font-size:var(--text-title-2)">Landing Page Design System</h1>
-      <p class="section-lead">[One sentence on what the landing has to prove to a visitor — replace.]</p>
-      <p class="ds-note"><strong>Color, typography and grid are defined.</strong> Still placeholder: the <strong>type families</strong> and every bracketed string. Change only the <code>:root</code> block at the top of the file.</p>
     </header>
 
-    <!-- 01 PRINCIPLES -->
-    <section class="ds-sec" id="principles">
-      <h2>01 · Principles</h2>
-      <p class="section-lead">[Three to five rules that settle arguments. Each one should rule something out.]</p>
-      <div class="auto-grid">
-        <div class="ds-demo"><p class="ds-label">Principle 1</p><p class="type-body" style="margin:0">[How this principle turns into a concrete visual decision.]</p></div>
-        <div class="ds-demo"><p class="ds-label">Principle 2</p><p class="type-body" style="margin:0">[Same.]</p></div>
-        <div class="ds-demo"><p class="ds-label">Principle 3</p><p class="type-body" style="margin:0">[Same.]</p></div>
-      </div>
-    </section>
-
-    <!-- 02 COLOR -->
+    <!-- 01 COLOR -->
     <section class="ds-sec" id="color">
-      <h2>02 · Color</h2>
+      <h2>01 · Color</h2>
       <p class="section-lead">Six colors, closed list. No other hex appears in the file — anything that looks like a seventh color is one of these with opacity or <code>color-mix()</code>.</p>
 
       <div class="ds-demo">
@@ -420,6 +414,7 @@ pre.ds-code { background: var(--color-surface-1); color: var(--color-text-2); pa
           <div class="ds-swatch"><div class="ds-swatch__chip" style="background:#312f2e;height:88px"></div><div class="ds-swatch__meta">312F2E<br><code>--color-surface-3</code><br>alternate section, hover</div></div>
           <div class="ds-swatch"><div class="ds-swatch__chip" style="background:#4a4847;height:88px"></div><div class="ds-swatch__meta">4A4847<br><code>--color-surface-4</code><br>subtle border</div></div>
           <div class="ds-swatch"><div class="ds-swatch__chip" style="background:#5e5e5e;height:88px"></div><div class="ds-swatch__meta">5E5E5E<br><code>--color-surface-5</code><br>strong border</div></div>
+          <div class="ds-swatch"><div class="ds-swatch__chip" style="background:#727272;height:88px"></div><div class="ds-swatch__meta">727272<br><code>--color-surface-6</code><br>lightest step</div></div>
         </div>
 
         <p class="ds-label" style="margin-top:var(--space-5)">Text — from the typography spec</p>
@@ -429,49 +424,35 @@ pre.ds-code { background: var(--color-surface-1); color: var(--color-text-2); pa
         </div>
       </div>
 
-      <p class="ds-note"><strong>Hover and active are not new colors.</strong> They come from <code>color-mix()</code> on the base itself — 88% brand + 12% white for hover, + 12% black for active. Change the brand and the states follow on their own.</p>
-
-      <p class="ds-note"><strong>No state colors.</strong> Success / warning / error / info are not in the palette, so they are gone. Nothing in the system can currently distinguish an error from a highlight — add those colors when a form or a status message needs them.</p>
 
       <div class="ds-scroll">
         <table class="ds-table">
-          <thead><tr><th>Role</th><th>Token</th><th>Use for</th></tr></thead>
+          <thead><tr><th>Role</th><th>Token</th><th>Value</th><th>What actually uses it on the landing</th></tr></thead>
           <tbody>
-            <tr><td>Page background</td><td><code>--bg-page</code></td><td>#1B1919 — body, default sections</td></tr>
-            <tr><td>Surface</td><td><code>--bg-surface</code></td><td>#242221 — header, raised blocks</td></tr>
-            <tr><td>Alternate surface</td><td><code>--bg-surface-alt</code></td><td>#312F2E — alternating sections, hover</td></tr>
-            <tr><td>Primary text</td><td><code>--text-primary</code></td><td>#FFFFFF — titles and emphasis</td></tr>
-            <tr><td>Secondary text</td><td><code>--text-secondary</code></td><td>#A2A09F — body copy, descriptions</td></tr>
-            <tr><td>Muted text</td><td><code>--text-muted</code></td><td>#5E5E5E — decorative only: 2.7:1, fails contrast</td></tr>
-            <tr><td>Brand text</td><td><code>--text-brand</code></td><td>#F84600 — subtitle, links</td></tr>
-            <tr><td>Subtle border</td><td><code>--border-subtle</code></td><td>#4A4847 — dividers, outlines</td></tr>
-            <tr><td>Strong border</td><td><code>--border-strong</code></td><td>#5E5E5E — secondary button</td></tr>
-            <tr><td>Focus</td><td><code>--focus-ring</code></td><td>#F84600 — keyboard outline (never remove)</td></tr>
+            <tr><td>Page background</td><td><code>--bg-page</code></td><td>#1B1919</td><td>the page ground, and every section that does not alternate</td></tr>
+            <tr><td>Surface</td><td><code>--bg-surface</code></td><td>#242221</td><td>the hero prompt pill, the stacked-card body, the table head row, the striped video placeholder</td></tr>
+            <tr><td>Alternate surface</td><td><code>--bg-surface-alt</code></td><td>#312F2E</td><td><code>.section--alt</code>, secondary and ghost button hover, the drawn window chrome, a table row</td></tr>
+            <tr><td>Well</td><td><code>--bg-well</code></td><td>#121111</td><td><strong>nothing yet</strong> — the only recessed step, added for an illustration to sit in</td></tr>
+            <tr><td>Inverse surface</td><td><code>--bg-inverse</code></td><td>#FFFFFF</td><td><code>.section--inverse</code> and the light block in the stacked cards</td></tr>
+            <tr><td>Primary text</td><td><code>--text-primary</code></td><td>#FFFFFF</td><td>titles, emphasis, secondary button label</td></tr>
+            <tr><td>Secondary text</td><td><code>--text-secondary</code></td><td>#A2A09F</td><td>body copy, section lead, input placeholder, captions</td></tr>
+            <tr><td>Muted text</td><td><code>--text-muted</code></td><td>#5E5E5E</td><td><strong>nothing yet</strong> — decorative only: 2.7:1, fails contrast</td></tr>
+            <tr><td>Inverse text</td><td><code>--text-inverse</code></td><td>#1B1919</td><td>text sitting on an inverse surface</td></tr>
+            <tr><td>Brand text</td><td><code>--text-brand</code></td><td>#F84600</td><td>the eyebrow, ghost and outline button labels, the play triangle</td></tr>
+            <tr><td>Text on brand</td><td><code>--text-on-brand</code></td><td>#1B1919</td><td>the primary button label — the one pairing people get wrong</td></tr>
+            <tr><td>Subtle border</td><td><code>--border-subtle</code></td><td>#4A4847</td><td>card outlines, dividers, the hero pill edge</td></tr>
+            <tr><td>Strong border</td><td><code>--border-strong</code></td><td>#5E5E5E</td><td>secondary button, the dashed placeholder frame, the play circle</td></tr>
+            <tr><td>Focus</td><td><code>--focus-ring</code></td><td>#F84600</td><td>every <code>:focus-visible</code> outline (never remove)</td></tr>
           </tbody>
         </table>
       </div>
 
       <p class="ds-note"><strong>Rule:</strong> one brand color carries the primary action. If everything is a highlight, nothing is — at most one primary button per visible fold.</p>
-
-      <h3>Contrast</h3>
-      <div class="ds-scroll">
-        <table class="ds-table">
-          <thead><tr><th>Pair</th><th>Ratio</th><th>Verdict</th></tr></thead>
-          <tbody>
-            <tr><td>#FFFFFF on #1B1919</td><td>17.5:1</td><td>✅ passes at any size, comfortably</td></tr>
-            <tr><td>#A2A09F on #1B1919</td><td>7.0:1</td><td>✅ passes at any size</td></tr>
-            <tr><td>#F84600 on #1B1919</td><td>4.9:1</td><td>✅ passes at any size</td></tr>
-            <tr><td>#1B1919 on #F84600</td><td>4.9:1</td><td>✅ this is why the primary button uses near-black text, not white (white on orange is 3.6:1 and fails)</td></tr>
-            <tr><td>#5E5E5E on #1B1919</td><td>2.7:1</td><td>⚠️ a border color, not a text color. Never use it for anything readable.</td></tr>
-          </tbody>
-        </table>
-      </div>
-      <p class="ds-note">Every text pair in the palette clears WCAG AA at any size. There are no contrast exceptions to remember.</p>
     </section>
 
-    <!-- 03 TYPOGRAPHY -->
+    <!-- 02 TYPOGRAPHY -->
     <section class="ds-sec" id="typography">
-      <h2>03 · Typography</h2>
+      <h2>02 · Typography</h2>
       <p class="section-lead">Four roles, each with a mobile and a desktop size. The rest of the scale exists only to support them.</p>
 
       <div class="ds-scroll">
@@ -479,22 +460,22 @@ pre.ds-code { background: var(--color-surface-1); color: var(--color-text-2); pa
           <thead><tr><th>Role</th><th>Weight</th><th>Mobile</th><th>Desktop</th><th>Leading</th><th>Tracking</th><th>Color</th><th>Token / class</th></tr></thead>
           <tbody>
             <tr>
-              <td><strong>Title</strong></td><td>regular</td><td>24px</td><td>56px</td><td>28px</td><td>1%</td>
+              <td><strong>Title</strong></td><td>regular</td><td>24px</td><td>56px</td><td>120%</td><td>1%</td>
               <td>#FFFFFF</td>
               <td><code>--text-title</code><br><code>.type-title</code></td>
             </tr>
             <tr>
-              <td><strong>Title 2</strong></td><td>regular</td><td>21px</td><td>40px</td><td>28px</td><td>1%</td>
+              <td><strong>Title 2</strong></td><td>regular</td><td>21px</td><td>40px</td><td>120%</td><td>1%</td>
               <td>#FFFFFF</td>
               <td><code>--text-title-2</code><br><code>.type-title-2</code> · <code>.section-title</code></td>
             </tr>
             <tr>
-              <td><strong>Subtitle Eyebrow</strong><br><span style="color:var(--text-muted)">all-small-caps</span></td><td>regular</td><td>14px</td><td>32px</td><td>30px</td><td>2%</td>
+              <td><strong>Subtitle Eyebrow</strong><br><span style="color:var(--text-muted)">all-small-caps</span></td><td>regular</td><td>14px</td><td>32px</td><td>120%</td><td>2%</td>
               <td>#F84600</td>
               <td><code>--text-subtitle</code><br><code>.type-subtitle</code> · <code>.subtitle</code></td>
             </tr>
             <tr>
-              <td><strong>Body</strong></td><td>regular</td><td>14px</td><td>21px</td><td>24px</td><td>2%</td>
+              <td><strong>Body</strong></td><td>regular</td><td>14px</td><td>21px</td><td>120%</td><td>2%</td>
               <td>#FFFFFF or #A2A09F</td>
               <td><code>--text-body</code><br><code>.type-body</code></td>
             </tr>
@@ -504,36 +485,39 @@ pre.ds-code { background: var(--color-surface-1); color: var(--color-text-2); pa
 
       <p class="ds-note"><strong>Every role is regular — there is no bold in this type system.</strong> Hierarchy is carried entirely by size, color and case: 56px white for the Title, 32px orange all-small-caps for the Subtitle Eyebrow, 21px grey for Body. So emphasis inside a paragraph means switching the text from grey to white (<code>.type-body--strong</code>), not bolding it. Headings inherit regular too — <code>&lt;h1&gt;</code>–<code>&lt;h4&gt;</code> are no longer bold by default.</p>
 
+      <p class="ds-note"><strong>Leading is 120% on every role, at both breakpoints.</strong> Being a ratio rather than a pixel value, it follows the size on its own — so unlike the sizes, no leading needs a <code>clamp()</code>. Tracking is likewise constant: 1% on the titles, 2% on the eyebrow and body.</p>
+
       <p class="ds-note">The one exception is UI chrome: buttons and nav sit at <strong>medium (500)</strong>, since a 16px label in a filled button needs a little more presence than body copy. Nothing in the four roles uses it. If you want those regular too, it is two lines.</p>
-
-      <p class="ds-note"><strong>Leading uses the source value.</strong> Subtitle Eyebrow stays at <strong>30px</strong>; Title and Title 2 use <strong>28px</strong>; Body uses <strong>24px</strong>. Tracking is constant across mobile and desktop.</p>
-
-      <p class="ds-note"><strong>The scale is responsive:</strong> each role interpolates from its mobile value to its desktop value while preserving its assigned line height and tracking.</p>
+      <p class="ds-note"><strong>One hierarchy consequence of the new mobile sizes:</strong> the Eyebrow and Body are both <strong>14px on mobile</strong>. The eyebrow is no longer distinguished by size there — only by color and all-small-caps. That works, but it means the orange and the letterform are doing all the work, so an eyebrow that loses its color loses its role entirely.</p>
 
       <h3>Interpolation</h3>
       <p class="type-body" style="max-width:65ch">The two values become one <code>clamp()</code> anchored at 375px (mobile) and 1440px (desktop). Between them the size grows continuously; outside them it locks. No font-size jump at any breakpoint.</p>
-      <pre class="ds-code">/* Title: 24px @375 → 56px @1440 */
+      <pre class="ds-code">/* Title size: 24px @375 → 56px @1440 */
 --text-title: clamp(1.5rem, .7958rem + 3.005vw, 3.5rem);
 
-/*  375px → 32.0px  (locks here going down)
-    768px → 40.8px
-   1024px → 46.6px
-   1440px → 56.0px  (locks here going up)  */</pre>
+/*  375px → 24.0px  (locks here going down)
+    768px → 35.8px
+   1024px → 43.5px
+   1440px → 56.0px  (locks here going up)  */
+
+/* Leading needs no clamp: 120% is a ratio, so it tracks
+   whatever the size resolves to at that viewport. */
+--leading-title: 1.2;   /* 28.8px @375 … 67.2px @1440 */</pre>
 
       <div class="ds-demo">
-        <p class="ds-label">.type-eyebrow · regular · all-small-caps · 14→32px · 30px leading · 2% · #F84600</p>
+        <p class="ds-label">.type-eyebrow · regular · all-small-caps · 14→32px · 120% leading · 2% · #F84600</p>
         <p class="type-eyebrow" style="margin:0 0 var(--space-6)">Subtitle eyebrow</p>
 
-        <p class="ds-label">.type-title · regular · 24→56px · 28px leading · 1% · #FFFFFF</p>
+        <p class="ds-label">.type-title · regular · 24→56px · 120% leading · 1% · #FFFFFF</p>
         <p class="type-title" style="margin:0 0 var(--space-6)">[Hero headline in eight words or fewer]</p>
 
-        <p class="ds-label">.type-title-2 · regular · 21→40px · 28px leading · 1% · #FFFFFF</p>
+        <p class="ds-label">.type-title-2 · regular · 21→40px · 120% leading · 1% · #FFFFFF</p>
         <p class="type-title-2" style="margin:0 0 var(--space-6)">[Inner section heading]</p>
 
-        <p class="ds-label">.type-body--strong · regular · 14→21px · 24px leading · 2% · #FFFFFF</p>
+        <p class="ds-label">.type-body--strong · regular · 14→21px · 120% leading · 2% · #FFFFFF</p>
         <p class="type-body type-body--strong" style="max-width:60ch;margin:0 0 var(--space-6)">[White body text, for anything that needs weight: hero lead, the offer line, a short answer.]</p>
 
-        <p class="ds-label">.type-body · regular · 14→21px · 24px leading · 2% · #A2A09F</p>
+        <p class="ds-label">.type-body · regular · 14→21px · 120% leading · 2% · #A2A09F</p>
         <p class="type-body" style="max-width:60ch;margin:0">[Grey body text, the default. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore.]</p>
       </div>
 
@@ -567,9 +551,9 @@ pre.ds-code { background: var(--color-surface-1); color: var(--color-text-2); pa
       <p class="ds-note"><strong>Type families are still placeholder:</strong> <code>--font-display</code> and <code>--font-body</code>. The design suggests a light-weight geometric sans for the title. Send me the font and I'll swap it in.</p>
     </section>
 
-    <!-- 04 SPACING -->
+    <!-- 03 SPACING -->
     <section class="ds-sec" id="spacing">
-      <h2>04 · Spacing</h2>
+      <h2>03 · Spacing</h2>
       <p class="section-lead">4px base scale. Never invent a value outside it.</p>
       <div class="ds-scroll">
         <table class="ds-table">
@@ -591,9 +575,9 @@ pre.ds-code { background: var(--color-surface-1); color: var(--color-text-2); pa
       <p class="ds-note">Rhythm between sections: <code>--section-y</code> (default) and <code>--section-y-lg</code> (hero, final CTA). Both are fluid — they shrink on mobile on their own.</p>
     </section>
 
-    <!-- 05 GRID -->
+    <!-- 04 GRID -->
     <section class="ds-sec" id="grid">
-      <h2>05 · Grid</h2>
+      <h2>04 · Grid</h2>
       <p class="section-lead">Two grids defined in Figma — 1920 and 375. Everything else is interpolation between them.</p>
 
       <div class="ds-scroll">
@@ -669,9 +653,9 @@ pre.ds-code { background: var(--color-surface-1); color: var(--color-text-2); pa
       <p class="ds-note"><strong>On mobile, 4 columns almost always becomes 1.</strong> The 4-column grid is there to align the margin and allow halves (2/4) for small paired blocks — not to squeeze three columns onto a 375px screen.</p>
     </section>
 
-    <!-- 06 BREAKPOINTS -->
+    <!-- 05 BREAKPOINTS -->
     <section class="ds-sec" id="breakpoints">
-      <h2>06 · Breakpoints</h2>
+      <h2>05 · Breakpoints</h2>
       <p class="section-lead">Mobile-first: write the base style for the smallest screen and step up with <code>min-width</code>.</p>
       <div class="ds-scroll">
         <table class="ds-table">
@@ -694,9 +678,9 @@ pre.ds-code { background: var(--color-surface-1); color: var(--color-text-2); pa
       <p class="ds-note">Hard rules: no <code>min-width</code> larger than the screen; tables, code and diagrams inside <code>overflow-x:auto</code>; the body never scrolls horizontally.</p>
     </section>
 
-    <!-- 07 RADIUS & ELEVATION -->
+    <!-- 06 RADIUS -->
     <section class="ds-sec" id="elevation">
-      <h2>07 · Radius</h2>
+      <h2>06 · Radius</h2>
       <div class="auto-grid">
         <div class="ds-demo"><p class="ds-label">--radius-sm · 4px</p><div style="height:56px;background:var(--bg-surface-alt);border-radius:var(--radius-sm)"></div></div>
         <div class="ds-demo"><p class="ds-label">--radius-md · 8px</p><div style="height:56px;background:var(--bg-surface-alt);border-radius:var(--radius-md)"></div></div>
@@ -705,9 +689,9 @@ pre.ds-code { background: var(--color-surface-1); color: var(--color-text-2); pa
       </div>
     </section>
 
-    <!-- 08 COMPONENTS -->
+    <!-- 07 COMPONENTS -->
     <section class="ds-sec" id="components">
-      <h2>08 · Components</h2>
+      <h2>07 · Components</h2>
       <p class="section-lead">A compact set of conversational controls: prompt, preview, actions and message states.</p>
 
       <h3>Prompt field</h3>
@@ -753,9 +737,9 @@ pre.ds-code { background: var(--color-surface-1); color: var(--color-text-2); pa
       </div>
     </section>
 
-    <!-- 09 LANDING SECTIONS -->
+    <!-- 08 LANDING SECTIONS -->
     <section class="ds-sec" id="sections">
-      <h2>09 · Landing sections</h2>
+      <h2>08 · Landing sections</h2>
       <p class="section-lead">The approved landing flow, its purpose and the interaction each section must support.</p>
       <div class="ds-scroll" style="display:none" aria-hidden="true">
         <table class="ds-table">
@@ -784,8 +768,7 @@ pre.ds-code { background: var(--color-surface-1); color: var(--color-text-2); pa
             <tr><td>3</td><td>Product Possibilities</td><td>3-5 use cases &middot; platform visual &middot; agents/chat</td><td>stacked cards</td></tr>
             <tr><td>4</td><td>Connectors</td><td>connector ecosystem &middot; external apps &middot; representative workflow</td><td>orbit</td></tr>
             <tr><td>5</td><td>Conductor Mode</td><td>model carousel &middot; routing message &middot; Starchild</td><td>interactive circle</td></tr>
-            <tr><td>6</td><td>Video</td><td>personal story &middot; video placeholder</td><td>embedded video</td></tr>
-            <tr><td>7</td><td>Final CTA</td><td>character presence &middot; value &middot; Try it for free</td><td>two columns</td></tr>
+            <tr><td>6</td><td>Final CTA</td><td>character presence &middot; value &middot; Try it for free</td><td>two columns</td></tr>
           </tbody>
         </table>
       </div>
